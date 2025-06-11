@@ -1,0 +1,58 @@
+@startuml DiagrammeComposantsKYC
+skinparam component {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+skinparam linetype ortho
+
+package "Système KYC" {
+    [Interface Web KYC] as Web
+    [Module Pré-enregistrement] as Preenr
+    [Module Enregistrement] as Enr
+    [Module Gestion Comptes] as Comptes
+    [Module Mandataires] as Mandat
+    [Module Blocage/Déblocage] as Blocage
+    [Module Contrôles Conformité] as Controle
+    [Module Signature Électronique] as Signature
+    [Module Documents KYC] as Docs
+    [Module Audit/Journalisation] as Audit
+}
+
+[Base de Données KYC] as DB
+[GED (Gestion Électronique de Documents)] as GED
+[CBS (Système Bancaire Central)] as CBS
+[Systèmes Externes (Blacklist, PPE, FATCA)] as EXT
+[Serveur Signature] as SIG
+
+Web --> Preenr
+Web --> Enr
+Web --> Comptes
+Web --> Mandat
+Web --> Blocage
+Web --> Docs
+
+Preenr --> Enr
+Enr --> Comptes
+Comptes --> Blocage
+Comptes --> Mandat
+Comptes --> Controle
+Comptes --> Docs
+Comptes --> Audit
+
+Blocage --> CBS
+Blocage --> Audit
+
+Controle --> EXT
+Controle --> Audit
+
+Docs --> GED
+Docs --> Audit
+
+Signature --> SIG
+Signature --> Docs
+
+Comptes --> DB
+Mandat --> DB
+Audit --> DB
+
+@enduml

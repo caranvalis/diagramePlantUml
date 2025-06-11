@@ -1,0 +1,23 @@
+@startuml DiagrammeEtatCompte
+skinparam state {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+
+[*] --> PréEnregistrement
+
+PréEnregistrement --> EnAttenteValidation : Données soumises
+EnAttenteValidation --> Actif : Validation OK
+EnAttenteValidation --> Rejeté : Validation KO
+
+Actif --> Bloqué : Blocage demandé
+Bloqué --> Actif : Déblocage validé
+Actif --> ClotureEnCours : Clôture demandée
+Bloqué --> ClotureEnCours : Clôture demandée
+
+ClotureEnCours --> Cloturé : Clôture validée
+
+Rejeté --> [*]
+Cloturé --> [*]
+
+@enduml

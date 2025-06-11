@@ -1,0 +1,23 @@
+@startuml DiagrammeDeploiementKYC
+skinparam node {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+
+node "Poste Client\n(Web/Agence)" as Client
+node "Serveur Applicatif\nKYC/INTRA" as App
+node "Serveur Base de Données\nKYC" as DB
+node "Serveur CBS\n(Système Bancaire Central)" as CBS
+node "Serveur GED\n(Gestion Électronique de Documents)" as GED
+node "Serveur Signature\nÉlectronique" as SIG
+node "Système Externe\n(Blacklist, PPE, FATCA...)" as EXT
+
+Client --> App : Saisie/consultation KYC
+App --> DB : Lecture/écriture données KYC
+App --> CBS : Création/Clôture compte\nBlocage/Déblocage
+App --> GED : Stockage/Récupération documents
+App --> SIG : Capture/Validation signature
+App --> EXT : Contrôles conformité (Blacklist, PPE, FATCA)
+App --> Client : Notifications/statuts
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml DiagrammeActivitéBlocage/Deblocage
+skinparam backgroundColor #E0F7FA
+skinparam activity {
+    StartColor #0097A7
+    EndColor #0097A7
+    BarColor #006064
+    ArrowColor #006064
+}
+
+start
+
+:Sélection du compte à traiter;
+partition Blocage {
+    :Demande de blocage (Gestionnaire ou Analyste);
+    :Vérification des droits et du motif;
+    if (Motif valide ?) then (oui)
+        :Blocage du compte;
+        :Notification des parties prenantes;
+    else (non)
+        :Rejet de la demande de blocage;
+    endif
+}
+partition Deblocage {
+    :Demande de déblocage (Gestionnaire ou Analyste);
+    :Vérification des droits et du motif;
+    if (Motif valide ?) then (oui)
+        :Déblocage du compte;
+        :Notification des parties prenantes;
+    else (non)
+        :Rejet de la demande de déblocage;
+    endif
+}
+partition Cloture {
+    :Demande de clôture (Gestionnaire);
+    :Vérification du statut du compte;
+    if (Compte débloqué et conditions remplies ?) then (oui)
+        :Clôture du compte;
+        :Notification des parties prenantes;
+    else (non)
+        :Rejet de la demande de clôture;
+    endif
+}
+
+stop
+@enduml
