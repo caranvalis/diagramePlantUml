@@ -8,7 +8,7 @@ skinparam usecase {
 skinparam packageStyle rectangle
 skinparam linetype ortho
 
-actor "Analyste conformité" as Analyste
+actor "Analyste conformité" as Analyste #blue
 
 package "Système INTRA" as INTRA {
     usecase "Bloquer client (particulier/entreprise)" as BlocClient
@@ -17,22 +17,22 @@ package "Système INTRA" as INTRA {
     usecase "Notifier parties prenantes" as Notif
     usecase "Débloquer client (particulier/entreprise)" as DeblocClient
     usecase "Débloquer compte (particulier/entreprise)" as DeblocCompte
+    usecase "Clôturer compte (particulier/entreprise)" as ClotureCompte
 }
 
-' Blocage client : tous les comptes sont bloqués
-Analyste -right-> BlocClient
-BlocClient --> IdComptes : <<include>>
-IdComptes --> BlocCompte : <<include>>
-BlocClient --> Notif : <<include>>
-BlocCompte --> Notif : <<include>>
+' Blocage et déblocage
+Analyste -right-> BlocClient #blue;text:blue
+Analyste -right-> BlocCompte #blue;text:blue
+Analyste -right-> DeblocClient #blue;text:blue
+Analyste -right-> DeblocCompte #blue;text:blue
+Analyste -right-> ClotureCompte #blue;text:blue
 
-' Blocage direct d'un compte
-Analyste --> BlocCompte
-
-' Déblocage client et compte
-Analyste --> DeblocClient
-Analyste --> DeblocCompte
-DeblocClient --> Notif : <<include>>
-DeblocCompte --> Notif : <<include>>
+BlocClient ..> IdComptes : <<include>>
+IdComptes ..> BlocCompte : <<include>>
+BlocClient ..> Notif : <<include>>
+BlocCompte ..> Notif : <<include>>
+DeblocClient ..> Notif : <<include>>
+DeblocCompte ..> Notif : <<include>>
+ClotureCompte ..> Notif : <<include>>
 
 @enduml

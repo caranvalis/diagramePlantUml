@@ -9,9 +9,8 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 left to right direction
 
-actor "Gestionnaire" as Gestionnaire
-
-actor "CBS" as CBS #line.dotted
+actor "Gestionnaire" as Gestionnaire #green
+actor "CBS" as CBS #orange
 
 package "Système INTRA" as INTRA {
     usecase "Créer compte client (particulier/entreprise)" as Creation
@@ -22,21 +21,28 @@ package "Système INTRA" as INTRA {
     usecase "Vérifier blacklist" as Blacklist
     usecase "Identifier PPE" as PPE
     usecase "Identifier FATCA" as FATCA
+    usecase "Attribuer statut (actif/inactif)" as Statut
 }
 
-Gestionnaire --> Creation
-Gestionnaire --> Cloture
-Creation --> CBS : <<include>>
-Cloture --> CBS : <<include>>
+Gestionnaire --> Creation #green;text:green
+Gestionnaire --> Cloture #green;text:green
+Gestionnaire --> PPE #green;text:green
+Gestionnaire --> FATCA #green;text:green
 
-Gestionnaire --> PPE
-Gestionnaire --> FATCA
-ValiderDocs --> CBS : <<include>>
+' Relations CBS en orange
+Creation --> CBS #orange;text:orange
+Cloture --> CBS #orange;text:orange
 
-ValiderDocs --> Completdocs : <<include>>
-ValiderDocs --> Doublon : <<include>>
-ValiderDocs --> Blacklist : <<include>>
-ValiderDocs --> PPE : <<include>>
-ValiderDocs --> FATCA : <<include>>
+' Attribution du statut après création
+CBS --> Statut #orange;text:orange
+
+' Relations internes (inclusions) en pointillés
+ValiderDocs ..> Completdocs : <<include>>
+ValiderDocs ..> Doublon : <<include>>
+ValiderDocs ..> Blacklist : <<include>>
+ValiderDocs ..> PPE : <<include>>
+ValiderDocs ..> FATCA : <<include>>
+ValiderDocs ..> CBS : <<include>>
+Creation ..> Statut : <<include>>
 
 @enduml

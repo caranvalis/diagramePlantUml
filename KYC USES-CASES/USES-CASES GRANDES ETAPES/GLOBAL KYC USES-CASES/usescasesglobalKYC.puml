@@ -1,0 +1,50 @@
+@startuml UseCasesGlobalKYC
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Client" as Client
+actor "Gestionnaire" as Gestionnaire
+actor "Analyste conformité" as Analyste
+
+package "Système INTRA" as INTRA {
+    usecase "Pré-enregistrer client" as Preenr
+    usecase "Enregistrer client" as Enr
+    usecase "Vérifier documents" as VerifDocs
+    usecase "Contrôle conformité (identité incluse)" as Conformite
+    usecase "Créer compte" as CreerCompte
+    usecase "Capturer signature électronique" as Signature
+    usecase "Attribuer statut client" as Statut
+    usecase "Bloquer/Débloquer/Clôturer" as BlocDebloc
+}
+
+Client --> Preenr
+Client --> Enr
+Client --> VerifDocs
+Client --> Signature
+
+Gestionnaire --> Preenr
+Gestionnaire --> Enr
+Gestionnaire --> VerifDocs
+Gestionnaire --> Conformite
+Gestionnaire --> CreerCompte
+Gestionnaire --> Statut
+Gestionnaire --> BlocDebloc
+
+Analyste --> Conformite
+Analyste --> BlocDebloc
+
+Preenr ..> VerifDocs : <<include>>
+VerifDocs ..> Conformite : <<include>>
+Conformite ..> CreerCompte : <<include>>
+CreerCompte ..> Signature : <<include>>
+Signature ..> Statut : <<include>>
+
+BlocDebloc ..> Statut : <<extend>>
+
+@enduml

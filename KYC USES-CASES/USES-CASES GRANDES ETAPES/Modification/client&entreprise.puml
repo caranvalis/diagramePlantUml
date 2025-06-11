@@ -24,11 +24,11 @@ Gestionnaire --> ModifDocPart
 Gestionnaire --> ModifEnt
 Gestionnaire --> ModifDocEnt
 
-ModifPart --> Validation : <<include>>
-ModifDocPart --> Validation : <<include>>
-ModifEnt --> Validation : <<include>>
-ModifDocEnt --> Validation : <<include>>
+ModifPart ..> Validation : <<include>>
+ModifDocPart ..> Validation : <<include>>
+ModifEnt ..> Validation : <<include>>
+ModifDocEnt ..> Validation : <<include>>
 
-Controle --> Validation
+Controle ..> Validation
 
 @enduml
