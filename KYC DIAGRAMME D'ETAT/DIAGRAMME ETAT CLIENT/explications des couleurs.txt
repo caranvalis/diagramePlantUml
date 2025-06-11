@@ -1,0 +1,52 @@
+🟦 Bleu (-[#blue]->)
+Transitions d’entrée ou de passage neutre
+Utilisé pour :
+Les débuts de processus
+Les transitions “techniques” (ex : entrée dans un sous-état, passage d’un input à une étape suivante)
+Exemple :
+[*] -[#blue]-> ProspectInput
+ProspectInput -[#blue]-> SaisieInfos
+
+🟩 Vert (-[#green]->)
+Transitions positives, validation, succès
+Utilisé pour :
+Passage à l’étape suivante après validation ou succès
+Validation des contrôles, dossier complet, etc.
+Exemple :
+AttentePieces -[#green]-> EnAttenteValidation : Dossier soumis
+ControleConformite -[#green]-> Actif : Validation OK
+
+🟥 Rouge (-[#red]->)
+Transitions négatives, erreur, refus
+Utilisé pour :
+Retour en arrière pour correction
+Rejet après contrôle négatif
+Exemple :
+AttentePieces -[#red]-> SaisieInfos : Correction infos
+ControleConformite -[#red]-> Rejete : Validation KO
+Actif -[#red]-> Cloture : Clôture demandée
+
+🟧 Orange (-[#orange]->)
+Transitions de changement d’état non définitif, suspension, désactivation
+Utilisé pour :
+Désactivation temporaire ou suspension
+Exemple :
+Actif -[#orange]-> Inactif : Désactivation demandée
+
+⚫️ Noir (-[#black]->)
+Transitions de sortie, fin de processus
+Utilisé pour :
+Retour à l’état final (fin du cycle)
+Exemple :
+Rejete -[#black]-> [*]
+Cloture -[#black]-> [*]
+Inactif -[#black]-> [*]
+Résumé visuel :
+
+Bleu : début ou passage neutre
+Vert : validation, succès
+Rouge : erreur, rejet
+Orange : suspension, désactivation
+Noir : fin du cycle
+Cela rend la lecture du diagramme intuitive et professionnelle.
+N’hésite pas à demander une adaptation ou une légende graphique si besoin !

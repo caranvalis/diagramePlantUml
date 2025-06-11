@@ -20,17 +20,15 @@ state Prospect {
 state EnAttenteValidation {
     state ValidationInput <<inputPin>>
     state ValidationOutput <<outputPin>>
-    [*] -[#blue]-> ControleIdentite
-    ControleIdentite : Vérification identité
-    ControleIdentite -[#green]-> ControleConformite : Identité OK
-    ControleConformite : Vérification conformité
+    [*] -[#blue]-> ControleConformite
+    ControleConformite : Contrôle conformité (inclut identité) par INTRA
     ControleConformite -[#green]-> Actif : Validation OK
     ControleConformite -[#red]-> Rejete : Validation KO
-    ValidationInput -[#blue]-> ControleIdentite
+    ValidationInput -[#blue]-> ControleConformite
     ControleConformite -[#green]-> ValidationOutput
 }
 
-EnAttenteValidation : Contrôles KYC en cours
+EnAttenteValidation : Contrôles KYC (INTRA) en cours
 
 Actif : Client validé
 Actif -[#orange]-> Inactif : Désactivation demandée

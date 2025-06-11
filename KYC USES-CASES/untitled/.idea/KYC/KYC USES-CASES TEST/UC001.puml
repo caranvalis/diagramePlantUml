@@ -12,14 +12,14 @@ skinparam colorArrowSeparationSpace 1
 start
 :Pré-enregistrement du client;
 
-|INTRA|
+|Système KYC|
 if (Données valides ?) then (oui)
 -[#green]->
     :Enregistrement des données;
     :Vérification complétude des documents;
     if (Documents complets ?) then (oui)
     -[#green]->
-        :Contrôle conformité (inclut identité);
+        :Contrôles identité et conformité;
     else (non)
     -[#red]->
         |Client / Gestionnaire|
@@ -33,8 +33,8 @@ else (non)
     stop
 endif
 
-|INTRA|
-if (Conformité OK ?) then (oui)
+|Système KYC|
+if (Contrôles OK ?) then (oui)
 -[#green]->
     :Préparation des données pour CBS;
 else (non)
@@ -47,11 +47,11 @@ endif
 :Création du compte;
 :Génération du RIB;
 
-| Signature|
+|GED / Signature|
 :Capture de signature électronique;
 :Génération des documents KYC;
 
-|INTRA|
+|Système KYC|
 :Attribution du statut client;
 :Audit et journalisation;
 
