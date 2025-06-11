@@ -1,4 +1,4 @@
-@startuml DiagrammeActivitéBlocage/Deblocage
+@startuml DiagrammeActivitéBlocageDeblocage
 skinparam backgroundColor #E0F7FA
 skinparam activity {
     StartColor #0097A7
@@ -6,40 +6,47 @@ skinparam activity {
     BarColor #006064
     ArrowColor #006064
 }
+skinparam colorArrowSeparationSpace 1
 
+|Gestionnaire / Analyste|
 start
-
 :Sélection du compte à traiter;
-partition Blocage {
-    :Demande de blocage (Gestionnaire ou Analyste);
-    :Vérification des droits et du motif;
-    if (Motif valide ?) then (oui)
-        :Blocage du compte;
-        :Notification des parties prenantes;
-    else (non)
-        :Rejet de la demande de blocage;
-    endif
-}
-partition Deblocage {
-    :Demande de déblocage (Gestionnaire ou Analyste);
-    :Vérification des droits et du motif;
-    if (Motif valide ?) then (oui)
-        :Déblocage du compte;
-        :Notification des parties prenantes;
-    else (non)
-        :Rejet de la demande de déblocage;
-    endif
-}
-partition Cloture {
-    :Demande de clôture (Gestionnaire);
-    :Vérification du statut du compte;
-    if (Compte débloqué et conditions remplies ?) then (oui)
-        :Clôture du compte;
-        :Notification des parties prenantes;
-    else (non)
-        :Rejet de la demande de clôture;
-    endif
-}
+
+|Blocage|
+:Demande de blocage;
+:Vérification des droits et du motif;
+if (Motif valide ?) then (oui)
+-[#green]->
+    :Blocage du compte;
+    :Notification des parties prenantes;
+else (non)
+-[#red]->
+    :Rejet de la demande de blocage;
+endif
+
+|Déblocage|
+:Demande de déblocage;
+:Vérification des droits et du motif;
+if (Motif valide ?) then (oui)
+-[#green]->
+    :Déblocage du compte;
+    :Notification des parties prenantes;
+else (non)
+-[#red]->
+    :Rejet de la demande de déblocage;
+endif
+
+|Clôture|
+:Demande de clôture;
+:Vérification du statut du compte;
+if (Compte débloqué et conditions remplies ?) then (oui)
+-[#green]->
+    :Clôture du compte;
+    :Notification des parties prenantes;
+else (non)
+-[#red]->
+    :Rejet de la demande de clôture;
+endif
 
 stop
 @enduml

@@ -1,23 +1,38 @@
-@startuml DiagrammeEtatCompte
-skinparam state {
-    BackgroundColor #E0F7FA
-    BorderColor #0097A7
-}
+@startuml DiagrammeEtatKYC
+hide empty description
 
-[*] --> PréEnregistrement
+[*] --> PreEnregistrement
+PreEnregistrement : Saisie des informations client
+PreEnregistrement : Aucune validation effectuee
 
-PréEnregistrement --> EnAttenteValidation : Données soumises
+PreEnregistrement --> EnAttenteValidation : Donnees soumises
+EnAttenteValidation : Controles KYC en cours
+EnAttenteValidation : Verification des documents
+
 EnAttenteValidation --> Actif : Validation OK
-EnAttenteValidation --> Rejeté : Validation KO
+EnAttenteValidation --> Rejete : Validation KO
 
-Actif --> Bloqué : Blocage demandé
-Bloqué --> Actif : Déblocage validé
-Actif --> ClotureEnCours : Clôture demandée
-Bloqué --> ClotureEnCours : Clôture demandée
+Actif : Compte utilisable
+Actif : Operations autorisees
 
-ClotureEnCours --> Cloturé : Clôture validée
+Actif --> Bloque : Blocage demande
+Bloque : Compte suspendu
+Bloque : Aucune operation possible
 
-Rejeté --> [*]
-Cloturé --> [*]
+Bloque --> Actif : Deblocage valide
+Actif --> ClotureEnCours : Cloture demandee
+Bloque --> ClotureEnCours : Cloture demandee
+
+ClotureEnCours : Traitement de la cloture
+ClotureEnCours : Verification des conditions
+
+ClotureEnCours --> Cloture : Cloture validee
+Cloture : Compte ferme
+Cloture : Aucune operation possible
+
+Rejete : Souscription refusee
+
+Rejete --> [*]
+Cloture --> [*]
 
 @enduml

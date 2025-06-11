@@ -1,9 +1,14 @@
 @startuml DiagrammeComposantsKYC
+skinparam BackgroundColor transparent
+skinparam componentStyle uml2
 skinparam component {
     BackgroundColor #E0F7FA
     BorderColor #0097A7
 }
 skinparam linetype ortho
+
+[Entrée] as i
+[Sortie] as o
 
 package "Système KYC" {
     [Interface Web KYC] as Web
@@ -16,6 +21,15 @@ package "Système KYC" {
     [Module Signature Électronique] as Signature
     [Module Documents KYC] as Docs
     [Module Audit/Journalisation] as Audit
+
+    portin p1
+    portin p2
+    portin p3
+    portout po1
+    portout po2
+    portout po3
+
+    component c1
 }
 
 [Base de Données KYC] as DB
@@ -23,6 +37,16 @@ package "Système KYC" {
 [CBS (Système Bancaire Central)] as CBS
 [Systèmes Externes (Blacklist, PPE, FATCA)] as EXT
 [Serveur Signature] as SIG
+
+i --> p1
+i --> p2
+i --> p3
+p1 --> c1
+p2 --> c1
+po1 --> o
+po2 --> o
+po3 --> o
+c1 --> po1
 
 Web --> Preenr
 Web --> Enr

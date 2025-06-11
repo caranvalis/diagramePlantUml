@@ -1,4 +1,4 @@
-@startuml Souscription
+@startuml GlobalKYC
 skinparam backgroundColor #E0F7FA
 skinparam activity {
     StartColor #0097A7
@@ -54,6 +54,14 @@ endif
 |Système KYC|
 :Attribution du statut client;
 :Audit et journalisation;
-stop
+
+if (Blocage/Déblocage/Clôture demandé ?) then (oui)
+-[#orange]->
+    :Traiter la demande (blocage, déblocage, clôture);
+    stop
+else (non)
+-[#green]->
+    stop
+endif
 
 @enduml
