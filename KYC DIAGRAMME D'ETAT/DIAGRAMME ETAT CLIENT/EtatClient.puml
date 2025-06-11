@@ -1,0 +1,48 @@
+@startuml EtatClient
+scale 350 width
+hide empty description
+
+[*] -[#blue]-> ProspectInput <<inputPin>>
+
+state Prospect {
+    state ProspectInput <<inputPin>>
+    state ProspectOutput <<outputPin>>
+    [*] -[#blue]-> SaisieInfos
+    SaisieInfos : Saisie des infos de base
+    SaisieInfos -[#orange]-> AttentePieces : Pièces justificatives requises
+    AttentePieces : Attente de dépôt des pièces
+    AttentePieces -[#red]-> SaisieInfos : Correction infos
+    AttentePieces -[#green]-> EnAttenteValidation : Dossier soumis
+    ProspectInput -[#blue]-> SaisieInfos
+    EnAttenteValidation -[#green]-> ProspectOutput
+}
+
+state EnAttenteValidation {
+    state ValidationInput <<inputPin>>
+    state ValidationOutput <<outputPin>>
+    [*] -[#blue]-> ControleIdentite
+    ControleIdentite : Vérification identité
+    ControleIdentite -[#green]-> ControleConformite : Identité OK
+    ControleConformite : Vérification conformité
+    ControleConformite -[#green]-> Actif : Validation OK
+    ControleConformite -[#red]-> Rejete : Validation KO
+    ValidationInput -[#blue]-> ControleIdentite
+    ControleConformite -[#green]-> ValidationOutput
+}
+
+EnAttenteValidation : Contrôles KYC en cours
+
+Actif : Client validé
+Actif -[#orange]-> Inactif : Désactivation demandée
+Inactif : Client désactivé
+
+Actif -[#red]-> Cloture : Clôture demandée
+Cloture : Client clôturé
+
+Rejete : Souscription refusée
+
+Rejete -[#black]-> [*]
+Cloture -[#black]-> [*]
+Inactif -[#black]-> [*]
+
+@enduml
