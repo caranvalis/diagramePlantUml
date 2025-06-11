@@ -1,0 +1,33 @@
+@startuml DiagrammeClasseAudit
+skinparam class {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+skinparam linetype ortho
+
+class AuditLog {
+    +id : String
+    +dateAction : Date
+    +typeAction : String // création, modification, suppression, blocage, etc.
+    +description : String
+    +ipUtilisateur : String
+}
+
+class Utilisateur {
+    +id : String
+    +nom : String
+    +prenom : String
+    +role : String
+}
+
+class EntiteCible {
+    +id : String
+    +type : String // Client, Compte, Mandat, etc.
+    +reference : String
+}
+
+' Relations
+Utilisateur "1" -- "0..*" AuditLog : effectue >
+AuditLog "1" -- "1" EntiteCible : concerne >
+
+@enduml

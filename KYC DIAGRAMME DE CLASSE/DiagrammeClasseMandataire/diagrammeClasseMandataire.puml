@@ -1,0 +1,62 @@
+@startuml DiagrammeClasseMandataire
+skinparam class {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+skinparam linetype ortho
+
+' --- Entités principales ---
+class Client {
+    +id : String
+    +nom : String
+    +prenom : String
+    +dateNaissance : Date
+    +type : String // particulier ou entreprise
+}
+
+class Mandataire {
+    +id : String
+    +nom : String
+    +prenom : String
+    +dateNaissance : Date
+    +lienAvecClient : String
+    +typeAutorisation : String // lecture, signature, opération
+    +dateDebutMandat : Date
+    +dateFinMandat : Date
+    +statut : String
+}
+
+class Mandat {
+    +id : String
+    +dateCreation : Date
+    +statut : String
+}
+
+class Document {
+    +id : String
+    +type : String
+    +dateDepot : Date
+    +statut : String
+}
+
+class Gestionnaire {
+    +id : String
+    +nom : String
+    +prenom : String
+}
+
+class HistoriqueMandat {
+    +id : String
+    +dateAction : Date
+    +action : String // ajout, modification, suppression
+    +utilisateur : String
+}
+
+' --- Relations ---
+Client "1" -- "0..*" Mandat : possède >
+Mandat "1" -- "1" Mandataire : concerne >
+Mandat "1" -- "0..*" Document : justificatif >
+Mandat "1" -- "0..*" HistoriqueMandat : historise >
+Gestionnaire "1" -- "0..*" Mandat : gère >
+
+@enduml

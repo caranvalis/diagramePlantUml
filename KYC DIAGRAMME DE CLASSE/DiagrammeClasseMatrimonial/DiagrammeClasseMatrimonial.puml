@@ -1,0 +1,50 @@
+@startuml DiagrammeClasseMatrimonial
+skinparam class {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+skinparam linetype ortho
+
+class Client {
+    +id : String
+    +nom : String
+    +prenom : String
+    +dateNaissance : Date
+    +statutMatrimonial : String
+}
+
+class SystemeMatrimonial {
+    +id : String
+    +type : String // Monogamie, Polygamie
+    +dateDeclaration : Date
+}
+
+class RegimeMatrimonial {
+    +id : String
+    +type : String // Communauté, Séparation
+    +dateDeclaration : Date
+    +justificatif : String
+}
+
+class Conjoint {
+    +id : String
+    +nom : String
+    +prenom : String
+    +dateNaissance : Date
+    +lien : String // époux(se), coépouse, etc.
+}
+
+class Document {
+    +id : String
+    +type : String
+    +dateDepot : Date
+    +statut : String
+}
+
+' Relations
+Client "1" -- "1" SystemeMatrimonial : déclare >
+Client "1" -- "1" RegimeMatrimonial : choisit >
+Client "1" -- "0..*" Conjoint : a pour conjoint >
+RegimeMatrimonial "0..1" -- "0..1" Document : justificatif >
+
+@enduml
