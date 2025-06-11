@@ -1,0 +1,40 @@
+@startuml Souscription
+skinparam backgroundColor #E0F7FA
+skinparam activity {
+    StartColor #0097A7
+    EndColor #0097A7
+    BarColor #006064
+    ArrowColor #006064
+}
+
+start
+
+:Pré-enregistrement du client
+(par le client ou gestionnaire);
+if (Données valides ?) then (oui)
+    :Enregistrement des données;
+    :Vérification complétude des documents;
+    if (Documents complets ?) then (oui)
+        :Contrôles identité et conformité;
+        if (Contrôles OK ?) then (oui)
+            :Création du compte dans le CBS;
+            :Génération du RIB;
+            :Capture de signature électronique;
+            :Génération des documents KYC;
+            :Attribution du statut client;
+            :Audit et journalisation;
+            stop
+        else (non)
+            :Notification des anomalies;
+            stop
+        endif
+    else (non)
+        :Demande de compléments au client;
+        stop
+    endif
+else (non)
+    :Rejet de la demande;
+    stop
+endif
+
+@enduml

@@ -3,6 +3,7 @@ skinparam class {
     BackgroundColor #E0F7FA
     BorderColor #0097A7
 }
+skinparam linetype ortho
 
 ' --- Entités principales ---
 class Client {
