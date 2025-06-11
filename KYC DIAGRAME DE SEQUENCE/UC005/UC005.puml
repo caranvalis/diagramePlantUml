@@ -1,0 +1,37 @@
+@startuml UC005
+skinparam actorStyle awesome
+
+actor Gestionnaire
+participant "Interface INTRA" as UI
+participant "Système" as System
+participant "Générateur PDF" as PDFGen
+
+== Scénario Nominal ==
+Gestionnaire -> UI : Démarrer génération fiche client
+activate UI
+activate Gestionnaire
+UI -> System : Demander génération
+activate System
+System -> System : Sélectionner modèle approprié
+alt Modèle indisponible
+    System --> UI : Message d’erreur (modèle manquant)
+    UI --> Gestionnaire : Afficher erreur
+else Modèle trouvé
+    System -> PDFGen : Générer document PDF
+    activate PDFGen
+    alt Erreur d’écriture
+        PDFGen --> System : Alerte écriture
+        System --> UI : Remonter erreur
+        UI --> Gestionnaire : Afficher alerte
+    else Génération réussie
+        PDFGen --> System : PDF généré
+        deactivate PDFGen
+        System --> UI : Document prêt
+        deactivate System
+        UI --> Gestionnaire : Afficher options (imprimer/envoyer)
+        deactivate UI
+        deactivate Gestionnaire
+    end
+end
+
+@enduml

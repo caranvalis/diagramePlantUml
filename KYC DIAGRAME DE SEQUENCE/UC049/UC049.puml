@@ -1,0 +1,38 @@
+@startuml UC049
+skinparam actorStyle awesome
+
+actor "Analyste BPM" as Analyste
+participant "Interface BPM" as UI
+participant "Système BPM" as Moteur
+database "Base BPM" as BPM
+
+== Modification d’un parcours BPM existant ==
+activate BPM
+Analyste -> UI : Ouvrir un parcours existant
+activate Analyste
+activate UI
+UI -> Moteur : Récupérer le flux
+activate Moteur
+Moteur -> BPM : Lire définition existante
+BPM --> Moteur : Parcours actif
+Moteur --> UI : Affichage du flux
+
+Analyste -> UI : Modifier une ou plusieurs étapes
+UI -> Moteur : Appliquer les modifications
+
+alt Processus en cours d’exécution
+    Moteur --> UI : Interdiction, message d’alerte
+else Aucune exécution en cours
+    Analyste -> UI : Tester le flux
+    UI -> Moteur : Tester et valider
+    Analyste -> UI : Publier le nouveau flux
+    UI -> Moteur : Déploiement de la version modifiée
+    Moteur -> BPM : Mise à jour de la définition
+    Moteur --> UI : Confirmation de publication
+    deactivate Moteur
+end
+
+UI --> Analyste : Message de succès
+deactivate UI
+deactivate Analyste
+@enduml

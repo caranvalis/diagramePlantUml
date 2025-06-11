@@ -1,0 +1,49 @@
+@startuml UCCO1
+skinparam actorStyle awesome
+
+actor Client
+participant "Interface Web" as UI
+participant "Système" as System
+
+== Scénario Nominal ==
+Client -> UI : Accéder à l’interface de préenregistrement
+activate UI
+activate Client
+UI -> System : Générer formulaire sécurisé
+activate System
+System --> UI : Afficher Formulaire sécurisé
+deactivate System
+
+Client -> UI : Saisir informations personnelles
+Client -> UI : Upload documents requis (CNI, etc.)
+UI -> System : Vérifier format des fichiers
+activate System
+alt Format supporté
+    System --> UI : OK
+    deactivate System
+    UI --> Client : Afficher données pour Review
+    Client -> UI : Valider le formulaire
+    UI -> System : Enregistrer données
+    activate System
+    alt Enregistrement OK
+        System -> System : Générer identifiant unique + QR code
+        System --> UI : Confirmation + ID généré
+        UI --> Client : Message de confirmation
+        UI -> System : Demande d'impression du document
+        System --> UI : Lancement impression
+    else Erreur serveur
+        System --> UI : Erreur serveur
+        UI --> Client : Message d'erreur (validation échouée)
+    end
+    
+else Format non supporté
+    System --> UI : Erreur format fichier
+    deactivate System
+    UI --> Client : Message d'erreur
+    deactivate Client
+    deactivate UI
+end
+deactivate Client
+deactivate UI
+
+@enduml

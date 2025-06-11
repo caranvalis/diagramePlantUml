@@ -1,0 +1,46 @@
+@startuml UC057
+skinparam actorStyle awesome
+
+actor "Administrateur / Auditeur interne" as Admin
+participant "Interface Audit" as UI
+participant "Système (Journaliseur)" as Systeme
+database "Base des Journaux d'Audit" as AuditDB
+database "Stockage archive (si saturation)" as Archive
+
+== Journalisation automatique ==
+activate AuditDB
+activate Archive
+Systeme -> AuditDB : Initialisation de la base de données
+activate Systeme
+Systeme -> AuditDB : Création des tables (utilisateur, action, date/heure, IP, module, statut)
+Systeme --> AuditDB : Confirmation de création
+loop Pour chaque action utilisateur (connexion, modif, export...)
+    Systeme -> AuditDB : Enregistrer (utilisateur, action, date/heure, IP, module, statut)
+    alt Espace audit saturé
+        Systeme -> Archive : Déclenchement archivage automatique
+        Archive --> AuditDB : Vérification de l'espace disponible
+        Systeme -> Admin : Alerte technique
+        activate Admin
+        Admin -> Archive : Vérification de l'espace disponible
+        Archive --> AuditDB : Sauvegarde des anciens journaux
+        AuditDB -> Archive : Confirmation de sauvegarde
+    end
+end
+
+== Consultation des journaux ==
+
+Admin -> UI : Accès à l'interface d’audit
+activate UI
+UI -> Systeme : Vérifier droits d'accès
+deactivate Systeme
+alt Utilisateur non autorisé
+    UI --> Admin : Accès refusé
+else Utilisateur autorisé
+    UI -> AuditDB : Requête avec filtres (utilisateur, date, action…)
+    AuditDB --> UI : Résultats filtrés
+    UI --> Admin : Affichage + options export PDF/Excel
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

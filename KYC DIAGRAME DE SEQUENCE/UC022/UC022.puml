@@ -1,0 +1,53 @@
+@startuml UC022
+skinparam actorStyle awesome
+
+actor "Client" as Client
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+database "Base Audit / Historique" as Audit
+
+== Scénario Nominal ==
+activate KYC
+activate Audit
+KYC -> KYC : Détection de la clôture du compte
+KYC -> Client : Notification de clôture du compte
+activate Client
+alt 2a. Client ne répond pas
+    KYC -> KYC : Relance de la notification
+    KYC -> Audit : Journalisation de l'échec
+else
+    KYC -> Audit : Journalisation de la notification
+    deactivate Client
+end
+KYC -> Gestionnaire : Notification de clôture du compte
+activate Gestionnaire
+alt 3a. Gestionnaire ne répond pas
+    KYC -> KYC : Relance de la notification
+    KYC -> Audit : Journalisation de l'échec
+else
+    KYC -> Audit : Journalisation de la notification
+   
+end
+KYC -> KYC : Vérification des conditions de clôture
+alt 4a. Conditions non remplies
+    KYC --> Client : Notification d'échec de clôture   
+    activate Client
+    KYC -> KYC : Relance de la notification
+    
+    KYC -> Audit : Journalisation de l'échec
+else
+    KYC -> KYC : Mise à jour du statut du compte (Clôturé)
+    KYC -> Audit : Journalisation de la clôture
+end
+
+KYC -> KYC : Génération de la notification
+KYC -> Client : Envoi notification clôture (email/SMS)
+KYC -> Gestionnaire : Envoi copie notification
+KYC -> Audit : Journalisation de l'envoi
+
+alt 3a. Message non délivré
+    KYC -> KYC : Réessaie d'envoi
+    KYC -> Audit : Journalisation de l'échec
+end
+@enduml
+

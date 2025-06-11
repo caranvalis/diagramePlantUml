@@ -1,0 +1,31 @@
+@startuml UC005
+' UC005 – Génération de fiche client particulier (amélioré)
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+
+actor "Gestionnaire" as Gestionnaire
+actor "Système" as Systeme
+
+package "Génération de fiche client" {
+    usecase "Démarrer la génération de fiche" as Demarrer
+    usecase "Sélectionner le modèle PDF" as Modele
+    usecase "Générer le fichier PDF" as Generation
+    usecase "Imprimer ou envoyer la fiche" as Sortie
+    usecase "Afficher confirmation" as Confirmation
+}
+
+Gestionnaire --> Demarrer
+Demarrer --> Modele
+Modele --> Generation
+Generation --> Sortie
+Sortie --> Confirmation
+Systeme --> Modele
+Systeme --> Generation
+Systeme --> Sortie
+Systeme --> Confirmation
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml UC055
+skinparam actorStyle awesome
+
+actor "Analyste conformité / Responsable d’agence" as Utilisateur
+participant "Interface de supervision" as UI
+participant "Moteur de Workflow (BPM)" as BPM
+database "Base KYC / Statuts" as DB
+
+== Visualisation en temps réel des statuts ==
+activate DB
+Utilisateur -> UI : Accès au module de suivi des workflows
+activate Utilisateur
+activate UI
+UI -> BPM : Requête des processus KYC en cours
+BPM -> DB : Lecture des dossiers actifs et leurs statuts
+activate BPM
+BPM -> DB : Requête des données de suivi (étapes, clients, agences, durée, blocages)
+DB --> BPM : Liste des dossiers (étape, client, agence, durée, blocages)
+BPM --> UI : Transmission des données pour affichage
+UI --> Utilisateur : Affichage tableau de suivi
+
+alt Aucun dossier actif
+    UI -> Utilisateur : Message « Aucun dossier en cours »
+else Données partiellement indisponibles
+    UI -> Utilisateur : Tableau partiel + alerte technique
+else Données disponibles
+    Utilisateur -> UI : Applique des filtres (type, agence, étape…)
+    UI -> BPM : Filtrage dynamique
+    BPM -> DB : Requête filtrée
+    DB --> BPM : Données filtrées
+    BPM --> UI : Résultat mis à jour
+    UI --> Utilisateur : Tableau mis à jour
+    UI --> Utilisateur : Affichage en temps réel
+    Utilisateur -> UI : Sélection d’un dossier pour détails
+    UI -> BPM : Requête des détails du dossier
+    BPM -> DB : Lecture des informations détaillées
+    DB --> BPM : Détails du dossier (client, historique, étapes)
+    BPM --> UI : Envoi des détails
+        deactivate BPM
+    UI --> Utilisateur : Affichage des détails du dossier
+        deactivate UI
+        deactivate Utilisateur
+end
+
+@enduml

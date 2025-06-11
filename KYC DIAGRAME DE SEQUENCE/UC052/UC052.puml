@@ -1,0 +1,38 @@
+@startuml UC052
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de configuration" as UI
+participant "Moteur BPM" as Moteur
+database "Base Workflow" as DB
+
+== Suppression d’un point de contrôle ==
+activate DB
+Admin -> UI : Accéder à la configuration du workflow
+activate Admin 
+activate UI
+UI -> DB : Charger les étapes et points de contrôle
+DB --> UI : Étapes et contrôles affichés
+
+Admin -> UI : Sélectionner l’étape concernée
+Admin -> UI : Cliquer "Supprimer" sur un contrôle
+UI -> Moteur : Vérifier si le point est utilisé dans des demandes actives
+activate Moteur
+Moteur -> DB : Requête d’utilisation active
+DB --> Moteur : Résultat (utilisé ou non)
+
+alt Point non utilisé
+    UI -> Admin : Demande de confirmation
+    Admin -> UI : Confirme la suppression
+    UI -> Moteur : Supprimer le point de contrôle
+    Moteur -> DB : Mise à jour du workflow
+    Moteur --> UI : Suppression réussie
+    deactivate Moteur
+    UI --> Admin : Message de succès
+else Point encore utilisé
+    UI --> Admin : Erreur - Contrôle utilisé dans des traitements en cours
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

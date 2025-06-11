@@ -1,0 +1,36 @@
+@startuml UC039
+skinparam actorStyle awesome
+
+actor "Client" as Client
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as Système
+database "Journal Audit" as Journal
+
+== Notification après déblocage client ==
+
+Système -> Système : Détecte changement de statut vers "Actif"
+activate Système
+Système -> Système : Vérifie les coordonnées du client
+alt Coordonnées valides
+    Système -> Système : Génère notification (détails de l’opération)
+    Système -> Système : Enregistre les détails de la notification
+else Coordonnées invalides
+    Système -> Système : Marque notification comme non délivrée
+end
+Système -> Système : Prépare notification (détails de l’opération)
+
+alt Coordonnées valides
+    Système -> Client : Envoie email/SMS de notification
+    activate Client
+    Client -> Système : Accuse réception de la notification
+    deactivate Client
+    Système -> Gestionnaire : Envoie notification
+    activate Gestionnaire
+    Gestionnaire -> Système : Accuse réception de la notification
+    deactivate Gestionnaire
+    Système -> Journal : Journalise l’envoi
+else Coordonnées invalides
+    Système -> Journal : Log "Échec notification - Coordonnées invalides"
+end
+
+@enduml

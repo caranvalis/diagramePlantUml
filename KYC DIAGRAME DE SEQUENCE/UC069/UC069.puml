@@ -1,0 +1,48 @@
+@startuml UC069
+skinparam actorStyle awesome
+
+actor Gestionnaire
+participant "Interface KYC" as UI
+participant "Système" as S
+
+== Déclaration du régime matrimonial ==
+
+Gestionnaire -> UI : Accéder à la fiche client - État matrimonial
+activate Gestionnaire
+activate UI
+UI -> S : Récupérer options de régime
+activate S
+S -> S : Charger les options de régime matrimonial
+S --> UI : Options de régime matrimonial (Séparation de biens, Communauté)
+S --> UI : Séparation de biens / Communauté
+S --> UI : Séparation de biens / Communauté / Autre (préciser)
+deactivate S
+UI --> Gestionnaire : Afficher options de régime matrimonial
+
+Gestionnaire -> UI : Sélectionner régime matrimonial
+alt Justificatif requis
+        Gestionnaire -> UI : Télécharger justificatif
+        UI -> S : Vérifier format et poids
+    activate S
+    alt Justificatif invalide
+        S --> UI : Message d’erreur
+    deactivate S
+        else Justificatif valide
+        UI -> S : Enregistrer justificatif
+    activate S
+        S -> S : Vérifier et stocker le justificatif
+        S --> UI : Justificatif enregistré
+        deactivate S
+    end
+end
+
+UI -> S : Enregistrer régime matrimonial
+activate S
+S -> S : Journaliser l’opération
+S --> UI : Confirmation du régime matrimonial
+deactivate S
+
+UI --> Gestionnaire : Confirmation enregistrée
+deactivate UI
+deactivate Gestionnaire
+@enduml

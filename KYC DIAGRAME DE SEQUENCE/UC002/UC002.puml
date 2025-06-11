@@ -1,0 +1,48 @@
+@startuml UC002
+skinparam actorStyle awesome
+
+actor Gestionnaire
+participant "Interface INTRA" as UI
+participant "Système" as System
+
+== Scénario Nominal ==
+activate UI
+activate System
+Gestionnaire -> UI : Se connecter à INTRA
+activate Gestionnaire
+UI -> System : Authentification
+
+System --> UI : Connexion réussie
+
+Gestionnaire -> UI : Sélectionner "Créer client particulier"
+UI -> System : Demande formulaire
+
+System --> UI : Affichage du formulaire
+
+Gestionnaire -> UI : Saisie des informations client
+Gestionnaire -> UI : Téléversement des documents
+
+UI -> System : Vérifier format des données et fichiers
+
+alt Données et fichiers valides
+    System --> UI : Vérifications réussies
+    Gestionnaire -> UI : Valider le formulaire
+    UI -> System : Enregistrer les données
+    alt Données conformes
+        System --> UI : Confirmation d’enregistrement
+        UI --> Gestionnaire : Message de confirmation
+    else Données non conformes (doublon, CNI expirée...)
+        System --> UI : Liste d’anomalies
+        UI --> Gestionnaire : Afficher anomalies
+    end
+else Donnée mal formatée
+    System --> UI : Erreur de format
+    UI --> Gestionnaire : Message d’erreur
+else Document obligatoire manquant
+    System --> UI : Validation bloquée
+    UI --> Gestionnaire : Indiquer document manquant
+end
+deactivate System
+deactivate Gestionnaire
+deactivate UI
+@enduml

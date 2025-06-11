@@ -1,0 +1,42 @@
+@startuml UC006-A
+skinparam actorStyle awesome
+actor Gestionnaire
+participant "INTRA (Frontend)" as UI
+participant "Système" as Backend
+database "Base de données" as DB
+
+Gestionnaire -> UI : Se connecter
+activate Gestionnaire
+activate UI
+activate DB
+UI -> Backend : POST /login
+activate Backend
+Backend -> DB : Authentification
+DB --> Backend : Résultat de l'authentification
+Backend --> UI : Authentification réussie
+UI --> Gestionnaire : Bienvenue
+Gestionnaire -> UI : Accéder à la liste des clients
+Gestionnaire -> UI : Ouvrir fiche client
+UI -> Backend : Requête fiche client
+Backend -> DB : Selectionner le client
+DB --> Backend : Données client
+Backend --> UI : Fiche client
+
+Gestionnaire -> UI : Ajouter un mandataire
+UI -> Backend : Afficher formulaire
+
+Gestionnaire -> UI : Saisir infos mandataire
+UI -> Backend : Vérification de cohérence
+Backend --> UI : OK
+
+Gestionnaire -> UI : Téléverser documents
+UI -> Backend : Upload pièces jointes
+Backend --> UI : Confirmation
+
+Gestionnaire -> UI : Valider
+UI -> Backend : POST /mandataires
+Backend -> DB : Insertion mandataire
+DB --> Backend : OK
+Backend --> UI : Confirmation ajout
+UI --> Gestionnaire : Mandataire ajouté avec succès
+@enduml

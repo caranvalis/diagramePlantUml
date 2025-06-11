@@ -1,0 +1,40 @@
+@startuml UC020
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système INTRA" as INTRA
+participant "Canal de communication (Email/SMS)" as Canal
+database "Base de Données INTRA" as BDD
+
+== Scénario Nominal ==
+Gestionnaire -> INTRA : Accède à la fiche du compte
+activate Gestionnaire
+activate INTRA
+INTRA -> BDD : Charge les données du compte
+activate BDD
+BDD --> INTRA : Données du compte (RIB, N° de compte)
+INTRA --> Gestionnaire : Affiche les données du compte
+Gestionnaire -> INTRA : Sélectionne "Délivrer RIB"
+INTRA -> BDD : Vérifie existence du RIB
+alt 2a. RIB non disponible
+    INTRA --> Gestionnaire : RIB non disponible, demande de génération
+else
+    INTRA --> Gestionnaire : RIB déjà disponible, propose téléchargement    
+Gestionnaire -> INTRA : Sélectionne mode de délivrance
+
+INTRA -> INTRA : Génère le PDF du RIB
+
+alt 3a. Erreur de génération
+    INTRA --> Gestionnaire : Message d'erreur
+else
+    INTRA -> Canal : Envoie du PDF (email ou SMS)
+    activate Canal
+    alt 4a. Canal indisponible
+        INTRA --> Gestionnaire : Échec d’envoi, mise en file d’attente
+    else
+        Canal --> INTRA : Confirmation d’envoi
+        INTRA --> Gestionnaire : Affiche confirmation
+    end
+end
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml UC010
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Interface INTRA" as INTRA
+participant "Système" as System
+participant "Moteur PDF" as PDFEngine
+
+== Scénario Nominal ==
+Gestionnaire -> INTRA : Demande de génération du document
+activate Gestionnaire
+activate INTRA
+INTRA -> System : Initier génération fiche entreprise
+activate System
+System -> PDFEngine : Sélectionner modèle (fiche KYC)
+activate PDFEngine
+PDFEngine -> System : Génére document PDF
+deactivate PDFEngine
+alt 4a. Erreur d’écriture
+    System --> INTRA : Alerte d’échec de génération
+    INTRA --> Gestionnaire : Afficher erreur
+else Succès
+    System --> INTRA : Fichier PDF généré
+    deactivate System
+    INTRA --> Gestionnaire : Afficher document PDF
+    INTRA --> Gestionnaire : Afficher options (impression, téléchargement, envoi)
+    deactivate INTRA
+    deactivate Gestionnaire
+end
+@enduml

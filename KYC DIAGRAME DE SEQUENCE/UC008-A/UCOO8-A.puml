@@ -1,0 +1,42 @@
+@startuml UC008-A
+skinparam actorStyle awesome
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 30
+skinparam maxMessageSize 120
+
+actor "Gestionnaire" as G
+participant "INTRA" as UI
+participant "Service Client" as SC
+participant "Service Matricule" as SM
+database "Base Client" as DB
+
+== Génération d’un matricule unique ==
+activate DB
+G -> UI : Accède au formulaire client
+activate UI
+activate G
+UI -> SC : Demande génération matricule
+activate SC
+SC -> SM : Demande génération matricule unique
+activate SM
+SC -> SM : Vérifie unicité + Génère matricule
+SM -> DB : Vérifie unicité\ncontre les matricules existants
+DB --> SM : Résultat de la vérification
+SM --> SC : Matricule généré (ex: CLT20250012)
+deactivate SM
+SC --> UI : Matricule pré-rempli dans formulaire
+UI --> G : Affiche formulaire avec matricule
+
+== Enregistrement du client ==
+
+G -> UI : Valide formulaire client
+UI -> SC : Enregistre le dossier client
+SC -> DB : Sauvegarde des données client\n(matricule inclus)
+DB --> SC : Confirmation
+SC --> UI : Confirmation de création
+deactivate SC
+UI --> G : Affichage confirmation
+deactivate UI
+deactivate G
+
+@enduml

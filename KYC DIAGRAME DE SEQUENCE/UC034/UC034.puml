@@ -1,0 +1,41 @@
+@startuml UC034
+skinparam actorStyle awesome
+
+actor "Système" as Système
+participant "Gestionnaire" as Gestionnaire
+participant "Responsable conformité" as RespConformité
+participant "DG" as DG
+database "Journal Audit" as Journal
+
+== Notification suite à blocage client ==
+activate Système
+Système -> Système : Détecte le statut "Bloqué"
+Système -> Système : Génère une notification (motif + infos client)
+
+alt Coordonnées disponibles
+    Système -> Gestionnaire : Envoie notification
+    activate Gestionnaire
+    Gestionnaire -> Système : Accuse réception
+    deactivate Gestionnaire
+    Système -> RespConformité : Envoie notification
+    activate RespConformité
+    RespConformité -> Système : Accuse réception
+    deactivate RespConformité
+    Système -> DG : Envoie notification
+    activate DG
+    DG -> Système : Accuse réception
+    deactivate DG
+    Système -> Journal : Journalise les notifications
+    activate Journal
+    Journal -> Système : Enregistre les détails de la notification
+    Système -> Journal : Journalise les envois
+else Coordonnées manquantes
+    Système -> Journal : Marque notification comme non délivrée
+    deactivate Journal
+end
+
+alt Échec d'envoi (serveur indisponible)
+    Système -> Système : Planifie une nouvelle tentative
+end
+
+@enduml

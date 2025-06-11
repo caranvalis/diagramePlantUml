@@ -1,0 +1,33 @@
+@startuml UC014
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+database "Base client" as BaseClient
+
+== Scénario Nominal ==
+Gestionnaire -> System : Accéder à la fiche client
+activate Gestionnaire
+activate System
+activate BaseClient
+System -> BaseClient : Charger données client
+System --> Gestionnaire : Afficher fiche client
+Gestionnaire -> System : Sélectionner "Modifier les informations"
+Gestionnaire -> System : Saisir nouvelles données
+
+alt 3a. Erreur de format
+    System --> Gestionnaire : Message bloquant
+else
+    System -> System : Vérifier la validité des champs
+    Gestionnaire -> System : Valider les modifications
+    alt 5a. Validation échoue (doublon/règle)
+        System --> Gestionnaire : Modification annulée
+    else
+        System -> BaseClient : Mettre à jour les données
+        System -> System : Enregistrer l'historique de modification
+        System --> Gestionnaire : Confirmation de mise à jour
+        deactivate System
+        deactivate Gestionnaire
+    end
+end
+@enduml

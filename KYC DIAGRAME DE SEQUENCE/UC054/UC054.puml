@@ -1,0 +1,46 @@
+@startuml UC054
+skinparam actorStyle awesome
+
+actor "Administrateur technique/fonctionnel" as Admin
+participant "Interface configuration séquence" as UI
+participant "Système BPM" as BPM
+database "Référentiel des contrôles" as DB
+
+== Définition de la séquence ==
+activate DB
+Admin -> UI : Accéder au module de gestion des séquences
+activate Admin
+activate UI
+UI -> BPM : Charger la liste des contrôles disponibles
+activate BPM
+BPM -> DB : Récupérer les modules configurés
+DB --> BPM : Liste des contrôles (doublon, blacklist, FATCA, etc.)
+BPM --> UI : Afficher les contrôles sélectionnables
+
+Admin -> UI : Sélectionner les contrôles et définir séquence/parallélisme
+UI -> BPM : Enregistrer la configuration
+
+alt Conflit de ressources entre contrôles parallèles
+    BPM -> UI : Alerte de conflit détecté
+    UI --> Admin : Message de résolution ou modification requise
+else Contrôle non parallélisable détecté
+    BPM -> UI : Alerte + bascule automatique en séquentiel
+    UI --> Admin : Notification de bascule forcée
+else Configuration correcte
+    Admin -> UI : Lancer test sur dossier fictif
+    UI -> BPM : Exécuter la séquence sur données de test
+    BPM --> UI : Résultat du test
+    Admin -> UI : Valider et sauvegarder
+    UI -> BPM : Sauvegarde définitive
+    BPM -> DB : Enregistrer la nouvelle séquence
+    DB --> UI : Confirmation de sauvegarde
+    UI --> Admin : Message de succès
+else Erreur de configuration
+    BPM -> UI : Message d'erreur "Configuration invalide"
+    deactivate BPM
+    UI --> Admin : Affichage de l'erreur
+    deactivate UI   
+    deactivate Admin
+end
+
+@enduml

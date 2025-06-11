@@ -1,0 +1,35 @@
+@startuml UC008-A
+skinparam actorStyle awesome
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 30
+skinparam maxMessageSize 120
+
+actor "Gestionnaire Référentiel" as GR
+participant "INTRA" as UI
+participant "Service Référentiel" as SR
+database "Base Référentiels" as DBR
+
+== Mise à jour d’une donnée de référentiel ==
+activate DBR
+GR -> UI : Accède au module Référentiel
+activate UI 
+activate GR
+UI -> SR : Demande de liste des catégories
+activate SR
+SR -> DBR : Lecture catégories disponibles
+DBR --> SR : Liste des types (professions, pièces, statuts…)
+SR --> UI : Retour des catégories
+UI --> GR : Affiche liste
+
+== Ajout ou modification ==
+
+GR -> UI : Clique "Ajouter" ou "Modifier"
+UI -> SR : Envoie données saisies
+SR -> DBR : Ajoute ou met à jour la valeur
+DBR --> SR : Confirmation
+SR --> UI : Succès affiché
+deactivate SR
+UI --> GR : Affichage message de succès
+deactivate GR
+deactivate UI
+@enduml

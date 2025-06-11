@@ -1,0 +1,30 @@
+@startuml UC044
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Console de configuration" as Console
+participant "Système" as Système
+
+== Désactiver un type de compte ==
+
+Admin -> Console : Accéder à la liste des types de comptes
+activate Console
+activate Admin
+Admin -> Console : Sélectionner un type et cliquer sur "Désactiver"
+
+Console -> Système : Demander désactivation du type
+activate Système
+Système -> Console : Afficher demande de confirmation
+
+Admin -> Console : Confirmer désactivation
+deactivate Admin
+Console -> Système : Valider l'action
+
+alt Type utilisé par des comptes actifs
+    Système -> Console : Refus/Différer la désactivation
+else Type non utilisé
+    Système -> Console : Marquer le type comme inactif
+    Système -> Console : Exclure des menus clients
+end
+
+@enduml

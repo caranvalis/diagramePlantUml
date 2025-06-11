@@ -1,0 +1,34 @@
+@startuml UC012
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système" as System
+database "Base comptes" as Comptes
+database "Journal" as Journal
+
+== Scénario Nominal ==
+activate Journal
+Analyste -> System : Accéder au profil entreprise
+activate Analyste
+activate System
+Analyste -> System : Activer ou bloquer l’entreprise
+
+alt 2a. Statut déjà à jour
+    System --> Analyste : Aucune modification
+else Changement requis
+    System -> Comptes : Identifier comptes associés
+    activate Comptes
+    Comptes --> System : Liste des comptes associés
+    alt 4a. Compte verrouillé
+        System --> Analyste : Action partielle + alerte
+    else Comptes modifiables
+        System -> System : Mettre à jour statut client
+        System -> Comptes : Changer statut des comptes
+        deactivate Comptes
+        System --> Analyste : Notifier succès
+        deactivate Analyste
+        System -> Journal : Journaliser opération
+        deactivate System
+    end
+end
+@enduml

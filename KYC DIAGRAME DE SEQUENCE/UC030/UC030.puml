@@ -1,0 +1,50 @@
+@startuml UC030
+skinparam actorStyle awesome
+
+actor "Gestionnaire conformité" as Conformite
+participant "Système KYC" as KYC
+participant "Liste Fonctions Sensibles" as Fonctions
+participant "Base PPE" as BasePPE
+
+== Scénario Nominal ==
+
+KYC -> Fonctions : Vérifie la fonction du client
+activate KYC
+activate Fonctions
+Fonctions -> KYC : Fonction du client (sensible ou non)
+
+alt Fonction sensible détectée
+    KYC -> BasePPE : Analyse des liens de filiation
+        activate BasePPE
+    loop Pour chaque lien (père, mère)
+        BasePPE --> KYC : Résultat de correspondance
+        alt Correspondance trouvée
+            alt C’est le client
+                KYC -> KYC : Marque "PPE direct"
+                    else C’est un proche
+                KYC -> KYC : Marque "PPE par affiliation"
+            end
+        end
+    end
+    KYC -> Conformite : Génère une alerte pour validation
+    activate Conformite
+    KYC -> KYC : Ajoute le statut PPE au client
+else Fonction non sensible
+    KYC -> KYC : Aucun statut PPE
+end
+
+== Scénarios alternatifs ==
+
+alt 1a. Fonction non renseignée
+    KYC -> KYC : Bloque la détection automatique
+end
+
+alt 2a. Liens de filiation manquants
+    KYC -> Conformite : Alerte "incomplétude"
+end
+
+alt 3a. Correspondance incertaine (nom similaire)
+    KYC -> Conformite : Demande de confirmation manuelle
+end
+
+@enduml

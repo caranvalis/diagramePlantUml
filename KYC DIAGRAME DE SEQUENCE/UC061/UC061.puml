@@ -1,0 +1,93 @@
+@startuml UC061
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface Classification" as UI
+participant "Système documentaire" as Système
+database "Base documentaire" as BDD
+
+== Accès et modification du plan ==
+Admin -> UI : Accéder au module "Plan de classification"
+activate Admin
+activate UI
+UI -> Système : Charger plan existant
+activate Système
+Système -> BDD : Récupérer hiérarchies existantes
+activate BDD
+BDD --> Système : Liste des hiérarchies
+deactivate BDD
+Système --> UI : Affichage des hiérarchies
+deactivate Système
+UI --> Admin : Afficher plan de classification
+deactivate Admin
+deactivate UI
+
+== Création ou modification ==
+Admin -> UI : Créer/modifier une hiérarchie
+activate Admin
+activate UI
+UI -> Système : Demander création/modification
+activate Système
+Système -> BDD : Enregistrer la hiérarchie
+activate BDD
+BDD --> Système : Confirmation de l’enregistrement
+deactivate BDD
+Système --> UI : Afficher confirmation de création/modification
+deactivate Système
+UI --> Admin : Afficher confirmation de création/modification
+deactivate UI
+deactivate Admin
+
+== Validation de la structure ==
+Admin -> UI : Valider la structure du plan
+activate Admin
+activate UI
+UI -> Système : Vérifier la cohérence de la hiérarchie
+activate Système
+Système -> BDD : Valider la structure
+activate BDD
+BDD --> Système : Validation réussie
+deactivate BDD
+Système --> UI : Afficher confirmation de validation
+deactivate Système
+UI --> Admin : Afficher confirmation de validation
+deactivate UI
+deactivate Admin
+
+== Publication du plan ==
+
+Admin -> UI : Publier le plan
+activate Admin
+activate UI
+UI -> Système : Demander publication du plan
+activate Système
+Système -> BDD : Mettre à jour le plan de classification
+activate BDD
+BDD --> Système : Confirmation de mise à jour
+deactivate BDD
+Système --> UI : Afficher confirmation de publication
+deactivate Système
+UI --> Admin : Afficher confirmation de publication
+deactivate UI
+deactivate Admin
+== Réorganisation des documents ==
+Admin -> UI : Réorganiser les documents selon le nouveau plan
+activate Admin
+activate UI
+UI -> Système : Appliquer la nouvelle structure
+activate Système
+Système -> BDD : Réorganisation automatique des documents
+BDD --> Système : Réorganisation terminée
+Système --> UI : Confirmation de publication
+deactivate Système
+UI -> Admin : Afficher confirmation de réorganisation
+deactivate Admin
+deactivate UI
+
+== Application aux futures insertions ==
+note right of Système
+Pour chaque nouveau document :
+• Arborescence appliquée dynamiquement
+end note
+
+@enduml

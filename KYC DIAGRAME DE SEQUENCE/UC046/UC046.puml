@@ -1,0 +1,32 @@
+@startuml UC046
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de gestion" as UI
+participant "Système" as Système
+
+== Modifier un type de client ==
+
+Admin -> UI : Sélectionner un type de client
+activate Admin
+activate UI
+UI -> Système : Récupérer données existantes
+activate Système
+Système -> UI : Retourner règles et attributs
+
+Admin -> UI : Modifier règles / attributs
+UI -> Système : Envoyer les modifications
+
+alt Incohérence avec formulaires clients existants
+    Système -> UI : Alerte sur incohérence détectée
+else Données valides
+    Système -> Base : Appliquer les modifications
+    
+    Système -> UI : Confirmer la mise à jour
+    deactivate Système
+    UI -> Admin : Afficher succès
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

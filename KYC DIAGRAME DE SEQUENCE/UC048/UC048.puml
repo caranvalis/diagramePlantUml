@@ -1,0 +1,36 @@
+@startuml UC048
+skinparam actorStyle awesome
+
+actor "Analyste (Administrateur)" as Analyste
+participant "Éditeur graphique BPM" as UI
+participant "Système" as Moteur
+database "Base BPM" as BPM
+
+== Création d’un nouveau parcours de validation ==
+    activate BPM
+Analyste -> UI : Accéder à l’éditeur graphique
+activate UI
+activate Analyste
+UI -> Moteur : Initialiser un nouveau processus
+activate Moteur
+Moteur --> UI : Formulaire vierge
+
+Analyste -> UI : Définir type de client, contrôles, acteurs
+UI -> Moteur : Enregistrer la définition du processus
+
+alt Une étape sans acteur
+    Moteur --> UI : Bloquer validation, alerte "acteur requis"
+else Toutes les étapes sont valides
+    Analyste -> UI : Valider le flux
+    UI -> Moteur : Enregistrer
+    Analyste -> UI : Publier
+    UI -> Moteur : Déployer dans le moteur
+    Moteur -> BPM : Sauvegarde et activation
+    Moteur --> UI : Confirmation
+    deactivate Moteur
+end
+
+UI --> Analyste : Message de succès
+deactivate UI
+deactivate Analyste
+@enduml

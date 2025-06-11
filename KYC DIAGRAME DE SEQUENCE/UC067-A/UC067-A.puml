@@ -1,0 +1,51 @@
+@startuml UC067-A
+skinparam actorStyle awesome
+
+actor "Administrateur système" as Admin
+participant "Interface Admin Utilisateurs" as UI
+participant "Système d'authentification" as Auth
+database "Base utilisateurs" as BDD
+participant "Service Email" as Email
+
+== Accès au module ==
+Admin -> UI : Accéder à "Gestion des utilisateurs"
+activate Admin
+activate UI
+
+== Formulaire de création ==
+Admin -> UI : Cliquer "Ajouter un utilisateur"
+UI -> Admin : Affiche formulaire
+Admin -> UI : Saisir infos : nom, prénom, email, matricule, agence, fonction
+Admin -> UI : Sélectionner statut initial et date expiration
+Admin -> UI : Valider création
+
+== Traitement système ==
+UI -> Auth : Vérifier unicité de l’email
+activate Auth
+alt Email déjà existant
+  Auth --> UI : Erreur "Utilisateur déjà existant"
+  UI --> Admin : Afficher erreur
+  deactivate Auth
+else Email unique
+  Auth --> UI : OK
+  deactivate Auth
+
+  UI -> BDD : Créer utilisateur avec identifiant unique
+  activate BDD
+  BDD --> UI : Confirmation création
+  deactivate BDD
+
+  UI -> Email : Envoyer identifiants par email sécurisé
+  activate Email
+  alt Envoi réussi
+    Email --> UI : Email envoyé
+  else Échec d'envoi
+    Email --> UI : Échec envoi - Identifiants dispo en local
+  end
+  deactivate Email
+
+  UI --> Admin : Confirmation création + infos d'accès
+end
+deactivate UI
+deactivate Admin
+@enduml

@@ -1,0 +1,34 @@
+@startuml UC015
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+database "Dossier Client" as DossierClient
+
+== Scénario Nominal ==
+activate DossierClient
+Gestionnaire -> System : Accéder à l’onglet "Documents"
+activate Gestionnaire
+activate System
+Gestionnaire -> System : Sélectionner document à remplacer
+System -> DossierClient : Charger document existant
+System --> Gestionnaire : Afficher document
+Gestionnaire -> System : Cliquer sur "Remplacer le document"
+Gestionnaire -> System : Téléverser une nouvelle version
+alt 3a. Fichier trop volumineux
+    System --> Gestionnaire : Téléchargement refusé
+else
+    System -> System : Vérifier format et complétude
+
+    alt 4a. Document incomplet
+        System --> Gestionnaire : Erreur + blocage de validation
+    else
+        Gestionnaire -> System : Valider le changement
+        System -> DossierClient : Mettre à jour et versionner le document
+        System --> Gestionnaire : Confirmation affichée
+        deactivate System
+        deactivate Gestionnaire
+    end
+end
+
+@enduml

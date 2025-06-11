@@ -1,0 +1,36 @@
+@startuml UC051
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de configuration" as UI
+participant "Moteur BPM" as Moteur
+database "Base Workflow" as DB
+
+== Ajout d’un contrôle à une étape ==
+activate DB
+Admin -> UI : Ouvrir le processus de validation
+activate Admin
+activate UI
+UI -> DB : Charger les étapes du processus
+DB --> UI : Liste des étapes
+
+Admin -> UI : Sélectionner étape "Vérification conformité"
+Admin -> UI : Cliquer "Ajouter un point de contrôle"
+Admin -> UI : Choisir règle à appliquer (pièce, blacklist, PPE...)
+Admin -> UI : Définir conditions d’activation
+Admin -> UI : Valider l’ajout
+
+alt Conditions valides
+    UI -> Moteur : Ajouter point de contrôle à l’étape
+    activate Moteur
+    Moteur -> DB : Enregistrer le nouveau contrôle
+    Moteur --> UI : Confirmation d’intégration
+    deactivate Moteur
+    UI --> Admin : Message de succès
+else Conditions invalides
+    UI --> Admin : Message d’erreur \n"Conditions incorrectes"
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

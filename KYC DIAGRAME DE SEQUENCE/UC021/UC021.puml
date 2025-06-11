@@ -1,0 +1,45 @@
+@startuml UC021
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système KYC" as KYC
+participant "CBS"
+database "Base de Données KYC" as BDD
+
+== Scénario Nominal ==
+Analyste -> KYC : Sélectionne le compte à clôturer
+activate Analyste
+activate KYC
+KYC -> BDD : Charge les données du compte
+activate BDD
+BDD --> KYC : Données du compte (statut, informations)
+KYC --> Analyste : Affiche les données du compte
+Analyste -> KYC : Sélectionne "Clôturer le compte"
+KYC -> KYC : Vérifie conditions de clôture (solde, opérations en cours) 
+Analyste -> KYC : Confirme la clôture
+
+KYC -> CBS : Envoie de la demande de clôture
+activate CBS
+
+alt 3a. CBS ne répond pas
+    KYC --> Analyste : Demande mise en file d'attente
+else
+    CBS -> CBS : Clôture du compte
+    alt 4a. Erreur de clôture
+        CBS --> KYC : Message d’erreur
+        KYC --> Analyste : Affiche message d’échec
+    else if Succès
+        deactivate CBS
+        KYC -> BDD : Met à jour statut (Clôturé)
+        CBS --> KYC : Confirmation de clôture
+        KYC -> BDD : Met à jour statut (Clôturé)
+        deactivate CBS
+        KYC -> BDD : Journalise l'historique de clôture
+        KYC --> Analyste : Affiche confirmation de clôture
+    end
+        BDD --> KYC : Confirmation de mise à jour
+        KYC --> Analyste : Affiche confirmation
+        deactivate KYC
+        deactivate Analyste
+    end
+@enduml

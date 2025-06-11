@@ -1,0 +1,41 @@
+@startuml UC004
+' UC004 – Capture de signature électronique via ePad
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+' Affichage vertical : supprime "left to right direction"
+
+actor "Client" as Client
+actor "Gestionnaire" as Gestionnaire
+actor "Système" as Systeme
+
+package "Signature électronique via ePad" {
+    usecase "UC004 - Capture signature\nélectronique via ePad" as UC004
+    usecase "Préparer documents à signer" as Preparation
+    usecase "Lancer session ePad" as LancerSession
+    usecase "Afficher document sur ePad" as AffichageDoc
+    usecase "Signer électroniquement" as Signature
+    usecase "Capturer signature\net métadonnées" as Capture
+    usecase "Intégrer signature au document" as Integration
+    usecase "Archiver document signé" as Archivage
+    usecase "Afficher confirmation" as Confirmation
+}
+
+Gestionnaire --> UC004
+UC004 --> Preparation
+Preparation --> LancerSession
+LancerSession --> AffichageDoc
+AffichageDoc --> Signature
+Client --> Signature
+Signature --> Capture
+Capture --> Integration
+Integration --> Archivage
+Archivage --> Confirmation
+Systeme --> Capture
+Systeme --> Archivage
+Systeme --> Confirmation
+
+@enduml

@@ -1,0 +1,41 @@
+@startuml UC035
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système KYC" as Système
+participant "CBS" as CBS
+database "Journal Audit" as Journal
+
+== Blocage du compte dans CBS ==
+
+Analyste -> Système : Déclenche un ordre de blocage
+activate Analyste
+activate Système
+Système -> Système : Vérifie si le compte est déjà bloqué
+alt Compte non bloqué
+    Système -> Système : Prépare la requête de blocage
+    Système -> CBS : Envoie requête de blocage
+    activate CBS
+    CBS --> Système : Confirme réception de la requête
+Système -> CBS : Requête de blocage du compte
+
+alt Communication réussie
+    CBS -> CBS : Bloque le compte
+    CBS --> Système : Confirmation de blocage
+    Système -> Système : Met à jour statut du compte à "Bloqué"
+    Système -> Journal : Journalise l'opération
+    activate Journal
+    Journal -> Système : Enregistre les détails du blocage
+    Système -> Analyste : Affiche message de succès
+    Système -> Analyste : Notifie le client du blocage
+    Système -> Analyste : Notification client envoyée
+    deactivate Journal
+else Échec de communication
+    Système -> Système : Met l’ordre en file d’attente
+end
+
+alt Compte déjà bloqué
+    Système -> Analyste : Affiche un message d’information
+end
+
+@enduml

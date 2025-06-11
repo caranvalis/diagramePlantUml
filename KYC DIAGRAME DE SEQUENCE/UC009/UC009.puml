@@ -1,0 +1,38 @@
+@startuml UC009
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Interface INTRA" as INTRA
+participant "Système" as System
+participant "Amplitude" as Amplitude
+
+== Scénario Nominal ==
+Gestionnaire -> INTRA : Sélectionner "Importer entreprise depuis Amplitude"
+activate Gestionnaire
+activate INTRA
+INTRA -> Gestionnaire : Saisir identifiant de l’entreprise
+Gestionnaire -> INTRA : Envoi identifiant
+INTRA -> System : Soumettre identifiant
+activate System
+System -> Amplitude : Appel API pour récupération données
+activate Amplitude
+alt 2a. Identifiant incorrect
+    System --> INTRA : Message d’erreur
+    INTRA --> Gestionnaire : Afficher erreur
+else 3a. Amplitude indisponible
+    System --> INTRA : Message d’échec d’intégration
+    INTRA --> Gestionnaire : Afficher erreur
+else Succès
+    Amplitude --> System : Données entreprise
+    deactivate Amplitude
+    System --> INTRA : Afficher données pour vérification
+    Gestionnaire -> INTRA : Valider l’import
+    INTRA -> System : Enregistrer données
+    System --> INTRA : Confirmation d’import
+    deactivate System
+    INTRA --> Gestionnaire : Afficher confirmation
+    deactivate Gestionnaire
+    deactivate INTRA
+end
+
+@enduml

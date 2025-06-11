@@ -1,0 +1,56 @@
+@startuml UC058
+skinparam actorStyle awesome
+
+actor "Responsable conformité / DSI" as Utilisateur
+participant "Interface métriques" as UI
+participant "Système d’analyse" as Systeme
+database "Base de données" as BDD
+database "Moteur de statistiques" as Statistiques
+
+== Ouverture de l’espace métriques ==
+Utilisateur -> UI : Accède à la page "Métriques de performance"
+activate Utilisateur
+activate UI
+UI -> Systeme : Initialiser les filtres (période, type de processus)
+deactivate UI
+
+== Saisie et soumission des filtres ==
+Utilisateur -> UI : Saisit période et type de processus
+activate UI
+UI -> Systeme : Transmettre les filtres
+activate Systeme
+
+Systeme -> BDD : Requête sur les données KYC (dossiers, étapes, rejets)
+activate BDD
+BDD --> Systeme : Données brutes
+deactivate BDD
+
+== Traitement des indicateurs ==
+Systeme -> Statistiques : Calculer les indicateurs :
+activate Statistiques
+Statistiques --> Systeme : Résultats agrégés
+deactivate Statistiques
+
+alt Certaines données sont manquantes
+    Systeme -> UI : Afficher "N/A" pour les métriques concernées
+else Toutes les métriques disponibles
+    Systeme -> UI : Envoyer les résultats complets
+end
+deactivate Systeme
+
+UI --> Utilisateur : Affiche le tableau de bord (graphes + tableaux)
+deactivate UI
+
+== Export (optionnel) ==
+opt Si export demandé
+    Utilisateur -> UI : Clique sur "Exporter"
+    activate UI
+    UI -> Systeme : Générer fichier (Excel/CSV)
+    activate Systeme
+    Systeme --> UI : Fichier exporté
+    UI --> Utilisateur : Téléchargement du fichier
+    deactivate Systeme
+    deactivate UI
+end
+
+@enduml

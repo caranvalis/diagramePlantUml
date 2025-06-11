@@ -1,0 +1,50 @@
+@startuml UC016
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+database "Base de Données Entreprise" as BDE
+
+== Scénario Nominal ==
+Gestionnaire -> System : Ouvrir la fiche entreprise
+activate Gestionnaire
+activate System
+System -> BDE : Charger les données de l’entreprise
+activate BDE
+BDE --> System : Données de l’entreprise
+Gestionnaire -> System : Cliquer sur "Modifier"
+Gestionnaire -> System : Mettre à jour les données (adresse, dirigeant, NIF…)
+alt 1a. Champ obligatoire vide
+    System --> Gestionnaire : Saisie bloquée
+else
+    System -> System : Vérifier la validité des données
+
+    alt 2a. Erreur de format
+        System --> Gestionnaire : Message d’erreur (format)
+    else
+        Gestionnaire -> System : Soumettre les modifications
+        System -> BDE : Enregistrer les modifications
+        System -> BDE : Journaliser l’historique des modifications
+
+        alt 3a. Échec de mise à jour
+            System --> Gestionnaire : Message d’erreur (échec)
+        else
+            System --> Gestionnaire : Confirmation de mise à jour
+        end
+    end
+end
+alt 3a. Donnée incohérente fiscalement
+    System --> Gestionnaire : Message d’erreur (règles fiscales)
+else
+    System -> System : Vérifier les modifications
+
+    alt 4a. Erreur technique
+        System --> Gestionnaire : Message d’erreur technique
+    else
+        Gestionnaire -> System : Confirmer la mise à jour
+        System -> BDE : Mettre à jour et journaliser le dossier
+        System --> Gestionnaire : Confirmation de mise à jour
+    end
+end
+
+@enduml

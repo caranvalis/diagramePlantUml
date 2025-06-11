@@ -1,0 +1,88 @@
+@startuml UC060
+skinparam actorStyle awesome
+
+actor "Archiviste" as Archiviste
+participant "Interface Archivage" as UI
+participant "Système de gestion documentaire" as Système
+database "Base documentaire" as BDD
+
+== Sélection du dossier client ==
+Archiviste -> UI : Sélectionner dossier client validé
+activate Archiviste
+activate UI
+UI -> Système : Requête : liste documents numériques
+activate Système
+Système -> BDD : Obtenir documents du client
+activate BDD
+BDD --> Système : Liste des documents
+deactivate BDD
+Système --> UI : Affiche les documents numériques
+deactivate Système
+UI --> Archiviste : Afficher liste des documents numériques
+deactivate UI
+deactivate Archiviste
+
+== Comparaison des documents Numriques ==
+Archiviste -> UI : Sélectionner document physique à comparer
+activate Archiviste
+activate UI
+UI -> Système : Requête : document physique associé
+activate Système
+Système -> BDD : Rechercher document physique
+activate BDD
+BDD --> Système : Document physique trouvé
+deactivate BDD
+Système --> UI : Afficher document physique
+deactivate Système
+UI -> Archiviste : Afficher document physique pour comparaison
+Archiviste -> UI : Compare avec le document numérique
+UI -> Système : Valider correspondance
+activate Système
+Système -> BDD : Enregistrer correspondance
+activate BDD
+BDD --> Système : Confirmation de l’enregistrement
+deactivate BDD
+Système --> UI : Confirmation de correspondance enregistrée
+deactivate Système
+UI --> Archiviste : Afficher confirmation de correspondance
+Archiviste -> UI : Compare avec document numérique
+deactivate Archiviste
+deactivate UI
+
+== Préparation de l’archivage ==
+Archiviste -> UI : Valider la correspondance globale
+activate UI
+activate Archiviste
+UI -> Système : Demande d’arborescence physique
+activate Système
+
+alt Chemin physique existant
+  Système --> UI : Afficher arborescence
+else Chemin inexistant
+  Système -> BDD : Générer chemin physique
+    activate BDD
+  BDD --> Système : Confirmation création
+    deactivate BDD
+  Système --> UI : Afficher nouvelle arborescence
+end
+deactivate Système
+UI --> Archiviste : Afficher arborescence physique
+deactivate Archiviste
+deactivate UI
+
+== Archivage manuel ==
+Archiviste -> UI : Classe physiquement les documents
+activate Archiviste
+activate UI
+UI -> Système : Confirme archivage effectué
+activate Système
+Système -> BDD : Marquer archivage physique comme effectué
+activate BDD
+BDD --> Système : Confirmation archivage
+deactivate BDD
+Système --> UI : Confirmation archivage physique
+deactivate Système
+UI --> Archiviste : Archivage physique confirmé
+deactivate UI
+deactivate Archiviste
+@enduml

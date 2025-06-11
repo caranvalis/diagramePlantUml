@@ -1,0 +1,37 @@
+@startuml UC017
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+database "Base de Données Documents" as BDD
+
+== Scénario Nominal ==
+Gestionnaire -> System : Ouvrir la fiche entreprise
+activate Gestionnaire
+activate System
+System -> BDD : Charger les documents de l’entreprise
+activate BDD
+BDD --> System : Liste des documents (statuts, attestation fiscale, etc.)
+System --> Gestionnaire : Afficher les documents disponibles
+Gestionnaire -> System : Sélectionner "Remplacer un document"
+
+Gestionnaire -> System : Accéder à la section "Documents"
+Gestionnaire -> System : Remplacer un document (statuts, attestation fiscale)
+
+alt 2a. Document expiré ou invalide
+    System --> Gestionnaire : Téléchargement refusé
+else
+    System -> System : Vérification type et complétude
+
+    alt 3a. Métadonnées absentes
+        System --> Gestionnaire : Message d’erreur
+    else
+        Gestionnaire -> System : Confirmer le changement
+        System -> BDD : Versionner et enregistrer le nouveau document
+        System --> Gestionnaire : Confirmation de modification
+        deactivate System
+        deactivate Gestionnaire
+    end
+end
+
+@enduml

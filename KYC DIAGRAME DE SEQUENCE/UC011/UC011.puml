@@ -1,0 +1,42 @@
+@startuml UC011
+skinparam actorStyle awesome
+
+actor "Représentant légal" as Representant
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+participant "ePad" as ePad
+database "Archivage" as Archive
+
+== Scénario Nominal ==
+Gestionnaire -> System : Préparer les documents
+activate System
+activate Archive
+activate Gestionnaire
+Gestionnaire -> ePad : Initier capture de signature
+    activate ePad
+alt 2a. ePad non fonctionnel
+    ePad --> Gestionnaire : Erreur - signature impossible
+    Gestionnaire --> Representant : Informer échec
+    activate Representant
+else ePad OK
+    Representant -> ePad : Signature sur dispositif
+    alt 3a. Refus de signature
+        Representant --> Gestionnaire : Refus → Annulation
+        deactivate Representant
+    else Signature acceptée
+        ePad -> System : Signature + métadonnées
+        deactivate ePad
+        alt 4a. Signature partielle
+            System --> Gestionnaire : Recommencer capture
+        else Signature complète
+            System -> System : Intégrer signature au document
+            System -> Archive : Archiver document signé
+            System --> Gestionnaire : Confirmation de signature
+            System --> Gestionnaire : Notification de succès
+            deactivate System
+            deactivate Gestionnaire
+        end
+    end
+end
+
+@enduml

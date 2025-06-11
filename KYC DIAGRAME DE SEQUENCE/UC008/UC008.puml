@@ -1,0 +1,38 @@
+@startuml UC008
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Interface INTRA" as INTRA
+participant "Système" as System
+
+== Scénario Nominal ==
+Gestionnaire -> INTRA : Sélectionner "Créer un client entreprise"
+activate Gestionnaire
+activate INTRA
+INTRA -> System : Demande du formulaire entreprise
+activate System
+
+System --> INTRA : Affiche formulaire
+
+Gestionnaire -> INTRA : Saisir données entreprise
+Gestionnaire -> INTRA : Téléverser documents justificatifs
+Gestionnaire -> INTRA : Valider la saisie
+
+INTRA -> System : Soumettre données et documents
+
+alt 4a. Fichier corrompu ou manquant
+    System --> INTRA : Message d’alerte
+else 6a. Échec de vérification (doublon, pièce expirée)
+    System --> INTRA : Interrompre soumission
+else Succès
+    System -> System : Effectuer les vérifications
+    System -> System : Enregistrer les données en base
+    System --> INTRA : Message de confirmation
+    deactivate System
+end
+
+INTRA --> Gestionnaire : Afficher confirmation ou message d'erreur
+deactivate Gestionnaire
+deactivate INTRA
+
+@enduml

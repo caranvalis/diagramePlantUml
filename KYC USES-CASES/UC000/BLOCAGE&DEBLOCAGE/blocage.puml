@@ -1,0 +1,38 @@
+@startuml BlocageClientCompte
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Analyste conformité" as Analyste
+
+package "Système INTRA" as INTRA {
+    usecase "Bloquer client (particulier/entreprise)" as BlocClient
+    usecase "Identifier comptes liés au client" as IdComptes
+    usecase "Bloquer compte (particulier/entreprise)" as BlocCompte
+    usecase "Notifier parties prenantes" as Notif
+    usecase "Débloquer client (particulier/entreprise)" as DeblocClient
+    usecase "Débloquer compte (particulier/entreprise)" as DeblocCompte
+}
+
+' Blocage client : tous les comptes sont bloqués
+Analyste -right-> BlocClient
+BlocClient --> IdComptes : <<include>>
+IdComptes --> BlocCompte : <<include>>
+BlocClient --> Notif : <<include>>
+BlocCompte --> Notif : <<include>>
+
+' Blocage direct d'un compte
+Analyste --> BlocCompte
+
+' Déblocage client et compte
+Analyste --> DeblocClient
+Analyste --> DeblocCompte
+DeblocClient --> Notif : <<include>>
+DeblocCompte --> Notif : <<include>>
+
+@enduml

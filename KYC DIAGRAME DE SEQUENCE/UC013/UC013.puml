@@ -1,0 +1,49 @@
+@startuml UC013
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système" as System
+database "Base client" as BaseClient
+database "Base documents" as BaseDocs
+
+== Scénario Nominal ==
+Gestionnaire -> System : Accéder à la section Actionnariat
+activate Gestionnaire
+activate System
+activate BaseClient
+activate BaseDocs
+System -> System : Vérifier droits d’accès
+alt 1a. Accès refusé
+    System --> Gestionnaire : Alerte d’accès refusé
+else Accès autorisé
+    System --> Gestionnaire : Afficher formulaire actionnariat
+end
+Gestionnaire -> System : Ajouter actionnaires (nom, nat., part, type)
+Gestionnaire -> System : Ajouter pièces justificatives
+alt 2a. Champ vide
+    System --> Gestionnaire : Saisie bloquée
+else
+    alt 3a. Document illisible
+        System --> Gestionnaire : Rejet de la ligne
+    else
+        System -> System : Valider données et documents
+        Gestionnaire -> System : Soumettre le formulaire
+
+        alt 5a. Échec de soumission
+            System --> Gestionnaire : Message d’erreur + option reprise
+        else
+            System -> BaseClient : Enregistrer données actionnaires
+            System -> BaseDocs : Associer pièces justificatives
+            System -> BaseClient : Mettre à jour fiche entreprise
+            System --> Gestionnaire : Résumé généré
+            Gestionnaire -> System : Télécharger résumé
+            System --> Gestionnaire : Fichier résumé prêt
+            deactivate Gestionnaire
+            deactivate System
+            deactivate BaseClient
+            deactivate BaseDocs
+        end
+    end
+end
+
+@enduml

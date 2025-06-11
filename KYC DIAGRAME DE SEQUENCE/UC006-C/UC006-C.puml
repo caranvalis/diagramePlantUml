@@ -1,0 +1,34 @@
+@startuml UC006-C
+skinparam actorStyle awesome
+actor "Gestionnaire" as G
+participant "INTRA" as UI
+participant "Système" as BE
+database "Base de données" as DB
+
+G -> UI : Se connecter
+activate G
+activate UI
+activate DB
+G -> UI : Ouvrir fiche client
+UI -> BE : Requête client
+activate BE
+BE -> DB : selectionner le client
+DB --> BE : Résultats
+BE --> UI : Infos client
+
+G -> UI : Modifier un mandat
+UI -> BE : GET /mandataires/id
+BE -> DB : 
+DB --> BE : Détails mandat
+BE --> UI : Afficher formulaire
+
+G -> UI : Modifier type/dates/autorisation
+UI -> BE : POST /mandataires/update
+BE -> DB : 
+DB --> BE : OK
+BE --> UI : Mandat modifié
+deactivate BE
+UI --> G : Confirmation
+deactivate UI
+deactivate G
+@enduml

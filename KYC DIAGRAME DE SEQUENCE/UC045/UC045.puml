@@ -1,0 +1,30 @@
+@startuml UC045
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de gestion" as UI
+participant "Système" as Système
+
+== Ajouter un type de client ==
+
+Admin -> UI : Cliquer sur "Ajouter un type de client"
+activate Admin
+activate UI
+UI -> Admin : Afficher formulaire de saisie
+
+Admin -> UI : Saisir libellé, code, description, règles
+UI -> Système : Vérifier unicité (libellé/code)
+activate Système
+
+alt Doublon détecté
+    Système -> UI : Rejeter l’ajout (erreur doublon)
+else Données valides
+    UI -> Système : Enregistrer le nouveau type
+    Système -> UI : Confirmer l’enregistrement
+    deactivate Système
+    UI -> Admin : Afficher message de succès
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

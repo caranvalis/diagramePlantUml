@@ -1,0 +1,37 @@
+@startuml UC047
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de gestion" as UI
+participant "Système" as Système
+database "Base de données" as DB
+
+== Désactiver un type ==
+
+Admin -> UI : Accéder à la liste des types
+activate UI
+activate Admin
+UI -> Système : Demande de la liste active
+activate Système
+Système -> DB : Récupérer les types configurés
+activate DB
+DB --> Système : Liste des types
+Système --> UI : Affiche la liste
+
+Admin -> UI : Sélectionner un type et cliquer sur "Désactiver"
+UI -> Système : Demande de désactivation
+
+Système -> DB : Vérifier l’usage courant
+alt Type encore utilisé
+    Système -> UI : Refus / message d’alerte
+else Type non utilisé
+    Système -> DB : Marquer comme Inactif
+    deactivate DB
+    Système -> UI : Confirmer la désactivation
+    deactivate Système 
+    UI -> Admin : Afficher succès
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

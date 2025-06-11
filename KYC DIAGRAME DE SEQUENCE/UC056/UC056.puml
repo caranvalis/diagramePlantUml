@@ -1,0 +1,37 @@
+@startuml UC056
+skinparam actorStyle awesome
+
+actor "Analyste conformité / Responsable qualité" as Utilisateur
+participant "Interface Rapport" as UI
+participant "Moteur de Rapport" as Rapport
+database "Base KYC (rejets, agents...)" as DB
+participant "Générateur PDF/Excel" as Export
+
+== Génération du rapport des rejets KYC ==
+activate DB
+Utilisateur -> UI : Accès au module "Rapports de rejet"
+activate Utilisateur
+activate UI
+UI -> Rapport : Demande de génération du rapport de rejets
+activate Rapport
+Rapport -> DB : Requête des critères de rejet (période, agence, type client...)
+DB --> Rapport : Critères disponibles (période, agence, type client...)
+Rapport -> UI : Affichage des critères de sélection
+UI -> Utilisateur : Sélection des critères (période, agence, type client...)
+Utilisateur -> UI : Validation des critères
+UI -> Rapport : Envoi des critères sélectionnés
+
+Rapport -> Export : Génération du fichier PDF/Excel
+activate Export
+Export -> Rapport : Fichier généré
+Rapport --> UI : Fichier prêt pour téléchargement
+
+UI --> Utilisateur : Affichage du lien de téléchargement ou aperçu du rapport
+Utilisateur -> UI : Téléchargement ou consultation du rapport
+
+UI -> Export : Téléchargement du fichier
+Export --> UI : Fichier téléchargé
+deactivate Rapport
+UI --> Utilisateur : Téléchargement, consultation ou partage du rapport
+
+@enduml

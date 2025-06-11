@@ -1,0 +1,28 @@
+@startuml UC028
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+
+== Scénario Nominal ==
+Gestionnaire -> KYC : Demande de validation d'un client
+activate Gestionnaire
+activate KYC
+KYC -> KYC : Vérification de l'identité du client
+KYC -> KYC : Vérification des documents fournis
+KYC -> KYC : Vérification des antécédents
+KYC -> KYC : Vérification de la conformité réglementaire
+KYC -> KYC : Vérification des sanctions internationales
+KYC -> KYC : Vérification des listes de surveillance
+KYC -> KYC : Vérification des risques associés
+
+alt Aucun doublon trouvé
+    KYC -> KYC : Validation du client
+    KYC -> Gestionnaire : Notification de validation
+end
+
+== Scénario alternatif 2a ==
+alt Plusieurs correspondances trouvées
+    KYC -> Gestionnaire : Alerte doublon potentiel
+end
+@enduml

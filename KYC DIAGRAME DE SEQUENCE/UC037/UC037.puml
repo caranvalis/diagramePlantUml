@@ -1,0 +1,33 @@
+@startuml UC037
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système KYC" as Système
+database "Journal Audit" as Journal
+
+== Retrait d'opposition (Déblocage) ==
+
+Analyste -> Système : Accède à la fiche client
+activate Analyste
+activate Système
+Système -> Système : Charge données client
+Système --> Analyste : Affiche fiche client
+Analyste -> Système : Sélectionne "Retirer opposition"
+Analyste -> Système : Saisit le motif du déblocage
+
+alt Client déjà actif
+    Système -> Analyste : Affiche message "Client déjà actif"
+else Base inaccessible
+    Système -> Analyste : Message d’alerte technique
+else Succès
+    Système -> Système : Valide l’opération
+    Système -> Système : Met à jour le statut à "Actif"
+    Système -> Journal : Trace de l’action (motif, date, utilisateur)
+    activate Journal
+    Journal -> Système : Enregistre les détails du déblocage
+    deactivate Journal
+    Système -> Analyste : Affiche message de succès
+    Système -> Analyste : Affiche boîte de dialogue "Succès"
+end
+
+@enduml

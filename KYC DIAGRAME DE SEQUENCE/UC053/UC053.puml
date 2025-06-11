@@ -1,0 +1,36 @@
+@startuml UC053
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface de consultation" as UI
+participant "Système BPM" as BPM
+database "Base Workflow" as DB
+
+== Consultation des points de contrôle ==
+activate DB
+Admin -> UI : Accéder à la page de consultation
+activate Admin
+activate UI
+UI -> BPM : Vérifier droits d'accès
+activate BPM
+BPM -> DB : Vérifier habilitations et état du processus
+alt Utilisateur autorisé et processus actif
+    DB --> BPM : OK
+    BPM -> DB : Charger les points de contrôle (étape ciblée)
+    DB --> BPM : Liste des contrôles (nom, règle, condition, état, historique)
+    BPM --> UI : Envoyer les données formatées
+    UI --> Admin : Affichage des points de contrôle
+else Processus inactif ou supprimé
+    DB --> BPM : État = inactif/supprimé
+    BPM --> UI : Message "Processus indisponible"
+    UI --> Admin : Affichage du message d’indisponibilité
+else Accès non autorisé
+    DB --> BPM : Accès refusé
+    BPM --> UI : Message "Accès refusé"
+    deactivate BPM
+    UI --> Admin : Affichage du message d’erreur
+    deactivate UI
+    deactivate Admin
+end
+
+@enduml

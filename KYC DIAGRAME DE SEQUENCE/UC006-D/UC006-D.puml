@@ -1,0 +1,35 @@
+@startuml UC006-D
+skinparam actorStyle awesome
+actor "Gestionnaire" as G
+participant "INTRA" as UI
+participant "Système" as BE
+database "Base de données" as DB
+
+G -> UI : Se connecter
+activate G
+activate UI
+activate DB
+G -> UI : Accéder à la fiche client
+UI -> BE : GET client + mandataires
+activate BE
+BE -> DB : Selectionner le client, mandataire 
+DB --> BE : Données
+BE --> UI : Affichage
+
+G -> UI : Cliquer sur "Supprimer mandat"
+UI -> BE : Vérification en cours
+BE -> DB : Vérifier opérations en cours
+alt Mandat actif dans opération
+    BE --> UI : Suppression refusée
+else Aucune opération en cours
+    UI -> BE : Confirmer suppression
+    BE -> DB : mettre a jour le statut du mandat
+    DB --> BE : OK
+    BE --> UI : Suppression confirmée
+    deactivate BE
+end
+
+UI --> G : Mandat supprimé (logiquement)
+deactivate G
+deactivate UI
+@enduml

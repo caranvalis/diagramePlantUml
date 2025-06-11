@@ -1,0 +1,45 @@
+@startuml UC029
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+participant "Base Blacklist API" as BlacklistAPI
+
+== Scénario Nominal ==
+KYC -> BlacklistAPI : Requête de vérification du client
+activate KYC
+activate BlacklistAPI
+BlacklistAPI -> KYC : Résultat de la vérification (match ou non)
+KYC -> KYC : Analyse du résultat de la vérification
+BlacklistAPI --> KYC : Résultat (match ou non)
+deactivate BlacklistAPI
+alt Correspondance trouvée
+    KYC -> KYC : Marquage "Blacklisté"
+    KYC -> Gestionnaire : Alerte
+    activate Gestionnaire
+    Gestionnaire -> KYC : Confirmation de la suspension
+    
+    KYC -> KYC : Suspension du processus
+else Pas de correspondance
+    KYC -> KYC : Validation OK
+end
+
+== Scénario alternatif 1a ==
+alt API non disponible
+    KYC -> Gestionnaire : Alerte technique (API injoignable)
+
+end
+
+== Scénario alternatif 3a ==
+alt Correspondance incertaine
+    KYC -> Gestionnaire : Demande de vérification manuelle
+    
+    Gestionnaire -> KYC : Confirmation de la vérification manuelle
+    KYC -> KYC : Mise à jour du statut du client
+else Correspondance claire
+    KYC -> KYC : Mise à jour du statut du client
+    KYC -> Gestionnaire : Notification de conformité
+    deactivate Gestionnaire
+    deactivate KYC    
+end
+@enduml

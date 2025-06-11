@@ -1,0 +1,67 @@
+@startuml SouscriptionCompteBancaire
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+left to right direction
+
+' Acteurs principaux (à gauche)
+actor "Client particulier" as Client
+actor "Gestionnaire" as Gestionnaire
+actor "Gestionnaire référentiel" as RefGestionnaire
+actor "Analyste conformité" as Analyste
+
+' Système central
+package "Système INTRA" as INTRA {
+    usecase "Pré-enregistrement via Web" as UC1
+    usecase "Création via INTRA" as UC2
+    usecase "Importation depuis Amplitude" as UC3
+    usecase "Capture de signature électronique" as UC4
+    usecase "Génération de fiche client" as UC5
+    usecase "Gestion du statut client" as UC6
+    usecase "Ajout/Consultation/\nSuppression de mandataire" as UC7
+    usecase "Gestion du matricule client" as UC8
+    usecase "Gestion du référentiel client" as UC9
+    usecase "Déclaration système matrimonial" as UC10
+    usecase "Déclaration régime matrimonial" as UC11
+
+    ' Cas d'utilisation pour les extensions (erreurs/alternatifs)
+    usecase "Erreur signature ou document" as UC4_ERR
+    usecase "Blocage génération fiche" as UC5_ERR
+    usecase "Erreur ajout/suppression mandataire" as UC7_ERR
+    usecase "Erreur génération matricule" as UC8_ERR
+    usecase "Erreur déclaration système matrimonial" as UC10_ERR
+    usecase "Erreur déclaration régime matrimonial" as UC11_ERR
+}
+
+' Système externe (à droite)
+actor "Amplitude" as Amplitude #line.dotted
+
+' Relations acteurs-cas d’utilisation
+Client --> UC1
+Gestionnaire --> UC2
+Gestionnaire --> UC3
+Gestionnaire --> UC4
+Gestionnaire --> UC5
+Gestionnaire --> UC7 
+Gestionnaire --> UC10
+Gestionnaire --> UC11
+RefGestionnaire --> UC9
+Analyste --> UC6
+
+' Amplitude à droite du package INTRA
+INTRA -right-> Amplitude
+Amplitude --> UC3
+
+' Extensions pour scénarios alternatifs (liens entre cas d'utilisation)
+UC4 .[#red].> UC4_ERR : <<extend>>
+UC5 .[#red].> UC5_ERR : <<extend>>
+UC7 .[#red].> UC7_ERR : <<extend>>
+UC8 .[#red].> UC8_ERR : <<extend>>
+UC10 .[#red].> UC10_ERR : <<extend>>
+UC11 .[#red].> UC11_ERR : <<extend>>
+
+@enduml

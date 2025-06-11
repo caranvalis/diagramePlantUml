@@ -1,0 +1,39 @@
+@startuml UC067-C
+skinparam actorStyle awesome
+
+actor Admin
+participant "Interface" as UI 
+participant "Systeme INTRA" as System
+participant "service de Notification" as Notif 
+database "Journal de l'audit" as Audit
+
+== scenario Nominal ==
+
+Admin -> UI: se connecte a l'interface 
+activate Admin 
+activate UI
+activate Audit
+UI --> Admin : renvoi une interface 
+Admin -> UI : selectionne suspendre sur le profile de l'utilisateur 
+UI -> System : donnees du client a suspendre
+activate System
+alt  message envoyer
+System -> System : charge les donnees du clients 
+System -> Audit : journalisation 
+System --> UI : message de confirmation 
+UI --> Admin : affiche le message
+else message d erreur
+System --> UI : renvoie erreur
+UI --> Admin : affiche le message d'erreur
+end
+
+Admin -> UI : definie la duree de la suspension
+UI -> System : envoie de la suspension 
+System -> System : enregistrement de la suspension
+System -> Notif : envoie de la suspensiom
+activate Notif
+Notif --> Admin : Notification de la suspension
+deactivate UI
+deactivate Admin
+deactivate System
+deactivate Notif

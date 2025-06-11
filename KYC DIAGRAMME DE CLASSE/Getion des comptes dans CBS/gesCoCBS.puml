@@ -1,0 +1,57 @@
+@startuml GestionCompteClientClasses
+skinparam class {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+}
+
+class Client {
+    +id : String
+    +nom : String
+    +prenom : String
+    +dateNaissance : Date
+    +type : String // particulier ou entreprise
+}
+
+class Compte {
+    +numero : String
+    +rib : String
+    +statut : String
+    +dateOuverture : Date
+    +dateCloture : Date
+    +type : String
+}
+
+class Document {
+    +id : String
+    +type : String
+    +dateDepot : Date
+    +statut : String
+}
+
+class Gestionnaire {
+    +id : String
+    +nom : String
+    +prenom : String
+}
+
+class ControleIdentite {
+    +statutValidation : String
+    +dateControle : Date
+}
+
+class ControleConformite {
+    +statutDoublon : Boolean
+    +statutBlacklist : Boolean
+    +statutPPE : Boolean
+    +statutFATCA : Boolean
+}
+
+' Relations
+Client "1" -- "0..*" Compte : possède >
+Client "1" -- "0..*" Document : fournit >
+Compte "1" -- "0..*" Document : justificatif >
+Gestionnaire "1" -- "0..*" Compte : crée >
+Compte "1" -- "1" ControleIdentite : contrôle identité >
+Compte "1" -- "1" ControleConformite : contrôle conformité >
+
+@enduml

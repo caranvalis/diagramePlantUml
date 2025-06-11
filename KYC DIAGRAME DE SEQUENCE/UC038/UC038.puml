@@ -1,0 +1,37 @@
+@startuml UC038
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système KYC" as Système
+database "Journal Audit" as Journal
+
+== Retrait d'opposition entreprise ==
+
+Analyste -> Système : Ouvre la fiche de l’entreprise
+activate Analyste
+activate Système
+Système -> Système : Charge les données de l’entreprise
+Système --> Analyste : Affiche la fiche de l’entreprise
+Analyste -> Système : Sélectionne "Retirer opposition"
+Analyste -> Système : Saisit le motif du retrait d’opposition
+Analyste -> Système : Demande le retrait d’opposition
+alt Base inaccessible
+    Système -> Analyste : Affiche message d’erreur "Base inaccessible"
+else Client déjà actif
+    Système -> Analyste : Affiche message "Client déjà actif"
+    Système -> Système : Journalise l’action (motif, date, analyste)
+    Système -> Système : Affiche boîte de dialogue "Client déjà actif"
+    end 
+Analyste -> Système : Saisit la justification
+
+alt Justificatif manquant
+    Système -> Analyste : Affiche message "Justificatif requis"
+else Succès
+    Système -> Système : Met à jour le statut à "Actif"
+    Système -> Journal : Journalise l’action (motif, date, analyste)
+    activate Journal
+    Journal -> Système : Enregistre les détails du retrait d’opposition
+    Système -> Analyste : Affiche boîte de dialogue "Action effectuée avec succès"
+end
+
+@enduml

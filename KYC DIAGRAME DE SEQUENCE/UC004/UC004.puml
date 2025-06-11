@@ -1,0 +1,44 @@
+@startuml UC004
+skinparam actorStyle awesome
+
+actor Client
+actor Gestionnaire
+participant "Interface GFC" as UI
+participant "Système" as System
+participant "ePad"
+
+== Scénario Nominal ==
+activate UI
+Gestionnaire -> UI : Préparer documents à signer
+activate Gestionnaire
+UI -> System : Générer documents à signer
+activate System
+Gestionnaire -> UI : Lancer session ePad
+UI -> System : Initialiser ePad
+
+alt ePad déconnecté
+    System --> UI : Message d’erreur
+    UI --> Gestionnaire : Annuler procédure
+else ePad prêt
+    System -> ePad : Afficher document
+    activate ePad
+    ePad --> Client : Affichage pour signature et prise de l'empreinte
+    activate Client
+    Client -> ePad : Signature électronique
+    deactivate Client
+    ePad -> System : Capture signature + métadonnées
+    deactivate ePad
+    alt Signature partielle
+        System --> UI : Échec capture
+        UI --> Gestionnaire : Redémarrer procédure
+    else Signature OK
+        System -> System : Intégrer signature au document
+        System -> System : Archiver document signé
+        System --> UI : Confirmation réussite
+        deactivate System
+        UI --> Gestionnaire : Message de succès
+        deactivate Gestionnaire
+    end
+
+end
+@enduml

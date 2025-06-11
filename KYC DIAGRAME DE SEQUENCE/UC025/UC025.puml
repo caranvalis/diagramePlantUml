@@ -1,0 +1,27 @@
+@startuml UC025
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+
+== Scénario Nominal ==
+activate KYC
+KYC -> KYC : Lecture de la date d'expiration
+KYC -> KYC : Comparaison avec la date du jour
+KYC -> KYC : Marquage de la date comme valide
+KYC -> Gestionnaire : Alerte émise
+activate Gestionnaire
+KYC -> KYC : Mise à jour du statut du document
+
+== Scénario alternatif 1a ==
+alt Date non détectée
+    KYC -> KYC : Document marqué comme non conforme
+end
+
+== Scénario alternatif 3a ==
+alt Date invalide détectée
+    KYC -> Gestionnaire : Alerte émise
+    deactivate Gestionnaire
+    deactivate KYC
+end
+@enduml

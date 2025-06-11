@@ -1,0 +1,25 @@
+@startuml UC043
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Console de configuration" as Console
+participant "Système" as Système
+
+== Modifier un type de compte ==
+
+Admin -> Console : Sélectionner un type de compte existant
+activate Admin
+activate Console
+Console -> Système : Charger les détails du type de compte
+activate Système
+Système --> Console : Détails du type de compte
+
+Admin -> Console : Modifier les attributs (libellé, conditions…)
+Admin -> Console : Valider la modification
+
+Console -> Système : Appliquer les modifications
+Système --> Console : Confirmation de mise à jour
+deactivate Système
+Console -> Admin : message de Confirmation
+
+@enduml

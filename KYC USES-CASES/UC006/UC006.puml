@@ -1,0 +1,38 @@
+@startuml UC006
+' UC006 – Gestion du statut client particulier
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+' Affichage vertical : supprime "left to right direction"
+
+actor "Analyste conformité" as Analyste
+actor "Système" as Systeme
+
+package "Gestion du statut client" {
+    usecase "UC006 - Mise à jour\nstatut client particulier" as UC006
+    usecase "Accéder au dossier client" as AccesDossier
+    usecase "Récupérer comptes liés" as RecupComptes
+    usecase "Mettre à jour statut client" as MAJStatutClient
+    usecase "Synchroniser statuts comptes" as MAJComptes
+    usecase "Envoyer notifications" as Notifications
+    usecase "Journaliser actions" as Journalisation
+}
+
+Analyste --> UC006
+UC006 --> AccesDossier
+AccesDossier --> RecupComptes
+RecupComptes --> MAJStatutClient
+MAJStatutClient --> MAJComptes
+MAJComptes --> Notifications
+Notifications --> Journalisation
+
+Systeme --> RecupComptes
+Systeme --> MAJStatutClient
+Systeme --> MAJComptes
+Systeme --> Notifications
+Systeme --> Journalisation
+
+@enduml

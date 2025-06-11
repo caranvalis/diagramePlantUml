@@ -1,0 +1,28 @@
+@startuml UC050
+skinparam actorStyle awesome
+
+actor "Analyste BPM" as Analyste
+participant "Interface BPM" as UI
+participant "Moteur BPM" as Moteur
+database "Base BPM" as BPM
+
+== Désactivation d’un parcours BPM ==
+activate BPM
+Analyste -> UI : Sélectionner un parcours
+activate Analyste
+activate UI
+UI -> Moteur : Requête de désactivation
+activate Moteur
+Moteur -> BPM : Vérifier s’il existe des instances actives
+
+alt Des instances sont actives
+    Moteur --> UI : Message d’erreur \n"Désactivation impossible"
+else Aucune instance active
+    Moteur -> BPM : Marquer comme inactif ou archivé
+    Moteur --> UI : Confirmation de retrait
+end
+deactivate Moteur
+UI --> Analyste : Boîte de dialogue de succès ou d’erreur
+deactivate UI
+deactivate Analyste
+@enduml

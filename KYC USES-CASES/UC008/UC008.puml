@@ -1,0 +1,44 @@
+@startuml UC008
+' UC008 – Création d’un client entreprise
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+
+actor "Gestionnaire" as Gestionnaire
+actor "Système" as Systeme
+
+package "Création client entreprise" {
+    usecase "Sélectionner 'Créer un client entreprise'" as UC1
+    usecase "Afficher formulaire entreprise" as UC2
+    usecase "Saisir données entreprise" as UC3
+    usecase "Téléverser documents justificatifs" as UC4
+    usecase "Valider la saisie" as UC5
+    usecase "Vérifier les données et documents" as UC6
+    usecase "Enregistrer en base KYC" as UC7
+    usecase "Afficher confirmation" as UC8
+    usecase "Alerte fichier manquant/corrompu" as Alt1
+    usecase "Alerte validation échouée" as Alt2
+}
+
+Gestionnaire --> UC1
+UC1 --> UC2 : <<include>>
+UC2 --> UC3 : <<include>>
+UC3 --> UC4 : <<include>>
+UC4 --> UC5 : <<include>>
+UC5 --> UC6 : <<include>>
+UC6 --> UC7 : <<include>>
+UC7 --> UC8 : <<include>>
+
+Systeme --> UC2
+Systeme --> UC6
+Systeme --> UC7
+Systeme --> UC8
+
+' Scénarios alternatifs
+UC4 --> Alt1 : <<extend>>
+UC6 --> Alt2 : <<extend>>
+
+@enduml

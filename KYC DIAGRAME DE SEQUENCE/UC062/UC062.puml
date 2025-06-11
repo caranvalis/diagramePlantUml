@@ -1,0 +1,45 @@
+@startuml UC062
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Interface de classement" as UI
+participant "Système de gestion documentaire" as Système
+database "Base documentaire" as BDD
+
+== Enregistrement d’un document classé ==
+Gestionnaire -> UI : Soumettre un document classé
+activate Gestionnaire
+activate UI
+UI -> Système : Demande de génération du code de classification
+activate Système
+
+alt Plan de classification actif et données complètes
+    Système -> BDD : Vérifier unicité du code généré (ex: CLI/ENT/STATUT/0012)
+    activate BDD
+
+    alt Code unique
+        BDD --> Système : Code accepté
+    else Doublon détecté
+        BDD --> Système : Conflit de code
+        Système -> BDD : Générer code avec suffixe incrémenté
+        BDD --> Système : Nouveau code (ex: CLI/ENT/STATUT/0012-01)
+    end
+    deactivate BDD
+
+    Système -> BDD : Enregistrer le code dans les métadonnées du document
+    activate BDD
+    BDD --> Système : Enregistrement confirmé
+    deactivate BDD
+
+    Système --> UI : Afficher code de classification généré
+    UI --> Gestionnaire : Code affiché (utilisable pour archivage/recherche)
+
+else Catégorie manquante / Erreur de structure
+    Système --> UI : Erreur : génération impossible
+    UI --> Gestionnaire : Blocage + message d’erreur
+end
+
+deactivate Système
+deactivate UI
+deactivate Gestionnaire
+@enduml

@@ -1,0 +1,64 @@
+@startuml UC065
+skinparam actorStyle awesome
+
+actor "Gestionnaire / Analyste" as Utilisateur
+participant "Interface documentaire" as UI
+participant "Système de gestion documentaire" as Système
+database "Base documentaire" as BDD
+
+== Accès à la fiche documentaire ==
+Utilisateur -> UI : Accéder à une fiche documentaire
+activate Utilisateur
+activate UI
+UI -> Système : Demande de l'historique des versions
+activate Système
+
+Système -> BDD : Rechercher les versions du document
+activate BDD
+BDD --> Système : Liste versions (n°, date, uploader, statut)
+deactivate BDD
+Système --> UI : Transmettre l’historique des versions
+deactivate Système
+UI --> Utilisateur : Affiche les versions disponibles
+deactivate UI
+deactivate Utilisateur
+
+== Comparaison / Restauration ==
+alt Comparer deux versions
+    Utilisateur -> UI : Comparer version X avec version Y
+    activate Utilisateur
+    activate UI
+    UI -> Système : Requête de comparaison
+    activate Système
+    Système -> BDD : Récupérer contenu des deux versions
+    activate BDD
+    BDD --> Système : Contenus des deux versions
+    deactivate BDD
+    Système --> UI : Résultat de la comparaison
+    deactivate Système
+    UI --> Utilisateur : Affiche différences entre les versions
+    deactivate UI
+    deactivate Utilisateur
+
+else Restaurer une version
+    Utilisateur -> UI : Restaurer version antérieure
+    activate Utilisateur
+    activate UI
+    UI -> Système : Demande de restauration
+    activate Système
+    alt Droits suffisants
+        Système -> BDD : Mettre à jour statut : version restaurée active
+        activate BDD
+        BDD --> Système : Confirmation
+        deactivate BDD
+        Système --> UI : Restauration effectuée
+        UI --> Utilisateur : Ancienne version restaurée
+    else Droits insuffisants
+        Système --> UI : Refus d’accès : droits insuffisants
+        deactivate Système
+        UI --> Utilisateur : Affichage du message d’erreur
+        deactivate Utilisateur
+        deactivate UI
+    end
+end
+@enduml

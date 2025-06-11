@@ -1,0 +1,36 @@
+@startuml UC041
+skinparam actorStyle awesome
+
+actor "Client" as Client
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as Système
+database "Journal Audit" as Journal
+
+== Notification de déblocage d’un compte ==
+
+Système -> Système : Détection du changement de statut (Actif)
+activate Système
+Système -> Système : Vérification des coordonnées du client
+Système -> Système : Composition de la notification\n(n° compte, date, motif)
+group Envoi de notification
+    Système -> Client : Envoi notification (SMS/email)
+    activate Client
+    Client -> Système : Accusé de réception
+    deactivate Client
+    Système -> Gestionnaire : Envoi notification
+    activate Gestionnaire
+    Gestionnaire -> Système : Accusé de réception
+    deactivate Gestionnaire
+    Système -> Journal : Journaliser l’envoi
+    activate Journal
+    Journal -> Système : Enregistrement des détails de l’envoi
+    
+end
+
+alt Envoi réussi
+    Système -> Journal : Journaliser l’envoi
+else Envoi échoué
+    Système -> Journal : Mise en file d’attente + suivi
+end
+
+@enduml

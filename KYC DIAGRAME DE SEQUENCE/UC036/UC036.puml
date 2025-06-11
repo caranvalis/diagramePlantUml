@@ -1,0 +1,43 @@
+@startuml UC036
+skinparam actorStyle awesome
+
+actor "Client" as Client
+participant "Système KYC" as Système
+database "Journal Audit" as Journal
+
+== Notification du client après blocage de compte ==
+
+Système -> Système : Détection du statut "Bloqué" du compte
+activate Système
+Système -> Système : Vérification des coordonnées du client
+alt Contact client valide
+    Système -> Système : Prépare la notification (SMS/Email)
+    Système -> Système : Enregistre les détails de la notification
+else Contact client invalide
+    Système -> Système : Marque notification comme non délivrée
+end
+Système -> Système : Génère notification (n° compte, motif, date)
+
+alt Contact client valide
+    Système -> Client : Envoie SMS / Email
+    activate Client
+    Client -> Système : Accuse réception de la notification
+    deactivate Client
+
+    alt Envoi réussi
+        Système -> Journal : Journalise l’envoi
+        activate Journal
+        Journal -> Système : Enregistre les détails de l’envoi
+        deactivate Journal
+        Système -> Système : Met à jour le statut de la notification
+        Système -> Système : Notification envoyée avec succès
+    else Envoi échoue
+        Système -> Système : Met le message en attente
+        Système -> Système : Alerte technique générée
+    end
+
+else Pas de contact valide
+    Système -> Système : Échec de notification
+end
+
+@enduml

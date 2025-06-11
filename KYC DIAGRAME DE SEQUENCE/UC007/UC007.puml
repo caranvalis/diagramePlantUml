@@ -1,0 +1,36 @@
+@startuml UC007
+skinparam actorStyle awesome
+
+actor "Représentant entreprise" as Representant
+participant "Interface Web" as Web
+participant "Système" as System
+
+== Scénario Nominal ==
+Representant -> Web : Accéder à l’interface
+activate Representant
+activate Web
+Web -> System : Demande formulaire préenregistrement
+activate System
+System --> Web : Affiche formulaire
+
+Representant -> Web : Saisir données de l’entreprise
+Representant -> Web : Téléverser documents requis
+Representant -> Web : Soumettre formulaire
+
+Web -> System : Envoi des données et documents
+
+alt 6a. Serveur indisponible
+    System --> Web : Affiche erreur technique
+    web --> Representant : message d'erreur
+else Succès
+    System -> System : Enregistrer les données
+    System -> System : Générer identifiant unique
+    System --> Web : Affiche confirmation + identifiant
+    Web --> Representant : affiche le resultat
+    deactivate System
+end
+
+Web --> Representant : Possibilite d'impression
+deactivate Representant
+deactivate Web
+@enduml

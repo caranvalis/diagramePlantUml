@@ -1,0 +1,29 @@
+@startuml UC042
+skinparam actorStyle awesome
+
+actor "Administrateur fonctionnel" as Admin
+participant "Console de configuration" as Console
+participant "Système" as Système
+
+== Ajouter un type de compte ==
+
+Admin -> Console : Ouvrir la console de configuration
+activate Admin
+activate Console
+Admin -> Console : Cliquer sur "Ajouter un type de compte"
+Admin -> Console : Saisir nom + caractéristiques
+Admin -> Console : Sélectionner types de clients éligibles
+Admin -> Console : Valider
+
+alt Types de clients sélectionnés
+    Console -> Système : Créer type de compte
+    activate Système
+    Système -> Système : Enregistrer type de compte
+    Système --> Console : Confirmation d’enregistrement
+    deactivate Système
+    Console --> Admin : Afficher confirmation
+else Aucun type sélectionné
+    Console -> Admin : Message d’erreur : sélection obligatoire
+end
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml UC033
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système" as Système
+participant "Base Entreprises" as Entreprises
+participant "Base Comptes" as Comptes
+
+== Blocage d’un client entreprise ==
+
+Analyste -> Système : Accède à la fiche entreprise
+activate Analyste
+activate Système
+Système -> Entreprises : Charge données entreprise
+activate Entreprises
+Système --> Analyste : Affiche fiche entreprise
+Analyste -> Système : Sélectionne "Bloquer l’entreprise"
+Analyste -> Système : Sélectionne "Mettre en opposition"
+Analyste -> Système : Saisit le motif de blocage
+Analyste -> Système : Insère le motif
+
+alt Motif renseigné et client non bloqué
+    Système -> Entreprises : Met à jour le statut (Bloqué)
+    Système -> Comptes : Bloque tous les comptes associés
+    activate Comptes
+    Comptes --> Système : Liste des comptes associés
+    Système -> Comptes : Met à jour statut des comptes (Bloqué)
+    Système -> Comptes : Bloque tous les comptes associés
+    deactivate Comptes
+    Système -> Système : Journalise l'action
+    Système -> Analyste : Affiche message de confirmation
+    
+    Système -> Système : Affiche confirmation à l’analyste
+else Motif manquant
+    Système -> Analyste : Refuse blocage, motif requis
+else Client déjà bloqué
+    Système -> Analyste : Alerte "Client déjà bloqué"
+end
+@enduml

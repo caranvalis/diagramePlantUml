@@ -1,0 +1,49 @@
+@startuml UC006
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Interface INTRA" as UI
+participant "Système" as System
+participant "Module Comptes" as Comptes
+participant "Notification" as Notif
+participant "Journalisation" as Log
+
+== Scénario Nominal ==
+Analyste -> UI : Accéder au dossier client
+activate Analyste
+UI -> System : Identifier et récupérer comptes liés
+activate UI
+activate System
+System -> Comptes : Récupérer comptes du client
+activate Comptes
+Comptes --> System : Liste des comptes
+
+System -> System : Mettre à jour statut client
+System -> Comptes : Mettre à jour statuts comptes
+deactivate Comptes
+alt Tous comptes mis à jour
+    System -> Notif : Envoyer notifications
+    activate Notif
+    Notif --> System : Notifications envoyées
+else 3a. Erreur sur certains comptes (verrouillés)
+    Comptes --> System : Erreur de mise à jour partielle
+    System -> Log : Log des anomalies de mise à jour
+    activate Log
+    System -> Notif : Envoyer notifications (partielles)
+    deactivate Notif
+end
+
+System -> Log : Journaliser l’ensemble des actions
+
+alt 6a. Échec de notification
+    Notif --> System : Erreur d’envoi
+    System -> Log : Journaliser erreur notification
+    deactivate Log
+    deactivate System
+end
+
+UI --> Analyste : Afficher résultat de l’opération
+deactivate UI
+deactivate Analyste
+
+@enduml

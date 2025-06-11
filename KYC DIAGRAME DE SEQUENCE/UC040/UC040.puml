@@ -1,0 +1,39 @@
+@startuml UC040
+skinparam actorStyle awesome
+
+actor "Analyste conformité" as Analyste
+participant "Système KYC" as Système
+participant "CBS (Core Banking System)" as CBS
+database "Journal Audit" as Journal
+
+== Déblocage d’un compte ==
+
+alt Déblocage déclenché manuellement
+    Analyste -> Système : Déclenche déblocage compte
+    activate Analyste
+    activate Système
+    Système -> Système : Vérifie statut compte
+else Déblocage automatique
+    Système -> Système : Déclenchement auto (ex : fin de blocage temporaire)
+end
+
+Système -> CBS : Requête de déblocage
+activate CBS
+alt CBS répond positivement
+    CBS --> Système : Confirmation déblocage
+    deactivate CBS
+    Système -> Système : Mise à jour statut compte (Actif)
+    Système -> Journal : Journaliser l’opération
+    activate Journal
+    Journal -> Système : Enregistre les détails du déblocage
+    Système -> Analyste : Affiche boîte de succès
+else CBS ne répond pas
+    Système -> Journal : Log échec CBS / Replanifie tentative
+    deactivate Journal
+    Système -> Analyste : Affiche message d’erreur "Échec de communication avec CBS"
+
+else Compte déjà actif
+    Système -> Analyste : Affiche message "Déjà actif" (opération ignorée)
+end
+
+@enduml

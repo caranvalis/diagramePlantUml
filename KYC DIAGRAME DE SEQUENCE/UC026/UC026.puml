@@ -1,0 +1,40 @@
+@startuml UC026
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+
+== Scénario Nominal ==
+activate KYC
+KYC -> KYC : Identification du type de client
+KYC -> KYC : Consultation du référentiel des pièces obligatoires
+KYC -> KYC : Comparaison avec les pièces soumises
+KYC -> KYC : Identification des éléments manquants
+KYC -> KYC : Mise à jour du statut à "complet"
+
+== Scénario alternatif 2a ==
+
+alt Pièces manquantes
+    KYC -> Gestionnaire : Notification des pièces manquantes
+    activate Gestionnaire
+    Gestionnaire -> KYC : Soumission des pièces manquantes
+    KYC -> KYC : Mise à jour du statut à "complet"
+else Pièces complètes
+    KYC -> Gestionnaire : Notification de conformité
+end
+alt Référentiel introuvable
+    KYC -> Gestionnaire : Message d’erreur système
+end
+
+== Scénario alternatif 4a ==
+alt Documents incomplets
+    KYC -> Gestionnaire : Message d’alerte
+    KYC -> KYC : Mise à jour du statut à "incomplet"
+else Documents complets
+    KYC -> KYC : Mise à jour du statut à "complet"
+    KYC -> Gestionnaire : Notification de conformité
+    deactivate Gestionnaire
+    deactivate KYC
+end
+@enduml
+

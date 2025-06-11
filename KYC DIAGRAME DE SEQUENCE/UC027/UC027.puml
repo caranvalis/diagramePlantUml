@@ -1,0 +1,57 @@
+@startuml UC027
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+
+== Scénario Nominal ==
+KYC -> KYC : Détection de pièces manquantes
+activate KYC
+KYC -> KYC : Identification du type de client
+KYC -> KYC : Consultation du référentiel des pièces obligatoires
+KYC -> KYC : Comparaison avec les pièces soumises
+KYC -> KYC : Identification des éléments manquants
+KYC -> KYC : Mise à jour du statut à "incomplet"
+KYC -> KYC : Préparation de l’alerte avec détails
+KYC -> Gestionnaire : Envoi de l’alerte
+activate Gestionnaire
+alt 1a. Gestionnaire ne répond pas
+    KYC -> KYC : Relance de l’alerte
+    KYC -> KYC : Journalisation de l’échec
+else 2a. Gestionnaire répond
+    Gestionnaire -> KYC : Confirmation de réception de l’alerte
+    KYC -> KYC : Journalisation de la réception
+end
+KYC -> KYC : Journalisation de l’alerte
+
+== Scénario alternatif 2a ==
+alt Module de notification indisponible
+    KYC -> KYC : Mise en file d’attente de l’alerte
+    KYC -> KYC : Journalisation de l’échec
+    KYC -> KYC : Vérification de la disponibilité du module de notification
+    alt Module de notification indisponible encore
+        KYC -> KYC : Alerte mise en file d’attente
+        KYC -> KYC : Journalisation de l’échec
+    else Module de notification disponible
+        KYC -> KYC : Envoi de l’alerte
+        KYC -> KYC : Journalisation de l’envoi 
+    end
+else Module de notification disponible
+    KYC -> KYC : Envoi de l’alerte
+    KYC -> KYC : Journalisation de l’envoi
+else Module de notification disponible
+    KYC -> KYC : Envoi de l’alerte
+    KYC -> KYC : Journalisation de l’envoi 
+end
+
+== Scénario alternatif 3a ==
+alt Adresse de contact invalide
+    KYC -> KYC : Alerte non délivrée mais journalisée
+    KYC -> KYC : Mise à jour du statut à "incomplet"
+else Adresse de contact valide
+    KYC -> KYC : Alerte délivrée
+    KYC -> KYC : Mise à jour du statut à "complet"
+    KYC -> Gestionnaire : Notification de conformité
+end
+@enduml
+

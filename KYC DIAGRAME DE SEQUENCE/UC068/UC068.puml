@@ -1,0 +1,76 @@
+@startuml UC068
+skinparam actorStyle awesome
+
+actor Gestionnaire
+participant "Interface KYC" as UI
+participant "Système" as S
+
+== Déclaration du système matrimonial ==
+
+Gestionnaire -> UI : Accéder au formulaire état civil
+activate UI
+activate Gestionnaire
+UI -> S : Récupérer les options matrimoniales
+activate S
+S -> S : Charger les options disponibles
+S --> UI : Options matrimoniales (Monogamie, Polygamie)
+S --> UI : Monogamie / Polygamie
+deactivate S
+UI --> Gestionnaire : Afficher options matrimoniales
+Gestionnaire -> UI : Sélectionner système matrimonial
+UI -> S : Valider et enregistrer le choix
+activate S
+alt Choix = Polygamie
+S -> UI : Activer section ajout conjoints
+else Choix = Monogamie
+S -> UI : Continuer sans changement
+end
+S -> S : Journaliser l’action
+S --> UI : Confirmation du choix
+deactivate S
+
+UI --> Gestionnaire : Confirmation enregistrée
+deactivate UI
+deactivate Gestionnaire
+
+== Ajout de conjoints (si Polygamie) ==
+
+Gestionnaire -> UI : Accéder à la section conjoints
+activate Gestionnaire
+activate UI
+UI -> S : Récupérer la liste des conjoints
+activate S
+S -> S : Charger les conjoints existants
+S --> UI : Liste des conjoints
+UI --> Gestionnaire : Afficher la liste des conjoints
+Gestionnaire -> UI : Ajouter un conjoint
+UI -> S : Afficher formulaire ajout conjoint
+
+S -> S : Préparer formulaire
+S --> UI : Formulaire conjoint
+Gestionnaire -> UI : Saisir informations conjoint
+UI -> S : Valider les informations
+
+S -> S : Vérifier les données
+S --> UI : Confirmation ajout conjoint
+
+UI --> Gestionnaire : Conjoint ajouté avec succès
+
+Gestionnaire -> UI : Enregistrer les modifications
+UI -> S : Enregistrer les conjoints
+
+S -> S : Mettre à jour la base de données
+S --> UI : Confirmation de l’enregistrement
+
+UI --> Gestionnaire : Modifications enregistrées
+
+Gestionnaire -> UI : Terminer la session
+UI -> S : Terminer la session
+
+S -> S : Journaliser la session
+S --> UI : Session terminée
+deactivate S
+UI --> Gestionnaire : Session terminée
+deactivate Gestionnaire
+deactivate UI
+@enduml

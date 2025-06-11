@@ -1,0 +1,29 @@
+@startuml UC006-B
+skinparam actorStyle awesome
+actor "Gestionnaire" as G
+participant "INTRA (UI)" as UI
+participant "Système" as BE
+database "Base de données" as DB
+
+G -> UI : Se connecter
+activate G
+activate UI
+activate DB
+G -> UI : Ouvrir fiche client
+UI -> BE : Requête fiche client
+activate BE
+BE -> DB : SELECT * FROM client WHERE id = X
+DB --> BE : Données client
+BE --> UI : Infos client
+
+G -> UI : Consulter mandataires
+UI -> BE : GET /mandataires?clientId=X
+BE -> DB : SELECT * FROM mandataire WHERE client_id = X
+DB --> BE : Liste mandataires
+BE --> UI : Résultat
+deactivate BE
+UI --> G : Liste mandataires affichée
+deactivate UI
+deactivate G
+@enduml
+// Gestionnaire -> UI : Ajouter un mandataire

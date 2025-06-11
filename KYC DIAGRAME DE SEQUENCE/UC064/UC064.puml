@@ -1,0 +1,42 @@
+@startuml UC064
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Interface de gestion documentaire" as UI
+participant "Système de gestion documentaire" as Système
+database "Base documentaire" as BDD
+
+== Téléversement ==
+Gestionnaire -> UI : Téléverser nouvelle version d’un document
+activate Gestionnaire
+activate UI
+UI -> Système : Nouvelle version détectée (même référence/catégorie)
+activate Système
+
+== Vérification de la version existante ==
+Système -> BDD : Rechercher document existant
+activate BDD
+BDD --> Système : Dernière version trouvée (ex : v1)
+deactivate BDD
+
+== Archivage et versionnage ==
+Système -> BDD : Archiver ancienne version (désactiver)
+activate BDD
+BDD --> Système : Ancienne version archivée
+deactivate BDD
+
+Système -> Système : Incrémenter numéro de version (ex : v2)
+
+Système -> BDD : Enregistrer nouvelle version (marquée "active")
+activate BDD
+BDD --> Système : Nouvelle version enregistrée
+deactivate BDD
+
+== Confirmation ==
+Système --> UI : Confirmation enregistrement versionné
+deactivate Système
+UI --> Gestionnaire : Nouvelle version active (v2)
+
+deactivate UI
+deactivate Gestionnaire
+@enduml

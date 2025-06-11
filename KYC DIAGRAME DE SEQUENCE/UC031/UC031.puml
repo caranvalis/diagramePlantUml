@@ -1,0 +1,29 @@
+@startuml UC031
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système KYC" as KYC
+participant "Base Formulaires FATCA" as FATCA
+
+== Scénario Nominal ==
+
+KYC -> FATCA : Recherche fiche FATCA du client
+activate KYC
+activate FATCA
+alt Fiche FATCA trouvée
+    KYC -> KYC : Marque le client "FATCA"
+    KYC -> KYC : Enregistre le statut dans la fiche fiscale
+    KYC -> Gestionnaire : Rend la fiche accessible
+    activate Gestionnaire
+    KYC -> KYC : Active le workflow de conformité
+else
+    KYC -> KYC : Client non marqué "FATCA"
+end
+
+== Scénario alternatif ==
+alt 1a. Aucune fiche FATCA trouvée
+    KYC -> KYC : Laisse le statut FATCA vide
+    
+end
+
+@enduml

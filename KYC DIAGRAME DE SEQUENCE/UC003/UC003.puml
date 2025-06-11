@@ -1,0 +1,48 @@
+@startuml UC003 
+skinparam actorStyle awesome
+
+actor Gestionnaire
+participant "Interface INTRA" as UI
+participant "Système" as System
+participant "Amplitude" as Amplitude
+
+== Scénario Nominal ==
+Gestionnaire -> UI : Accéder à "Importer depuis Amplitude"
+activate Gestionnaire
+activate UI
+UI -> Gestionnaire : Affichage champ identifiant client
+Gestionnaire -> UI : Saisie identifiant
+deactivate Gestionnaire
+UI -> System : Vérification identifiant
+activate System
+alt Identifiant invalide
+    System --> UI : Message d'erreur
+    UI --> Gestionnaire : Afficher erreur
+    activate Gestionnaire
+else Identifiant valide
+    System -> Amplitude : Interroger dossier client
+    activate Amplitude
+    alt Amplitude indisponible
+        Amplitude --> System : Erreur de connexion
+        System --> UI : Échec d’importation
+        UI --> Gestionnaire : Afficher message d’échec
+    else Réponse OK
+        Amplitude --> System : Données client
+        deactivate Amplitude
+        System --> UI : Afficher données récupérées
+        UI --> Gestionnaire : Visualisation + vérification
+        Gestionnaire -> UI : Valider l'import
+        UI -> System : Demande enregistrement
+        alt Données incomplètes
+            UI --> Gestionnaire : Compléter les données
+        else Données complètes
+            System --> UI : Confirmation d’intégration
+            deactivate System
+            UI --> Gestionnaire : Message de confirmation
+            deactivate Gestionnaire
+            deactivate UI
+        end
+    end
+end
+deactivate UI
+@enduml

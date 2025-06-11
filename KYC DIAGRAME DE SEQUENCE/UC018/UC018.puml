@@ -1,0 +1,45 @@
+@startuml UC018
+skinparam actorStyle awesome
+
+actor "Gestionnaire" as Gestionnaire
+participant "Système INTRA" as INTRA
+participant "CBS (Core Banking System)" as CBS
+database "Base de Données INTRA" as BDD
+
+== Scénario Nominal ==
+
+Gestionnaire -> INTRA : Ouvrir la fiche client
+activate Gestionnaire
+activate INTRA
+INTRA -> BDD : Charger les données du client
+activate BDD
+BDD --> INTRA : Données du client
+INTRA --> Gestionnaire : Afficher les données du client
+Gestionnaire -> INTRA : Déclenche la création de compte
+INTRA -> CBS : Envoi requête SOAP/REST avec données client
+activate CBS
+alt 2a. CBS ne répond pas
+    INTRA -> CBS : Relance de la requête
+end
+
+CBS -> CBS : Traitement de la demande
+
+alt 4a. Erreur validation côté CBS
+    CBS --> INTRA : Message d’erreur
+    INTRA --> Gestionnaire : Affiche message d’échec
+else
+    CBS --> INTRA : Identifiant client + N° compte + RIB
+    deactivate CBS
+    INTRA -> BDD : Enregistrer les données du compte
+    BDD --> INTRA : Confirmation d’enregistrement
+    INTRA --> Gestionnaire : Afficher confirmation de création de compte
+    INTRA -> BDD : Enregistrer les infos reçues
+    INTRA -> BDD : Journaliser l’historique de création
+
+    INTRA --> Gestionnaire : Confirmation de création
+    deactivate INTRA
+    deactivate Gestionnaire
+end
+
+@enduml
+
