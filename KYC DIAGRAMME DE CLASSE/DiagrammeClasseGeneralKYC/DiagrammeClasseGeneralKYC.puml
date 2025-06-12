@@ -7,16 +7,16 @@ skinparam linetype ortho
 
 ' --- Entités principales ---
 class Client {
-    +id : String
+    -id : String
     +nom : String
     +prenom : String
-    +dateNaissance : Date
+    #dateNaissance : Date
     +type : String // particulier ou entreprise
     +statut : String
 }
 
 class Compte {
-    +numero : String
+    -numero : String
     +rib : String
     +statut : String
     +dateOuverture : Date
@@ -41,9 +41,9 @@ class Actionnaire {
 
 ' --- Utilisateurs, rôles et profils ---
 class User {
-    +id : String
+    -id : String
     +login : String
-    +motDePasse : String
+    -motDePasse : String
     +email : String
 }
 
@@ -148,7 +148,7 @@ class ControleType {
 
 class ControleEtape {
     +id : String
-    +nom : String
+    +nom : String 
     +ordre : int
     +controleTypeId : String
     +parametres : String
@@ -182,82 +182,75 @@ Documentation "0..*" -- "0..*" Client : concerne >
 Documentation "0..*" -- "0..*" Compte : concerne >
 Documentation "0..*" -- "0..*" ControleType : concerne >
 
-' --- Relations principales ---
-Client "1" -- "0..*" Compte : possède >
-Client "1" -- "0..*" Document : fournit >
-Client "1" -- "0..*" Actionnaire : possède >
-Compte "1" -- "0..*" Document : justificatif >
-Compte "1" -- "0..*" Controle : contrôle >
-Client "1" -- "0..*" Controle : contrôle >
+' --- Relations principales (avec types UML) ---
+Client *-- Compte : possède >                ' Composition : un compte n'existe que pour un client
+Client o-- Actionnaire : possède >           ' Agrégation : un actionnaire peut exister sans client
+Compte o-- TypeCompte : type >               ' Agrégation : un type de compte peut exister sans compte
+Client o-- TypeClient : type >               ' Agrégation : un type de client peut exister sans client
+Compte o-- Document : justificatif >         ' Agrégation
+Client o-- Document : fournit >              ' Agrégation
+Compte o-- Controle : contrôle >             ' Agrégation
+Client o-- Controle : contrôle >             ' Agrégation
 
-' --- Relations opérations ---
-Client "1" -- "0..*" Preenregistrement : pré-enregistre >
-Client "1" -- "0..*" Enregistrement : enregistre >
-Client "1" -- "0..*" Modification : modifie >
-Client "1" -- "0..*" ActionBlocage : action blocage >
+' --- Héritage (exemple) ---
+Document <|-- TypeDocument : type
 
-Compte "1" -- "0..*" Modification : modifie >
-Compte "1" -- "0..*" ActionBlocage : action blocage >
+' --- Dépendances (faibles) ---
+Client ..> ParametreDynamique : attribut dynamique >
+Compte ..> ParametreDynamique : attribut dynamique >
 
-' --- Relations paramétrage & workflow ---
-Client "1" -- "0..*" Parametre : paramètre >
-Compte "1" -- "0..*" Parametre : paramètre >
-Document "1" -- "1" TypeDocument : type >
+' --- Dépendances fortes (utilisation) ---
+Client --> Preenregistrement : pré-enregistre >
+Client --> Enregistrement : enregistre >
+Client --> Modification : modifie >
+Client --> ActionBlocage : action blocage >
+Compte --> Modification : modifie >
+Compte --> ActionBlocage : action blocage >
 
-Workflow "1" -- "0..*" Etape : contient >
-Etape "1" -- "0..*" RegleControle : contrôle >
-Client "1" -- "0..*" ParametreDynamique : attribut dynamique >
-Compte "1" -- "0..*" ParametreDynamique : attribut dynamique >
-Compte "1" -- "0..*" ParametreDynamique : attribut dynamique >
+' --- Paramétrage & workflow ---
+Workflow *-- Etape : contient >              ' Composition
+Etape o-- RegleControle : contrôle >         ' Agrégation
 
+' --- Contrôle paramétrable ---
 Controle "1" -- "1" ControleType : type >
-ControleType "1" -- "0..*" ControleEtape : étapes >
-Controle "1" -- "0..*" ControleEtapeInstance : exécution étape >
-ControleEtape "1" -- "0..*" ControleEtapeInstance : exécution >
+ControleType *-- ControleEtape : étapes >    ' Composition
+Controle o-- ControleEtapeInstance : exécution étape > ' Agrégation
+ControleEtape o-- ControleEtapeInstance : exécution >  ' Agrégation
+ControleEtape ..> Parametre : paramètre >    ' Dépendance faible
 
-' --- Paramétrage des contrôles ---
-ControleEtape "1" -- "0..*" Parametre : paramètre >
-
-' --- Types de comptes ---
-class TypeCompte {
-    +code : String
-    +libelle : String
-    +description : String
-}
-
-Compte "1" -- "1" TypeCompte : type >
-
-' --- Types de clients ---
-class TypeClient {
-    +code : String
-    +libelle : String
-    +description : String
-}
-
-Client "1" -- "1" TypeClient : type >
-
-' --- Notifications liées au contrôle ---
-class Notification {
-    +id : String
-    +dateEnvoi : Date
-    +type : String // email, sms, interne, etc.
-    +message : String
-    +destinataire : String
-    +statut : String
-}
-
-Controle "1" -- "0..*" Notification : notification >
-ControleEtapeInstance "1" -- "0..*" Notification : notification étape >
+' --- Notifications ---
+Controle o-- Notification : notification >    ' Agrégation
+ControleEtapeInstance o-- Notification : notification étape > ' Agrégation
 
 ' --- Statut du client ---
-class StatutClient {
-    +code : String
-    +libelle : String
-    +description : String
-    +actif : Boolean
-}
-
-Client "1" -- "1" StatutClient : statut >
+Client o-- StatutClient : statut >           ' Agrégation
 
 ' Exemple : notification lors d'un changement de statut, d'une étape validée, etc.
+
+abstract class AbstractControle {
+    +id : String
+    +dateCreation : Date
+}
+
+interface INotifiable {
+    +notifier() : void
+}
+
+enum TypeNotification {
+    EMAIL
+    SMS
+    INTERNE
+}
+
+annotation DocumentationMetier
+
+Controle <|-- AbstractControle
+Notification ..|> INotifiable
+Notification -- TypeNotification
+Controle .. DocumentationMetier
+
+note right of Controle
+  Classe centrale pour la gestion des contrôles KYC.
+  Peut être spécialisée selon le type de contrôle.
+end note
 @enduml
