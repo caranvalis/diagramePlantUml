@@ -22,6 +22,7 @@ class Compte {
     +dateOuverture : Date
     +dateCloture : Date
     +type : String
+    +solde : Float
 }
 
 class Document {
@@ -31,10 +32,75 @@ class Document {
     +statut : String
 }
 
-class Gestionnaire {
+class Actionnaire {
     +id : String
     +nom : String
-    +prenom : String
+    +pourcentage : Float
+    +type : String // personne physique ou morale
+}
+
+' --- Utilisateurs, rôles et profils ---
+class User {
+    +id : String
+    +login : String
+    +motDePasse : String
+    +email : String
+}
+
+class Role {
+    +id : String
+    +nom : String
+    +description : String
+}
+
+class Profile {
+    +id : String
+    +nom : String
+    +description : String
+}
+
+User "1" -- "1..*" Role : appartient >
+Role "1" -- "0..*" Profile : définit >
+User "1" -- "0..*" Client : gère >
+User "1" -- "0..*" Parametre : paramètre >
+
+' --- Paramétrage & Workflow ---
+class Parametre {
+    +id : String
+    +nom : String
+    +valeur : String
+    +categorie : String
+}
+
+class TypeDocument {
+    +code : String
+    +libelle : String
+}
+
+class Workflow {
+    +id : String
+    +nom : String
+}
+
+class Etape {
+    +id : String
+    +nom : String
+    +ordre : int
+    +workflowId : String
+}
+
+class RegleControle {
+    +id : String
+    +type : String
+    +actif : Boolean
+    +parametres : String
+}
+
+class ParametreDynamique {
+    +id : String
+    +entite : String
+    +cle : String
+    +valeur : String
 }
 
 ' --- Opérations/Services ---
@@ -55,54 +121,120 @@ class Modification {
     +nouvelleValeur : String
 }
 
-class Blocage {
-    +dateBlocage : Date
+' Fusion Blocage & Déblocage
+class ActionBlocage {
+    +id : String
+    +dateAction : Date
+    +typeAction : String // "blocage" ou "déblocage"
     +motif : String
-    +typeBlocage : String // client ou compte
+    +cible : String // client ou compte
 }
 
-class Deblocage {
-    +dateDeblocage : Date
-    +motif : String
-    +typeDeblocage : String // client ou compte
-}
-
-' --- Contrôles ---
-class ControleIdentite {
-    +statutValidation : String
+' --- Contrôles (fusion possible) ---
+class Controle {
+    +id : String
+    +type : String // identité, conformité, etc.
+    +statut : String
     +dateControle : Date
+    +details : String
 }
 
-class ControleConformite {
-    +statutDoublon : Boolean
-    +statutBlacklist : Boolean
-    +statutPPE : Boolean
-    +statutFATCA : Boolean
+' --- Contrôle paramétrable et étapes dynamiques ---
+class ControleType {
+    +id : String
+    +nom : String
+    +description : String
 }
+
+class ControleEtape {
+    +id : String
+    +nom : String
+    +ordre : int
+    +controleTypeId : String
+    +parametres : String
+}
+
+class ControleEtapeInstance {
+    +id : String
+    +controleId : String
+    +controleEtapeId : String
+    +statut : String
+    +dateDebut : Date
+    +dateFin : Date
+    +resultat : String
+    +userId : String // Who
+    +canal : String  // Where/How
+}
+
+' --- Gestion documentaire ---
+class Documentation {
+    +id : String
+    +titre : String
+    +description : String
+    +type : String // procédure, guide, politique, etc.
+    +dateCreation : Date
+    +auteur : String
+    +url : String
+}
+
+' --- Lien entre Documentation et les entités concernées ---
+Documentation "0..*" -- "0..*" Client : concerne >
+Documentation "0..*" -- "0..*" Compte : concerne >
+Documentation "0..*" -- "0..*" ControleType : concerne >
 
 ' --- Relations principales ---
 Client "1" -- "0..*" Compte : possède >
 Client "1" -- "0..*" Document : fournit >
+Client "1" -- "0..*" Actionnaire : possède >
 Compte "1" -- "0..*" Document : justificatif >
-Gestionnaire "1" -- "0..*" Compte : crée >
-Compte "1" -- "1" ControleIdentite : contrôle identité >
-Compte "1" -- "1" ControleConformite : contrôle conformité >
+Compte "1" -- "0..*" Controle : contrôle >
+Client "1" -- "0..*" Controle : contrôle >
 
 ' --- Relations opérations ---
 Client "1" -- "0..*" Preenregistrement : pré-enregistre >
 Client "1" -- "0..*" Enregistrement : enregistre >
 Client "1" -- "0..*" Modification : modifie >
-Client "1" -- "0..*" Blocage : bloque >
-Client "1" -- "0..*" Deblocage : débloque >
+Client "1" -- "0..*" ActionBlocage : action blocage >
 
 Compte "1" -- "0..*" Modification : modifie >
-Compte "1" -- "0..*" Blocage : bloque >
-Compte "1" -- "0..*" Deblocage : débloque >
+Compte "1" -- "0..*" ActionBlocage : action blocage >
 
-Gestionnaire "1" -- "0..*" Preenregistrement : initie >
-Gestionnaire "1" -- "0..*" Enregistrement : valide >
-Gestionnaire "1" -- "0..*" Modification : effectue >
-Gestionnaire "1" -- "0..*" Blocage : demande >
-Gestionnaire "1" -- "0..*" Deblocage : demande >
+' --- Relations paramétrage & workflow ---
+Client "1" -- "0..*" Parametre : paramètre >
+Compte "1" -- "0..*" Parametre : paramètre >
+Document "1" -- "1" TypeDocument : type >
 
+Workflow "1" -- "0..*" Etape : contient >
+Etape "1" -- "0..*" RegleControle : contrôle >
+Client "1" -- "0..*" ParametreDynamique : attribut dynamique >
+Compte "1" -- "0..*" ParametreDynamique : attribut dynamique >
+Compte "1" -- "0..*" ParametreDynamique : attribut dynamique >
+
+Controle "1" -- "1" ControleType : type >
+ControleType "1" -- "0..*" ControleEtape : étapes >
+Controle "1" -- "0..*" ControleEtapeInstance : exécution étape >
+ControleEtape "1" -- "0..*" ControleEtapeInstance : exécution >
+
+' --- Paramétrage des contrôles ---
+ControleEtape "1" -- "0..*" Parametre : paramètre >
+
+' --- Types de comptes ---
+class TypeCompte {
+    +code : String
+    +libelle : String
+    +description : String
+}
+
+Compte "1" -- "1" TypeCompte : type >
+
+' --- Types de clients ---
+class TypeClient {
+    +code : String
+    +libelle : String
+    +description : String
+}
+
+Client "1" -- "1" TypeClient : type >
+
+' Exemple : particulier, entreprise, association, etc.
 @enduml

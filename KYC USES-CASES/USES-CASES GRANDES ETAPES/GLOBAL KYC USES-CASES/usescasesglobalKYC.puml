@@ -7,10 +7,11 @@ skinparam usecase {
 }
 skinparam packageStyle rectangle
 skinparam linetype ortho
+left to right direction
 
-actor "Client" as Client
-actor "Gestionnaire" as Gestionnaire
-actor "Analyste conformité" as Analyste
+actor "Client" as Client #purple
+actor "Gestionnaire" as Gestionnaire #green
+actor "Analyste conformité" as Analyste #blue
 
 package "Système INTRA" as INTRA {
     usecase "Pré-enregistrer client" as Preenr
@@ -23,28 +24,31 @@ package "Système INTRA" as INTRA {
     usecase "Bloquer/Débloquer/Clôturer" as BlocDebloc
 }
 
-Client --> Preenr
-Client --> Enr
-Client --> VerifDocs
-Client --> Signature
+' Interactions Client
+Client --> Preenr #purple;text:purple
+Client --> Enr #purple;text:purple
+Client --> VerifDocs #purple;text:purple
+Client --> Signature #purple;text:purple
 
-Gestionnaire --> Preenr
-Gestionnaire --> Enr
-Gestionnaire --> VerifDocs
-Gestionnaire --> Conformite
-Gestionnaire --> CreerCompte
-Gestionnaire --> Statut
-Gestionnaire --> BlocDebloc
+' Interactions Gestionnaire
+Gestionnaire --> Preenr #green;text:green
+Gestionnaire --> Enr #green;text:green
+Gestionnaire --> VerifDocs #green;text:green
+Gestionnaire --> Conformite #green;text:green
+Gestionnaire --> CreerCompte #green;text:green
+Gestionnaire --> Statut #green;text:green
+Gestionnaire --> BlocDebloc #green;text:green
 
-Analyste --> Conformite
-Analyste --> BlocDebloc
+' Interactions Analyste conformité
+Analyste --> Conformite #blue;text:blue
+Analyste --> BlocDebloc #blue;text:blue
 
+' Relations internes (inclusions et extensions) en pointillés
 Preenr ..> VerifDocs : <<include>>
 VerifDocs ..> Conformite : <<include>>
 Conformite ..> CreerCompte : <<include>>
 CreerCompte ..> Signature : <<include>>
 Signature ..> Statut : <<include>>
-
 BlocDebloc ..> Statut : <<extend>>
 
 @enduml

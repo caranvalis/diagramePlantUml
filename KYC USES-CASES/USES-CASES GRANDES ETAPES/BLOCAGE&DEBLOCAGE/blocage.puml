@@ -27,7 +27,7 @@ Analyste -right-> DeblocClient #blue;text:blue
 Analyste -right-> DeblocCompte #blue;text:blue
 Analyste -right-> ClotureCompte #blue;text:blue
 
-BlocClient ..> IdComptes : <<include>>
+BlocClient ..> IdComptes : <<include>>  
 IdComptes ..> BlocCompte : <<include>>
 BlocClient ..> Notif : <<include>>
 BlocCompte ..> Notif : <<include>>
