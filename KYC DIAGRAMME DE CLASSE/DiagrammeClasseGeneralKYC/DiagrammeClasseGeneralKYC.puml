@@ -236,5 +236,28 @@ class TypeClient {
 
 Client "1" -- "1" TypeClient : type >
 
-' Exemple : particulier, entreprise, association, etc.
+' --- Notifications liées au contrôle ---
+class Notification {
+    +id : String
+    +dateEnvoi : Date
+    +type : String // email, sms, interne, etc.
+    +message : String
+    +destinataire : String
+    +statut : String
+}
+
+Controle "1" -- "0..*" Notification : notification >
+ControleEtapeInstance "1" -- "0..*" Notification : notification étape >
+
+' --- Statut du client ---
+class StatutClient {
+    +code : String
+    +libelle : String
+    +description : String
+    +actif : Boolean
+}
+
+Client "1" -- "1" StatutClient : statut >
+
+' Exemple : notification lors d'un changement de statut, d'une étape validée, etc.
 @enduml
