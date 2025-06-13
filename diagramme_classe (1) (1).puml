@@ -1,7 +1,22 @@
 @startuml D_KYC GEN
-' Classes principales avec tous les détails
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 30
+left to right direction
 
-class Utilisateur {
+' === Package Utilisateurs & Rôles ===
+package "Utilisateurs & Rôles" <<Rectangle>> {
+  class Utilisateur {
   - id: String
   - nom: String
   - prenom: String
@@ -27,7 +42,59 @@ class Utilisateur {
   + cloturerCompte(): void
 }
 
-class Client {
+  class Habilitation {
+  - id: String
+  - module: String
+  - fonctionnalite: String
+  - niveauAcces: NiveauAcces
+  - perimetre: String
+  - perimetreGeographique: String
+  - dateAttribution: Date
+  - dateExpiration: Date
+  - statutHabilitation: StatutHabilitation
+  - utilisateurAttributeur: String
+  - motifAttribution: String
+  - motifSuspension: String
+  - dateSuspension: Date
+  + accorderHabilitation(): void
+  + modifierHabilitation(): void
+  + suspendreHabilitation(): void
+  + reactiverHabilitation(): void
+  + verifierAcces(String module): Boolean
+  + verifierPerimetre(String ressource): Boolean
+  + prolongerValidite(): void
+  + journaliserUtilisation(): void
+}
+
+  class Role {
+  - id: String
+  - nom: String
+  - description: String
+  - categorieRole: CategorieRole
+  - statutRole: StatutRole
+  - dateCreation: Date
+  - dateModification: Date
+  - createur: String
+  - estSysteme: Boolean
+  - estModifiable: Boolean
+  - nombreUtilisateurs: Integer
+  - rolesIncompatibles: List<String>
+  - prerequisOrganisationnels: List<String>
+  + creerRole(): void
+  + modifierRole(): void
+  + suspendreRole(): void
+  + assignerUtilisateur(): void
+  + retirerUtilisateur(): void
+  + copierRole(): Role
+  + verifierCompatibilite(List<Role>): Boolean
+  + calculerImpactModification(): Rapport
+  + migrerUtilisateurs(Role): void
+}
+}
+
+' === Package Clients & Comptes ===
+package "Clients & Comptes" <<Node>> {
+  class Client {
   - id: String
   - codeClient: String
   - typeClient: TypeClient
@@ -52,7 +119,7 @@ class Client {
   + notifierChangementStatut(): void
 }
 
-class ClientParticulier {
+  class ClientParticulier {
   - nom: String
   - prenom: String
   - dateNaissance: Date
@@ -81,7 +148,7 @@ class ClientParticulier {
   + verifierExpirationCNI(): Boolean
 }
 
-class ClientEntreprise {
+  class ClientEntreprise {
   - raisonSociale: String
   - formeJuridique: String
   - numeroRCCM: String
@@ -112,28 +179,7 @@ class ClientEntreprise {
   + mettreAJourStatuts(): void
 }
 
-class Actionnaire {
-  - id: String
-  - nom: String
-  - prenom: String
-  - typePersonne: TypePersonne
-  - nationalite: String
-  - numeroPieceIdentite: String
-  - partCapital: Double
-  - pourcentageDetention: Double
-  - dateEntree: Date
-  - adresse: String
-  - telephone: String
-  - estDirigeant: Boolean
-  - fonctionDansEntreprise: String
-  + ajouterActionnaire(): void
-  + modifierPartCapital(): void
-  + supprimerActionnaire(): void
-  + mettreAJourInformations(): void
-  + verifierConformiteActionnaire(): Boolean
-}
-
-class Compte {
+  class Compte {
   - id: String
   - numeroCompte: String
   - rib: String
@@ -165,7 +211,31 @@ class Compte {
   + synchroniserAvecCBS(): Boolean
 }
 
-class Document {
+  class Actionnaire {
+  - id: String
+  - nom: String
+  - prenom: String
+  - typePersonne: TypePersonne
+  - nationalite: String
+  - numeroPieceIdentite: String
+  - partCapital: Double
+  - pourcentageDetention: Double
+  - dateEntree: Date
+  - adresse: String
+  - telephone: String
+  - estDirigeant: Boolean
+  - fonctionDansEntreprise: String
+  + ajouterActionnaire(): void
+  + modifierPartCapital(): void
+  + supprimerActionnaire(): void
+  + mettreAJourInformations(): void
+  + verifierConformiteActionnaire(): Boolean
+}
+}
+
+' === Package Documents ===
+package "Documents" <<Folder>> {
+  class Document {
   - id: String
   - nom: String
   - typeDocument: TypeDocument
@@ -201,8 +271,11 @@ class Document {
   + consulterHistorique(): List<Document>
   + restaurerVersion(Integer): Document
 }
+}
 
-class Workflow {
+' === Package Workflow & Contrôles ===
+package "Workflow & Contrôles" <<Frame>> {
+  class Workflow {
   - id: String
   - nom: String
   - description: String
@@ -231,7 +304,7 @@ class Workflow {
   + archiverWorkflow(): void
 }
 
-class InstanceWorkflow {
+  class InstanceWorkflow {
   - id: String
   - numeroInstance: String
   - etapeCourante: String
@@ -259,7 +332,7 @@ class InstanceWorkflow {
   + notifierRetard(): void
 }
 
-class PointControle {
+  class PointControle {
   - id: String
   - nom: String
   - description: String
@@ -283,56 +356,32 @@ class PointControle {
   + relancerExecution(): void
 }
 
-class Habilitation {
-  - id: String
-  - module: String
-  - fonctionnalite: String
-  - niveauAcces: NiveauAcces
-  - perimetre: String
-  - perimetreGeographique: String
-  - dateAttribution: Date
-  - dateExpiration: Date
-  - statutHabilitation: StatutHabilitation
-  - utilisateurAttributeur: String
-  - motifAttribution: String
-  - motifSuspension: String
-  - dateSuspension: Date
-  + accorderHabilitation(): void
-  + modifierHabilitation(): void
-  + suspendreHabilitation(): void
-  + reactiverHabilitation(): void
-  + verifierAcces(String module): Boolean
-  + verifierPerimetre(String ressource): Boolean
-  + prolongerValidite(): void
-  + journaliserUtilisation(): void
-}
-
-class Role {
+  class ControleConformite {
   - id: String
   - nom: String
   - description: String
-  - categorieRole: CategorieRole
-  - statutRole: StatutRole
   - dateCreation: Date
   - dateModification: Date
-  - createur: String
-  - estSysteme: Boolean
-  - estModifiable: Boolean
-  - nombreUtilisateurs: Integer
-  - rolesIncompatibles: List<String>
-  - prerequisOrganisationnels: List<String>
-  + creerRole(): void
-  + modifierRole(): void
-  + suspendreRole(): void
-  + assignerUtilisateur(): void
-  + retirerUtilisateur(): void
-  + copierRole(): Role
-  + verifierCompatibilite(List<Role>): Boolean
-  + calculerImpactModification(): Rapport
-  + migrerUtilisateurs(Role): void
+  - statut: StatutControle
+  - utilisateurCreateur: String
+  - utilisateurModificateur: String
+  - dateExecutionPrevue: Date
+  - dateExecutionReelle: Date
+  - resultat: String
+  - rapport: Document
+  + creerControle(): void
+  + modifierControle(): void
+  + supprimerControle(): void
+  + lancerControle(): void
+  + archiverControle(): void
+  + restaurerControle(): void
+  + notifierResultat(): void
+}
 }
 
-class Notification {
+' === Package Notifications & Audit ===
+package "Notifications & Audit" <<Cloud>> {
+  class Notification {
   - id: String
   - destinataire: String
   - expediteur: String
@@ -359,7 +408,7 @@ class Notification {
   + annulerEnvoi(): void
 }
 
-class Audit {
+  class Audit {
   - id: String
   - utilisateur: String
   - action: String
@@ -384,57 +433,50 @@ class Audit {
   + archiverJournaux(): void
   + purgerAnciennesEntrees(): void
 }
-
-' Énumérations principales
-enum TypeClient {
-  PARTICULIER
-  ENTREPRISE
 }
 
-enum StatutClient {
-  ACTIF
-  INACTIF
-  BLOQUE
-  SUSPENDU
+' === Grandes étapes du KYC ===
+package "Grandes étapes KYC" <<Rectangle>> {
+  class Preenregistrement {
+    +id : String
+    +date : Date
+    +canal : String
+    +initier() : void
+    +annuler() : void
+  }
+  class Enregistrement {
+    +id : String
+    +date : Date
+    +valider() : void
+    +rejeter() : void
+  }
+  class Verification {
+    +id : String
+    +date : Date
+    +typeVerification : String
+    +effectuer() : void
+    +resultat : String
+  }
+  class ValidationFinale {
+    +id : String
+    +date : Date
+    +valider() : void
+    +rejeter() : void
+  }
+  class Archivage {
+    +id : String
+    +date : Date
+    +archiver() : void
+    +restaurer() : void
+  }
 }
 
-enum StatutCompte {
-  ACTIF
-  BLOQUE
-  CLOTURE
-  SUSPENDU
-}
-
-enum TypeControle {
-  DOUBLON
-  BLACKLIST
-  PPE
-  FATCA
-  EXPIRATION_DOCUMENT
-  COMPLETUDE
-  VALIDATION_AUTOMATIQUE
-  EXAMEN_MANUEL
-}
-
-enum NiveauAcces {
-  LECTURE
-  ECRITURE
-  VALIDATION
-  ADMINISTRATION
-  SUPERVISION
-}
-
-enum TypeDocument {
-  CNI
-  PASSEPORT
-  ACTE_NAISSANCE
-  JUSTIFICATIF_DOMICILE
-  JUSTIFICATIF_REVENUS
-  RCCM
-  STATUTS
-  ATTESTATION_FISCALE
-  FORMULAIRE_FATCA
-}
+' Relations principales avec le Client
+Client --> Preenregistrement : initie
+Client --> Enregistrement : enregistre
+Client --> Verification : verifie
+Client --> ValidationFinale : valide
+Client --> Archivage : archive
 
 ' Relations avec cardinalités et noms explicites
 Utilisateur "1" -- "0..*" Client : gère

@@ -313,13 +313,18 @@ Notification ..|> INotifiable
 Notification -- TypeNotification
 Controle .. DocumentationMetier
 
-note right of Controle
-    Classe centrale pour la gestion des contrôles KYC.
-    Peut être spécialisée selon le type de contrôle.
-end note
+' --- Parcours KYC ---
 
-Parcours *-- ParcoursEtape : contient >
+
+Parcours *-- ParcoursEtape : contient 
 
 ' Optionnel : relier Parcours à Client, Compte ou Controle selon le contexte
-Client o-- Parcours : parcours en cours >
+Client o-- Parcours : parcours en cours 
+
+class ControleKYC extends AbstractControle
+class Notification implements INotifiable
+
+' Affichage de toutes les propriétés des classes (annulation du hide)
+show members
+
 @enduml
