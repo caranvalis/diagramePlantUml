@@ -1,0 +1,474 @@
+@startuml D_KYC GEN
+' Classes principales avec tous les détails
+
+class Utilisateur {
+  - id: String
+  - nom: String
+  - prenom: String
+  - email: String
+  - matricule: String
+  - agenceRattachement: String
+  - fonction: String
+  - statut: StatutUtilisateur
+  - dateCreation: Date
+  - dateExpiration: Date
+  - motDePasse: String
+  - dernierConnexion: Date
+  + seConnecter(): Boolean
+  + seDeconnecter(): void
+  + modifierProfil(): void
+  + changerMotDePasse(): void
+  + consulterHabilitations(): List<Habilitation>
+  + gererClient(): void
+  + validerDocument(): Boolean
+  + bloquerClient(): void
+  + debloquerClient(): void
+  + creerCompte(): void
+  + cloturerCompte(): void
+}
+
+class Client {
+  - id: String
+  - codeClient: String
+  - typeClient: TypeClient
+  - statut: StatutClient
+  - dateCreation: Date
+  - dateModification: Date
+  - utilisateurCreateur: String
+  - agenceCreation: String
+  - motifBlocage: String
+  - dateBlocage: Date
+  - estPPE: Boolean
+  - estFATCA: Boolean
+  - estBlacklist: Boolean
+  + creerClient(): String
+  + modifierDonnees(): void
+  + changerStatut(StatutClient): void
+  + bloquer(String motif): void
+  + debloquer(String motif): void
+  + genererFiche(): Document
+  + detecterDoublon(): Boolean
+  + verifierConformite(): Boolean
+  + notifierChangementStatut(): void
+}
+
+class ClientParticulier {
+  - nom: String
+  - prenom: String
+  - dateNaissance: Date
+  - lieuNaissance: String
+  - nationalite: String
+  - numeroCNI: String
+  - dateExpirationCNI: Date
+  - telephone: String
+  - email: String
+  - adresse: String
+  - profession: String
+  - employeur: String
+  - revenuMensuel: Double
+  - situationMatrimoniale: String
+  - nombreEnfants: Integer
+  - personneContact: String
+  - telephoneContact: String
+  + preEnregistrerViaWeb(): String
+  + saisirDonneesViaINTRA(): void
+  + importerDepuisAmplitude(): void
+  + capturerSignatureElectronique(): void
+  + genererFicheParticulier(): Document
+  + modifierDonneesParticulier(): void
+  + modifierDocumentsParticulier(): void
+  + validerIdentite(): Boolean
+  + verifierExpirationCNI(): Boolean
+}
+
+class ClientEntreprise {
+  - raisonSociale: String
+  - formeJuridique: String
+  - numeroRCCM: String
+  - dateImmatriculationRCCM: Date
+  - numeroNIF: String
+  - numeroIFU: String
+  - adresseSiege: String
+  - telephone: String
+  - email: String
+  - fax: String
+  - siteWeb: String
+  - secteurActivite: String
+  - chiffreAffaires: Double
+  - nombreEmployes: Integer
+  - dateCreationEntreprise: Date
+  - capitalSocial: Double
+  - representantLegal: String
+  - fonctionRepresentant: String
+  + preEnregistrerEntrepriseViaWeb(): String
+  + saisirDonneesEntrepriseViaINTRA(): void
+  + importerEntrepriseDepuisAmplitude(): void
+  + genererFicheEntreprise(): Document
+  + capturerSignatureRepresentant(): void
+  + modifierDonneesEntreprise(): void
+  + modifierDocumentsEntreprise(): void
+  + gererActionnariat(): void
+  + validerDocumentsJuridiques(): Boolean
+  + mettreAJourStatuts(): void
+}
+
+class Actionnaire {
+  - id: String
+  - nom: String
+  - prenom: String
+  - typePersonne: TypePersonne
+  - nationalite: String
+  - numeroPieceIdentite: String
+  - partCapital: Double
+  - pourcentageDetention: Double
+  - dateEntree: Date
+  - adresse: String
+  - telephone: String
+  - estDirigeant: Boolean
+  - fonctionDansEntreprise: String
+  + ajouterActionnaire(): void
+  + modifierPartCapital(): void
+  + supprimerActionnaire(): void
+  + mettreAJourInformations(): void
+  + verifierConformiteActionnaire(): Boolean
+}
+
+class Compte {
+  - id: String
+  - numeroCompte: String
+  - rib: String
+  - codeAgence: String
+  - typeCompte: TypeCompte
+  - libelleCompte: String
+  - statut: StatutCompte
+  - dateCreation: Date
+  - dateOuverture: Date
+  - dateClotureLogique: Date
+  - dateCloturePhysique: Date
+  - soldeInitial: Double
+  - deviseCompte: String
+  - motifCloture: String
+  - motifBlocage: String
+  - dateBlocage: Date
+  + creerCompteDansCBS(): String
+  + genererNumeroCompte(): String
+  + genererRIB(): String
+  + delivrerRIBImpression(): void
+  + delivrerRIBEmail(): void
+  + delivrerRIBSMS(): void
+  + bloquerCompte(String motif): void
+  + debloquerCompte(String motif): void
+  + cloturerCompteDansCBS(): void
+  + notifierCloture(): void
+  + notifierBlocage(): void
+  + notifierDeblocage(): void
+  + synchroniserAvecCBS(): Boolean
+}
+
+class Document {
+  - id: String
+  - nom: String
+  - typeDocument: TypeDocument
+  - categorieDocument: String
+  - format: String
+  - taille: Long
+  - cheminFichier: String
+  - cheminArchivage: String
+  - codeClassification: String
+  - version: Integer
+  - versionActive: Boolean
+  - statut: StatutDocument
+  - dateUpload: Date
+  - dateExpiration: Date
+  - dateArchivage: Date
+  - utilisateurUpload: String
+  - commentaireVersion: String
+  - checksum: String
+  - estObligatoire: Boolean
+  - estExpire: Boolean
+  - estValide: Boolean
+  + telechargerDocument(): void
+  + validerAutomatiquement(): Boolean
+  + validerManuellement(): Boolean
+  + verifierExpiration(): Boolean
+  + verifierCompletude(): Boolean
+  + verifierFormat(): Boolean
+  + versioner(): Document
+  + archiverDocument(): void
+  + archiverPhysiquement(): void
+  + genererCodeClassification(): String
+  + creerArborescenceArchivage(): void
+  + consulterHistorique(): List<Document>
+  + restaurerVersion(Integer): Document
+}
+
+class Workflow {
+  - id: String
+  - nom: String
+  - description: String
+  - version: String
+  - typeWorkflow: TypeWorkflow
+  - typeClientCible: TypeClient
+  - statut: StatutWorkflow
+  - dateCreation: Date
+  - dateActivation: Date
+  - dateDesactivation: Date
+  - createur: String
+  - nombreEtapes: Integer
+  - dureeEstimee: Integer
+  - estParallele: Boolean
+  + demarrerInstanceWorkflow(): InstanceWorkflow
+  + modifierParcours(): void
+  + desactiverWorkflow(): void
+  + ajouterPointControle(): void
+  + retirerPointControle(): void
+  + ajouterEtape(): void
+  + supprimerEtape(): void
+  + definirSequencement(): void
+  + configurerParallelisation(): void
+  + testerWorkflow(): Boolean
+  + publierWorkflow(): void
+  + archiverWorkflow(): void
+}
+
+class InstanceWorkflow {
+  - id: String
+  - numeroInstance: String
+  - etapeCourante: String
+  - statutInstance: StatutInstance
+  - dateDebut: Date
+  - dateFin: Date
+  - tempsEcoule: Duration
+  - tempsRestantEstime: Duration
+  - priorite: Integer
+  - responsableActuel: String
+  - historiqueEtapes: String
+  - pointsBlocants: String
+  - commentaires: String
+  + avancerEtape(): void
+  + reculerEtape(): void
+  + suspendreInstance(): void
+  + reprendreInstance(): void
+  + terminerInstance(): void
+  + annulerInstance(): void
+  + reassignerResponsable(String): void
+  + ajouterCommentaire(String): void
+  + genererRapportAvancement(): Rapport
+  + calculerTempsRestant(): Duration
+  + detecterPointsBlocants(): List<String>
+  + notifierRetard(): void
+}
+
+class PointControle {
+  - id: String
+  - nom: String
+  - description: String
+  - etapeWorkflow: String
+  - regleAppliquee: String
+  - conditionActivation: String
+  - parametresExecution: String
+  - statutPointControle: StatutPointControle
+  - ordreExecution: Integer
+  - estObligatoire: Boolean
+  - estBloquant: Boolean
+  - timeoutExecution: Integer
+  - nombreTentatives: Integer
+  + executerPointControle(): Boolean
+  + configurerParametres(): void
+  + activerPointControle(): void
+  + desactiverPointControle(): void
+  + testerExecution(): Boolean
+  + journaliserExecution(): void
+  + gererEchec(): void
+  + relancerExecution(): void
+}
+
+class Habilitation {
+  - id: String
+  - module: String
+  - fonctionnalite: String
+  - niveauAcces: NiveauAcces
+  - perimetre: String
+  - perimetreGeographique: String
+  - dateAttribution: Date
+  - dateExpiration: Date
+  - statutHabilitation: StatutHabilitation
+  - utilisateurAttributeur: String
+  - motifAttribution: String
+  - motifSuspension: String
+  - dateSuspension: Date
+  + accorderHabilitation(): void
+  + modifierHabilitation(): void
+  + suspendreHabilitation(): void
+  + reactiverHabilitation(): void
+  + verifierAcces(String module): Boolean
+  + verifierPerimetre(String ressource): Boolean
+  + prolongerValidite(): void
+  + journaliserUtilisation(): void
+}
+
+class Role {
+  - id: String
+  - nom: String
+  - description: String
+  - categorieRole: CategorieRole
+  - statutRole: StatutRole
+  - dateCreation: Date
+  - dateModification: Date
+  - createur: String
+  - estSysteme: Boolean
+  - estModifiable: Boolean
+  - nombreUtilisateurs: Integer
+  - rolesIncompatibles: List<String>
+  - prerequisOrganisationnels: List<String>
+  + creerRole(): void
+  + modifierRole(): void
+  + suspendreRole(): void
+  + assignerUtilisateur(): void
+  + retirerUtilisateur(): void
+  + copierRole(): Role
+  + verifierCompatibilite(List<Role>): Boolean
+  + calculerImpactModification(): Rapport
+  + migrerUtilisateurs(Role): void
+}
+
+class Notification {
+  - id: String
+  - destinataire: String
+  - expediteur: String
+  - sujet: String
+  - contenu: String
+  - canalNotification: CanalNotification
+  - priorite: Integer
+  - statutNotification: StatutNotification
+  - dateCreation: Date
+  - dateEnvoi: Date
+  - dateLecture: Date
+  - nombreTentatives: Integer
+  - motifEchec: String
+  - estLue: Boolean
+  - estArchivee: Boolean
+  + creerNotification(): void
+  + envoyerEmail(): Boolean
+  + envoyerSMS(): Boolean
+  + envoyerAlerteSysteme(): Boolean
+  + marquerCommelue(): void
+  + reessayerEnvoi(): void
+  + archiverNotification(): void
+  + planifierEnvoi(Date): void
+  + annulerEnvoi(): void
+}
+
+class Audit {
+  - id: String
+  - utilisateur: String
+  - action: String
+  - module: String
+  - ressourceAccedee: String
+  - dateAction: Date
+  - heureAction: Time
+  - adresseIP: String
+  - userAgent: String
+  - sessionId: String
+  - statutAction: String
+  - detailsAction: String
+  - valeursAvant: String
+  - valeursApres: String
+  - dureeAction: Long
+  + journaliserAction(): void
+  + consulterJournal(): List<Audit>
+  + filtrerJournal(): List<Audit>
+  + exporterJournal(): Rapport
+  + detecterAnomalies(): List<Audit>
+  + genererRapportActivite(): Rapport
+  + archiverJournaux(): void
+  + purgerAnciennesEntrees(): void
+}
+
+' Énumérations principales
+enum TypeClient {
+  PARTICULIER
+  ENTREPRISE
+}
+
+enum StatutClient {
+  ACTIF
+  INACTIF
+  BLOQUE
+  SUSPENDU
+}
+
+enum StatutCompte {
+  ACTIF
+  BLOQUE
+  CLOTURE
+  SUSPENDU
+}
+
+enum TypeControle {
+  DOUBLON
+  BLACKLIST
+  PPE
+  FATCA
+  EXPIRATION_DOCUMENT
+  COMPLETUDE
+  VALIDATION_AUTOMATIQUE
+  EXAMEN_MANUEL
+}
+
+enum NiveauAcces {
+  LECTURE
+  ECRITURE
+  VALIDATION
+  ADMINISTRATION
+  SUPERVISION
+}
+
+enum TypeDocument {
+  CNI
+  PASSEPORT
+  ACTE_NAISSANCE
+  JUSTIFICATIF_DOMICILE
+  JUSTIFICATIF_REVENUS
+  RCCM
+  STATUTS
+  ATTESTATION_FISCALE
+  FORMULAIRE_FATCA
+}
+
+' Relations avec cardinalités et noms explicites
+Utilisateur "1" -- "0..*" Client : gère
+Utilisateur "1" -- "0..*" Document : manipule
+Utilisateur "1" -- "0..*" Workflow : configure
+Utilisateur "1" -- "0..*" Habilitation : possède
+Utilisateur "1" -- "0..*" Role : a_assigné
+Utilisateur "1" -- "0..*" Audit : génère
+Utilisateur "1" -- "0..*" Notification : reçoit
+
+Client "1" -- "1..*" Compte : possède
+Client "1" -- "1..*" Document : fournit
+Client "1" -- "0..*" ControleConformite : fait_lobjet_de
+Client "1" -- "1" InstanceWorkflow : traité_par
+
+ClientParticulier --|> Client : hérite
+ClientEntreprise --|> Client : hérite
+
+ClientEntreprise "1" -- "1..*" Actionnaire : comprend
+
+Document "1" -- "0..*" ControleConformite : subit
+Document "1" -- "0..*" Audit : tracé_par
+
+Compte "1" -- "0..*" Notification : déclenche
+
+Workflow "1" -- "0..*" InstanceWorkflow : instancie
+Workflow "1" -- "1..*" PointControle : contient
+
+InstanceWorkflow "1" -- "0..*" ControleConformite : exécute
+
+PointControle "1" -- "0..*" ControleConformite : déclenche
+
+ControleConformite "1" -- "0..*" Notification : génère
+
+Role "1" -- "0..*" Habilitation : contient
+
+@enduml
