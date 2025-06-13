@@ -59,10 +59,10 @@ class Profile {
     +description : String
 }
 
-User "1" -- "1..*" Role : appartient >
-Role "1" -- "0..*" Profile : définit >
-User "1" -- "0..*" Client : gère >
-User "1" -- "0..*" Parametre : paramètre >
+User "1" -- "1..*" Role : appartient 
+Role "1" -- "0..*" Profile : définit 
+User "1" -- "0..*" Client : gère 
+User "1" -- "0..*" Parametre : paramètre 
 
 ' --- Paramétrage & Workflow ---
 class Parametre {
@@ -178,52 +178,52 @@ class Documentation {
 }
 
 ' --- Lien entre Documentation et les entités concernées ---
-Documentation "0..*" -- "0..*" Client : concerne >
-Documentation "0..*" -- "0..*" Compte : concerne >
-Documentation "0..*" -- "0..*" ControleType : concerne >
+Documentation "0..*" -- "0..*" Client : concerne 
+Documentation "0..*" -- "0..*" Compte : concerne 
+Documentation "0..*" -- "0..*" ControleType : concerne 
 
 ' --- Relations principales (avec types UML) ---
-Client *-- Compte : possède >                ' Composition : un compte n'existe que pour un client
-Client o-- Actionnaire : possède >           ' Agrégation : un actionnaire peut exister sans client
-Compte o-- TypeCompte : type >               ' Agrégation : un type de compte peut exister sans compte
-Client o-- TypeClient : type >               ' Agrégation : un type de client peut exister sans client
-Compte o-- Document : justificatif >         ' Agrégation
-Client o-- Document : fournit >              ' Agrégation
-Compte o-- Controle : contrôle >             ' Agrégation
-Client o-- Controle : contrôle >             ' Agrégation
+Client *-- Compte : possède                 
+Client o-- Actionnaire : possède          
+Compte o-- TypeCompte : type               
+Client o-- TypeClient : type 
+Compte o-- Document : justificatif 
+Client o-- Document : fournit 
+Compte o-- Controle : contrôle 
+Client o-- Controle : contrôle 
 
 ' --- Héritage (exemple) ---
 Document <|-- TypeDocument : type
 
 ' --- Dépendances (faibles) ---
-Client ..> ParametreDynamique : attribut dynamique >
-Compte ..> ParametreDynamique : attribut dynamique >
+Client ..> ParametreDynamique : attribut dynamique 
+Compte ..> ParametreDynamique : attribut dynamique 
 
 ' --- Dépendances fortes (utilisation) ---
-Client --> Preenregistrement : pré-enregistre >
-Client --> Enregistrement : enregistre >
-Client --> Modification : modifie >
-Client --> ActionBlocage : action blocage >
-Compte --> Modification : modifie >
-Compte --> ActionBlocage : action blocage >
+Client --> Preenregistrement : pré-enregistre 
+Client --> Enregistrement : enregistre 
+Client --> Modification : modifie 
+Client --> ActionBlocage : action blocage 
+Compte --> Modification : modifie 
+Compte --> ActionBlocage : action blocage 
 
 ' --- Paramétrage & workflow ---
-Workflow *-- Etape : contient >              ' Composition
-Etape o-- RegleControle : contrôle >         ' Agrégation
+Workflow *-- Etape : contient 
+Etape o-- RegleControle : contrôle 
 
 ' --- Contrôle paramétrable ---
-Controle "1" -- "1" ControleType : type >
-ControleType *-- ControleEtape : étapes >    ' Composition
-Controle o-- ControleEtapeInstance : exécution étape > ' Agrégation
-ControleEtape o-- ControleEtapeInstance : exécution >  ' Agrégation
-ControleEtape ..> Parametre : paramètre >    ' Dépendance faible
+Controle "1" -- "1" ControleType : type 
+ControleType *-- ControleEtape : étapes 
+Controle o-- ControleEtapeInstance : exécution étape 
+ControleEtape o-- ControleEtapeInstance : exécution 
+ControleEtape ..> Parametre : paramètre 
 
 ' --- Notifications ---
-Controle o-- Notification : notification >    ' Agrégation
-ControleEtapeInstance o-- Notification : notification étape > ' Agrégation
+Controle o-- Notification : notification 
+ControleEtapeInstance o-- Notification : notification étape 
 
 ' --- Statut du client ---
-Client o-- StatutClient : statut >           ' Agrégation
+Client o-- StatutClient : statut            
 
 ' Exemple : notification lors d'un changement de statut, d'une étape validée, etc.
 
@@ -250,7 +250,7 @@ Notification -- TypeNotification
 Controle .. DocumentationMetier
 
 note right of Controle
-  Classe centrale pour la gestion des contrôles KYC.
-  Peut être spécialisée selon le type de contrôle.
+    Classe centrale pour la gestion des contrôles KYC.
+    Peut être spécialisée selon le type de contrôle.
 end note
 @enduml
