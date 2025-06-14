@@ -1,33 +1,147 @@
-@startuml UC037
-skinparam actorStyle awesome
+@startuml
+!theme aws-orange
+title Blocage temporaire compte
 
-actor "Analyste conformité" as Analyste
-participant "Système KYC" as Système
-database "Journal Audit" as Journal
+' === ACTEURS ===
+actor "Client" as client #lightblue
+actor "Agent Bancaire" as agent #lightgreen
+actor "Administrateur KYC" as admin #orange
 
-== Retrait d'opposition (Déblocage) ==
+' === INTERFACES ===
+participant "Interface Client" as ui_client #lightblue
+participant "Interface Agent" as ui_agent #lightgreen
+participant "Interface Admin" as ui_admin #orange
 
-Analyste -> Système : Accède à la fiche client
-activate Analyste
-activate Système
-Système -> Système : Charge données client
-Système --> Analyste : Affiche fiche client
-Analyste -> Système : Sélectionne "Retirer opposition"
-Analyste -> Système : Saisit le motif du déblocage
+' === API GATEWAY ===
+participant "API Gateway KYC" as gateway #gold
 
-alt Client déjà actif
-    Système -> Analyste : Affiche message "Client déjà actif"
-else Base inaccessible
-    Système -> Analyste : Message d’alerte technique
-else Succès
-    Système -> Système : Valide l’opération
-    Système -> Système : Met à jour le statut à "Actif"
-    Système -> Journal : Trace de l’action (motif, date, utilisateur)
-    activate Journal
-    Journal -> Système : Enregistre les détails du déblocage
-    deactivate Journal
-    Système -> Analyste : Affiche message de succès
-    Système -> Analyste : Affiche boîte de dialogue "Succès"
+' === ORCHESTRATION ===
+participant "Orchestrateur KYC" as orchestrator #red
+
+' === SERVICES MÉTIER ===
+participant "Service Client" as svc_client #lightblue
+participant "Service Compte" as svc_compte #lightgreen
+participant "Service Document" as svc_document #lightyellow
+participant "Service Contrôle" as svc_controle #orange
+participant "Service Validation" as svc_validation #lightcoral
+
+' === SERVICES TECHNIQUES ===
+participant "Service Auth" as svc_auth #lightgray
+participant "Service Notification" as svc_notification #lightcyan
+participant "Service Audit" as svc_audit #lightpink
+participant "Service Cache" as svc_cache #lavender
+
+' === INFRASTRUCTURE ===
+database "Base KYC" as db_kyc #yellow
+database "Base Audit" as db_audit #lightyellow
+database "Cache Redis" as cache_redis #lightcyan
+queue "Queue Events" as queue #lightgray
+
+' === SÉQUENCE PRINCIPALE ===
+activate client
+client -> ui_client : Finalisation onboarding client
+activate ui_client
+
+ui_client -> gateway : Requête Blocage temporaire compte
+activate gateway
+
+gateway -> svc_auth : Vérifier authentification
+activate svc_auth
+svc_auth -> db_kyc : Valider token
+svc_auth --> gateway : Token valide
+deactivate svc_auth
+
+gateway -> orchestrator : Orchestrer Blocage temporaire compte
+activate orchestrator
+
+' === GESTION DU CACHE ===
+orchestrator -> svc_cache : Vérifier cache
+activate svc_cache
+svc_cache -> cache_redis : Get données
+alt Cache hit
+    cache_redis --> svc_cache : Données en cache
+    svc_cache --> orchestrator : Données disponibles
+else Cache miss
+    svc_cache --> orchestrator : Cache vide
+    deactivate svc_cache
+    
+    ' === LOGIQUE MÉTIER ===
+    orchestrator -> svc_client : Traiter demande client
+    activate svc_client
+    svc_client -> db_kyc : Lire/Écrire données client
+    svc_client --> orchestrator : Résultat Blocage temporaire compte
+    deactivate svc_client
+    
+    orchestrator -> svc_compte : Mise à jour compte
+    activate svc_compte
+    svc_compte -> db_kyc : Mettre à jour statut
+    svc_compte --> orchestrator : Compte mis à jour
+    deactivate svc_compte
+    
+    orchestrator -> svc_document : Gestion documents
+    activate svc_document
+    svc_document -> db_kyc : Sauvegarder documents
+    svc_document --> orchestrator : Documents traités
+    deactivate svc_document
+    
+    orchestrator -> svc_controle : Contrôles KYC
+    activate svc_controle
+    svc_controle -> db_kyc : Vérifier conformité
+    svc_controle --> orchestrator : Contrôles effectués
+    deactivate svc_controle
+    
+    orchestrator -> svc_validation : Validation finale
+    activate svc_validation
+    svc_validation -> db_kyc : Finaliser processus
+    svc_validation --> orchestrator : Validation terminée
+    deactivate svc_validation
+    
+    ' === MISE À JOUR DU CACHE ===
+    orchestrator -> svc_cache : Mettre à jour cache
+    activate svc_cache
+    svc_cache -> cache_redis : Set nouvelles données
+    deactivate svc_cache
 end
+
+' === AUDIT ET NOTIFICATION ===
+orchestrator -> svc_audit : Enregistrer audit
+activate svc_audit
+svc_audit -> db_audit : Log opération
+svc_audit -> queue : Publier événement
+deactivate svc_audit
+
+orchestrator -> svc_notification : Envoyer notification
+activate svc_notification
+svc_notification -> queue : Publier notification
+deactivate svc_notification
+
+orchestrator --> gateway : Résultat Blocage temporaire compte
+deactivate orchestrator
+
+gateway --> ui_client : Réponse Blocage temporaire compte
+deactivate gateway
+
+ui_client --> client : Confirmation Blocage temporaire compte
+deactivate ui_client
+deactivate client
+
+' === GESTION D'ERREURS ===
+note over orchestrator, svc_validation
+  Gestion d'erreurs standardisée :
+  - Timeout : 30s par service
+  - Retry : 3 tentatives avec backoff
+  - Circuit breaker sur échecs
+  - Logs détaillés pour debugging
+end note
+
+' === CONFORMITÉ RÉGLEMENTAIRE ===
+note over svc_audit, db_audit
+  Traçabilité complète :
+  - Horodatage précis
+  - Identification utilisateur
+  - Actions effectuées
+  - Données modifiées
+  - Conformité RGPD/AML
+end note
 
 @enduml

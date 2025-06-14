@@ -1,0 +1,104 @@
+@startgantt
+!theme aws-orange
+title Planification Projet KYC - Architecture Complète
+
+Project starts 2025-01-01
+
+' === PHASE 1: ANALYSE ET CONCEPTION ===
+[Analyse besoins KYC] starts 2025-01-01 and lasts 15 days
+[Analyse besoins KYC] is colored in Blue
+
+[Conception architecture] starts 2025-01-16 and lasts 20 days
+[Conception architecture] is colored in Blue
+
+[Modélisation UML] starts 2025-02-05 and lasts 25 days
+[Modélisation UML] is colored in Blue
+
+' === PHASE 2: DÉVELOPPEMENT SERVICES ===
+[Développement API Gateway] starts 2025-03-02 and lasts 30 days
+[Développement API Gateway] is colored in Green
+
+[Développement Orchestrateur] starts 2025-03-02 and lasts 35 days
+[Développement Orchestrateur] is colored in Green
+
+[Services Métier Core] starts 2025-03-15 and lasts 40 days
+[Services Métier Core] is colored in Green
+
+[Services Techniques] starts 2025-04-01 and lasts 30 days
+[Services Techniques] is colored in Green
+
+' === PHASE 3: INFRASTRUCTURE ===
+[Setup Infrastructure] starts 2025-03-01 and lasts 20 days
+[Setup Infrastructure] is colored in Purple
+
+[Configuration BDD] starts 2025-03-21 and lasts 15 days
+[Configuration BDD] is colored in Purple
+
+[Mise en place Cache] starts 2025-04-05 and lasts 10 days
+[Mise en place Cache] is colored in Purple
+
+[Configuration Queue] starts 2025-04-15 and lasts 8 days
+[Configuration Queue] is colored in Purple
+
+' === PHASE 4: TESTS ===
+[Tests Unitaires] starts 2025-04-20 and lasts 20 days
+[Tests Unitaires] is colored in Yellow
+
+[Tests Intégration] starts 2025-05-10 and lasts 25 days
+[Tests Intégration] is colored in Yellow
+
+[Tests End-to-End] starts 2025-06-04 and lasts 20 days
+[Tests End-to-End] is colored in Yellow
+
+[Tests Performance] starts 2025-06-24 and lasts 15 days
+[Tests Performance] is colored in Red
+
+' === PHASE 5: DÉPLOIEMENT ===
+[Préparation Prod] starts 2025-07-09 and lasts 10 days
+[Préparation Prod] is colored in Purple
+
+[Déploiement UAT] starts 2025-07-19 and lasts 7 days
+[Déploiement UAT] is colored in Purple
+
+[Tests UAT] starts 2025-07-26 and lasts 14 days
+[Tests UAT] is colored in Yellow
+
+[Déploiement Production] starts 2025-08-09 and lasts 5 days
+[Déploiement Production] is colored in Red
+
+' === PHASE 6: SUPPORT ET MAINTENANCE ===
+[Formation Équipes] starts 2025-08-14 and lasts 10 days
+[Formation Équipes] is colored in Green
+
+[Documentation Finale] starts 2025-08-24 and lasts 7 days
+[Documentation Finale] is colored in Blue
+
+[Support Go-Live] starts 2025-08-31 and lasts 30 days
+[Support Go-Live] is colored in Red
+
+' === JALONS CRITIQUES ===
+[Validation Architecture] happens 2025-03-01
+[Validation Architecture] is colored in Red
+
+[Livraison MVP] happens 2025-05-01
+[Livraison MVP] is colored in Red
+
+[Go-Live Production] happens 2025-08-14
+[Go-Live Production] is colored in Red
+
+' === DÉPENDANCES ===
+[Conception architecture] starts after [Analyse besoins KYC]'s end
+[Modélisation UML] starts after [Conception architecture]'s end
+[Développement API Gateway] starts after [Validation Architecture]
+[Développement Orchestrateur] starts after [Validation Architecture]
+[Services Métier Core] starts after [Développement API Gateway]'s end
+[Services Techniques] starts after [Services Métier Core]'s end
+[Configuration BDD] starts after [Setup Infrastructure]'s end
+[Tests Unitaires] starts after [Services Techniques]'s end
+[Tests Intégration] starts after [Tests Unitaires]'s end
+[Tests End-to-End] starts after [Tests Intégration]'s end
+[Déploiement UAT] starts after [Préparation Prod]'s end
+[Tests UAT] starts after [Déploiement UAT]'s end
+[Déploiement Production] starts after [Tests UAT]'s end
+
+@endgantt

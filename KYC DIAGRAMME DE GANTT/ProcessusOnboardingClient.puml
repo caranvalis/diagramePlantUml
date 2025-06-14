@@ -1,0 +1,88 @@
+@startgantt
+!theme aws-orange
+title Processus Onboarding Client KYC
+
+Project starts 2025-06-01
+
+' === PHASE 1: PRÉ-ENREGISTREMENT ===
+[Saisie informations client] starts 2025-06-01 and lasts 1 days
+[Saisie informations client] is colored in Blue
+
+[Vérification identité] starts 2025-06-02 and lasts 2 days
+[Vérification identité] is colored in Blue
+
+[Validation données] starts 2025-06-04 and lasts 1 days
+[Validation données] is colored in Green
+
+' === PHASE 2: COLLECTE DOCUMENTS ===
+[Upload documents] starts 2025-06-05 and lasts 2 days
+[Upload documents] is colored in Yellow
+
+[Contrôle qualité docs] starts 2025-06-07 and lasts 3 days
+[Contrôle qualité docs] is colored in Yellow
+
+[Validation documents] starts 2025-06-10 and lasts 2 days
+[Validation documents] is colored in Green
+
+' === PHASE 3: CONTRÔLES KYC ===
+[Contrôle anti-blanchiment] starts 2025-06-12 and lasts 2 days
+[Contrôle anti-blanchiment] is colored in Red
+
+[Vérification listes sanctions] starts 2025-06-12 and lasts 1 days
+[Vérification listes sanctions] is colored in Red
+
+[Évaluation risque client] starts 2025-06-14 and lasts 2 days
+[Évaluation risque client] is colored in Orange
+
+[Contrôle PEP] starts 2025-06-14 and lasts 1 days
+[Contrôle PEP] is colored in Red
+
+' === PHASE 4: VALIDATION FINALE ===
+[Revue dossier complet] starts 2025-06-16 and lasts 2 days
+[Revue dossier complet] is colored in Blue
+
+[Approbation finale] starts 2025-06-18 and lasts 1 days
+[Approbation finale] is colored in Green
+
+[Création compte CBS] starts 2025-06-19 and lasts 1 days
+[Création compte CBS] is colored in Purple
+
+' === PHASE 5: ACTIVATION ===
+[Signature électronique] starts 2025-06-20 and lasts 1 days
+[Signature électronique] is colored in Green
+
+[Activation services] starts 2025-06-21 and lasts 1 days
+[Activation services] is colored in Purple
+
+[Notification client] starts 2025-06-22 and lasts 1 days
+[Notification client] is colored in Blue
+
+' === JALONS CRITIQUES ===
+[Validation Identité] happens 2025-06-04
+[Validation Identité] is colored in Red
+
+[Documents Complets] happens 2025-06-12
+[Documents Complets] is colored in Red
+
+[Contrôles Passés] happens 2025-06-16
+[Contrôles Passés] is colored in Red
+
+[Compte Activé] happens 2025-06-22
+[Compte Activé] is colored in Green
+
+' === DÉPENDANCES ===
+[Vérification identité] starts after [Saisie informations client]'s end
+[Validation données] starts after [Vérification identité]'s end
+[Upload documents] starts after [Validation données]'s end
+[Contrôle qualité docs] starts after [Upload documents]'s end
+[Validation documents] starts after [Contrôle qualité docs]'s end
+[Contrôle anti-blanchiment] starts after [Validation documents]'s end
+[Évaluation risque client] starts after [Contrôle anti-blanchiment]'s end
+[Revue dossier complet] starts after [Évaluation risque client]'s end and after [Contrôle PEP]'s end
+[Approbation finale] starts after [Revue dossier complet]'s end
+[Création compte CBS] starts after [Approbation finale]'s end
+[Signature électronique] starts after [Création compte CBS]'s end
+[Activation services] starts after [Signature électronique]'s end
+[Notification client] starts after [Activation services]'s end
+
+@endgantt

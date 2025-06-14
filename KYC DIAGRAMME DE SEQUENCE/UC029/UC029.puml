@@ -1,45 +1,273 @@
 @startuml UC029
+!theme superhero-outline
+skinparam backgroundColor #1e1e1e
 skinparam actorStyle awesome
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
 
-actor "Gestionnaire" as Gestionnaire
-participant "Système KYC" as KYC
-participant "Base Blacklist API" as BlacklistAPI
+title <color:#4a90e2>UC029 - Vérification Multi-Sources des Listes Noires et Sanctions</color>
 
-== Scénario Nominal ==
-KYC -> BlacklistAPI : Requête de vérification du client
-activate KYC
-activate BlacklistAPI
-BlacklistAPI -> KYC : Résultat de la vérification (match ou non)
-KYC -> KYC : Analyse du résultat de la vérification
-BlacklistAPI --> KYC : Résultat (match ou non)
-deactivate BlacklistAPI
-alt Correspondance trouvée
-    KYC -> KYC : Marquage "Blacklisté"
-    KYC -> Gestionnaire : Alerte
-    activate Gestionnaire
-    Gestionnaire -> KYC : Confirmation de la suspension
+' Acteurs
+actor "<color:#ff6b6b>Gestionnaire KYC</color>" as Gestionnaire
+actor "<color:#ff9ff3>Analyste Conformité</color>" as Analyste
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Blacklist</color>" as BlacklistService
+participant "<color:#96ceb4>Service Sanctions</color>" as SanctionsService
+participant "<color:#96ceb4>Service Scoring</color>" as ScoringService
+participant "<color:#96ceb4>Service PEP</color>" as PEPService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+participant "<color:#9c88ff>Service Monitoring</color>" as MonitoringService
+
+' APIs Externes
+participant "<color:#ffa726>API OFAC</color>" as OFACAPI
+participant "<color:#ffa726>API Union Européenne</color>" as EUAPI
+participant "<color:#ffa726>API ONU</color>" as UNAPI
+participant "<color:#ffa726>API ACPR</color>" as ACPRAPI
+participant "<color:#ffa726>API World-Check</color>" as WorldCheckAPI
+
+' Infrastructure
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+database "<color:#5f27cd>Cache Blacklist</color>" as BlacklistCache
+
+== Déclenchement de la Vérification ==
+
+note over Orchestrator : <color:#ffa726>Déclenchement automatique lors de :</color>\n<color:#ffa726>• Création nouveau client</color>\n<color:#ffa726>• Mise à jour données client</color>\n<color:#ffa726>• Vérification périodique</color>
+
+Orchestrator -> BlacklistService : <color:#96ceb4>Vérifier client contre toutes les listes [CLIENT_ID]</color>
+activate Orchestrator
+activate BlacklistService
+
+BlacklistService -> AuditService : <color:#feca57>Log début vérification blacklist</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début + données client
+AuditService --> BlacklistService : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Vérification Cache ==
+
+BlacklistService -> CacheService : <color:#54a0ff>Vérifier cache récent client</color>
+activate CacheService
+
+CacheService -> BlacklistCache : <color:#5f27cd>SELECT * FROM blacklist_cache WHERE client_id=? AND created_at > NOW() - INTERVAL 24 HOUR</color>
+activate BlacklistCache
+
+alt <color:#00ff00>Cache valide trouvé</color>
+    BlacklistCache --> CacheService : <color:#00d2d3>Résultats cache (< 24h)</color>
+    CacheService --> BlacklistService : <color:#54a0ff>Résultats en cache</color>
     
-    KYC -> KYC : Suspension du processus
-else Pas de correspondance
-    KYC -> KYC : Validation OK
-end
-
-== Scénario alternatif 1a ==
-alt API non disponible
-    KYC -> Gestionnaire : Alerte technique (API injoignable)
-
-end
-
-== Scénario alternatif 3a ==
-alt Correspondance incertaine
-    KYC -> Gestionnaire : Demande de vérification manuelle
+    BlacklistService -> AuditService : <color:#feca57>Log utilisation cache</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre cache hit
+    deactivate AuditService
     
-    Gestionnaire -> KYC : Confirmation de la vérification manuelle
-    KYC -> KYC : Mise à jour du statut du client
-else Correspondance claire
-    KYC -> KYC : Mise à jour du statut du client
-    KYC -> Gestionnaire : Notification de conformité
-    deactivate Gestionnaire
-    deactivate KYC    
+    BlacklistService --> Orchestrator : <color:#00ff00>Résultats cache validés</color>
+    
+else <color:#ff6348>Cache expiré ou absent</color>
+    BlacklistCache --> CacheService : <color:#ff6348>Pas de cache valide</color>
+    deactivate BlacklistCache
+    CacheService --> BlacklistService : <color:#ff6348>Vérification APIs requise</color>
+    deactivate CacheService
+    
+    == Vérifications Multi-Sources ==
+    
+    note over BlacklistService : <color:#ffa726>**VÉRIFICATION SÉQUENTIELLE :**</color>\n<color:#ffa726>Interrogation de toutes les sources</color>\n<color:#ffa726>avec gestion d'erreur robuste</color>
+    
+    BlacklistService -> MonitoringService : <color:#9c88ff>Monitor APIs disponibles</color>
+    activate MonitoringService
+    MonitoringService --> BlacklistService : <color:#00d2d3>Status APIs vérifié</color>
+    deactivate MonitoringService
+    
+    == Vérification OFAC (USA) ==
+    BlacklistService -> OFACAPI : <color:#ffa726>Recherche sanctions US</color>
+    activate OFACAPI
+    
+    alt <color:#ff6b6b>API OFAC indisponible</color>
+        OFACAPI --> BlacklistService : <color:#ff6b6b>Timeout/Erreur</color>
+        BlacklistService -> AuditService : <color:#feca57>Log indisponibilité OFAC</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre incident API
+        deactivate AuditService
+        
+    else <color:#00ff00>Résultat OFAC reçu</color>
+        OFACAPI --> BlacklistService : <color:#00ff00>Résultat OFAC + score match</color>
+    end
+    deactivate OFACAPI
+    
+    == Vérification Union Européenne ==
+    BlacklistService -> EUAPI : <color:#ffa726>Recherche sanctions UE</color>
+    activate EUAPI
+    
+    alt <color:#ff6b6b>API UE indisponible</color>
+        EUAPI --> BlacklistService : <color:#ff6b6b>Erreur UE</color>
+        BlacklistService -> AuditService : <color:#feca57>Log indisponibilité UE</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre incident
+        deactivate AuditService
+        
+    else <color:#00ff00>Résultat UE reçu</color>
+        EUAPI --> BlacklistService : <color:#00ff00>Résultat UE + détails</color>
+    end
+    deactivate EUAPI
+    
+    == Vérification ONU ==
+    BlacklistService -> UNAPI : <color:#ffa726>Recherche sanctions ONU</color>
+    activate UNAPI
+    UNAPI --> BlacklistService : <color:#00ff00>Résultat ONU</color>
+    deactivate UNAPI
+    
+    == Vérification ACPR (France) ==
+    BlacklistService -> ACPRAPI : <color:#ffa726>Recherche sanctions France</color>
+    activate ACPRAPI
+    ACPRAPI --> BlacklistService : <color:#00ff00>Résultat ACPR</color>
+    deactivate ACPRAPI
+    
+    == Vérification World-Check ==
+    BlacklistService -> WorldCheckAPI : <color:#ffa726>Recherche base commerciale</color>
+    activate WorldCheckAPI
+    WorldCheckAPI --> BlacklistService : <color:#00ff00>Résultat World-Check</color>
+    deactivate WorldCheckAPI
+    
+    == Analyse des Résultats ==
+    
+    BlacklistService -> ScoringService : <color:#96ceb4>Analyser tous les résultats</color>
+    activate ScoringService
+    
+    ScoringService -> ScoringService : <color:#ffa726>Consolider résultats multi-sources</color>
+    ScoringService -> ScoringService : <color:#ffa726>Calculer score de risque global</color>
+    ScoringService -> ScoringService : <color:#ffa726>Identifier correspondances exactes</color>
+    ScoringService -> ScoringService : <color:#ffa726>Détecter correspondances partielles</color>
+    
+    alt <color:#ff6b6b>Correspondance exacte confirmée</color>
+        ScoringService --> BlacklistService : <color:#ff6b6b>BLACKLISTÉ CONFIRMÉ: Score 100%</color>
+        
+        BlacklistService -> KYCDB : <color:#00d2d3>UPDATE client_status='BLACKLISTED', risk_score=100</color>
+        activate KYCDB
+        KYCDB --> BlacklistService : <color:#00d2d3>Client marqué blacklisté</color>
+        deactivate KYCDB
+        
+        BlacklistService -> AuditService : <color:#feca57>Log blacklist confirmé</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre blacklist + sources
+        deactivate AuditService
+        
+        BlacklistService -> NotificationService : <color:#ff9ff3>Alerte urgente blacklist</color>
+        activate NotificationService
+        NotificationService -> Gestionnaire : <color:#ff6b6b>🚨 URGENT : Client blacklisté confirmé</color>
+        activate Gestionnaire
+        NotificationService -> Analyste : <color:#ff6b6b>🚨 Client blacklisté - Action requise</color>
+        activate Analyste
+        NotificationService --> BlacklistService : <color:#00d2d3>Alertes envoyées</color>
+        deactivate NotificationService
+        
+        BlacklistService --> Orchestrator : <color:#ff6b6b>Client blacklisté - Processus suspendu</color>
+        
+        note over Gestionnaire, Analyste : <color:#ff6b6b>**ACTION IMMÉDIATE REQUISE :**</color>\n<color:#ff6b6b>• Suspension immédiate du compte</color>\n<color:#ff6b6b>• Déclaration TRACFIN obligatoire</color>\n<color:#ff6b6b>• Investigation compliance</color>
+        
+    else <color:#ffa726>Correspondance partielle/incertaine</color>
+        ScoringService --> BlacklistService : <color:#ffa726>CORRESPONDANCE PARTIELLE: Score 60-85%</color>
+        
+        BlacklistService -> PEPService : <color:#96ceb4>Vérifier statut PEP</color>
+        activate PEPService
+        PEPService -> PEPService : <color:#ffa726>Analyser exposition politique</color>
+        PEPService -> PEPService : <color:#ffa726>Vérifier relations familiales</color>
+        PEPService --> BlacklistService : <color:#96ceb4>Analyse PEP terminée</color>
+        deactivate PEPService
+        
+        BlacklistService -> KYCDB : <color:#00d2d3>UPDATE client_status='PENDING_REVIEW', risk_score=?</color>
+        activate KYCDB
+        KYCDB --> BlacklistService : <color:#00d2d3>Statut mis à jour</color>
+        deactivate KYCDB
+        
+        BlacklistService -> AuditService : <color:#feca57>Log correspondance partielle</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre alerte + scores
+        deactivate AuditService
+        
+        BlacklistService -> NotificationService : <color:#ff9ff3>Demande révision manuelle</color>
+        activate NotificationService
+        NotificationService -> Analyste : <color:#ffa726>🔍 Révision manuelle requise - Correspondance partielle</color>
+        NotificationService -> Gestionnaire : <color:#ffa726>⚠️ Client en attente de révision</color>
+        NotificationService --> BlacklistService : <color:#00d2d3>Demandes envoyées</color>
+        deactivate NotificationService
+        
+        BlacklistService --> Orchestrator : <color:#ffa726>Révision manuelle requise</color>
+        
+        note over Analyste : <color:#ffa726>**RÉVISION MANUELLE :**</color>\n<color:#ffa726>• Analyser correspondances</color>\n<color:#ffa726>• Vérifier contexte</color>\n<color:#ffa726>• Décision finale à prendre</color>
+        
+    else <color:#00ff00>Aucune correspondance significative</color>
+        ScoringService --> BlacklistService : <color:#00ff00>CLEAN: Score < 60%</color>
+        deactivate ScoringService
+        
+        BlacklistService -> KYCDB : <color:#00d2d3>UPDATE client_status='VERIFIED', risk_score=0</color>
+        activate KYCDB
+        KYCDB --> BlacklistService : <color:#00d2d3>Client vérifié</color>
+        deactivate KYCDB
+        
+        == Mise en Cache ==
+        
+        BlacklistService -> CacheService : <color:#54a0ff>Mettre résultats en cache</color>
+        activate CacheService
+        CacheService -> BlacklistCache : <color:#5f27cd>INSERT blacklist_cache</color>
+        activate BlacklistCache
+        BlacklistCache --> CacheService : <color:#00d2d3>Cache mis à jour</color>
+        deactivate BlacklistCache
+        CacheService --> BlacklistService : <color:#00d2d3>Résultats cachés</color>
+        deactivate CacheService
+        
+        BlacklistService -> AuditService : <color:#feca57>Log vérification clean</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre vérification clean
+        deactivate AuditService
+        
+        BlacklistService -> NotificationService : <color:#ff9ff3>Confirmer client clean</color>
+        activate NotificationService
+        NotificationService -> Gestionnaire : <color:#00ff00>✅ Client vérifié - Aucune correspondance</color>
+        NotificationService --> BlacklistService : <color:#00d2d3>Confirmation envoyée</color>
+        deactivate NotificationService
+        
+        BlacklistService --> Orchestrator : <color:#00ff00>Client vérifié - Processus peut continuer</color>
+        
+        note over Orchestrator : <color:#00ff00>**CLIENT CLEAN :**</color>\n<color:#00ff00>• Toutes sources vérifiées</color>\n<color:#00ff00>• Aucune correspondance</color>\n<color:#00ff00>• Processus KYC peut continuer</color>
+    end
 end
+
+deactivate BlacklistService
+
+== Finalisation ==
+
+Orchestrator -> AuditService : <color:#feca57>Log fin vérification blacklist</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre fin + résultat final
+AuditService --> Orchestrator : <color:#00d2d3>Processus audité</color>
+deactivate AuditService
+
+Orchestrator -> Orchestrator : <color:#00ff00>Vérification blacklist terminée</color>
+deactivate Orchestrator
+
+deactivate Gestionnaire
+deactivate Analyste
+
+note over KYCDB : <color:#ffa726>**SOURCES VÉRIFIÉES :**</color>\n<color:#ffa726>• OFAC (USA)</color>\n<color:#ffa726>• Union Européenne</color>\n<color:#ffa726>• ONU</color>\n<color:#ffa726>• ACPR (France)</color>\n<color:#ffa726>• World-Check</color>\n<color:#ffa726>• Listes PEP</color>
+
 @enduml

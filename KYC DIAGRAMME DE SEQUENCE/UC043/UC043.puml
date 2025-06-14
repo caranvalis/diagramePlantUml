@@ -1,25 +1,147 @@
-@startuml UC043
-skinparam actorStyle awesome
+@startuml
+!theme aws-orange
+title Mise à jour réglementaire
 
-actor "Administrateur fonctionnel" as Admin
-participant "Console de configuration" as Console
-participant "Système" as Système
+' === ACTEURS ===
+actor "Client" as client #lightblue
+actor "Agent Bancaire" as agent #lightgreen
+actor "Administrateur KYC" as admin #orange
 
-== Modifier un type de compte ==
+' === INTERFACES ===
+participant "Interface Client" as ui_client #lightblue
+participant "Interface Agent" as ui_agent #lightgreen
+participant "Interface Admin" as ui_admin #orange
 
-Admin -> Console : Sélectionner un type de compte existant
-activate Admin
-activate Console
-Console -> Système : Charger les détails du type de compte
-activate Système
-Système --> Console : Détails du type de compte
+' === API GATEWAY ===
+participant "API Gateway KYC" as gateway #gold
 
-Admin -> Console : Modifier les attributs (libellé, conditions…)
-Admin -> Console : Valider la modification
+' === ORCHESTRATION ===
+participant "Orchestrateur KYC" as orchestrator #red
 
-Console -> Système : Appliquer les modifications
-Système --> Console : Confirmation de mise à jour
-deactivate Système
-Console -> Admin : message de Confirmation
+' === SERVICES MÉTIER ===
+participant "Service Client" as svc_client #lightblue
+participant "Service Compte" as svc_compte #lightgreen
+participant "Service Document" as svc_document #lightyellow
+participant "Service Contrôle" as svc_controle #orange
+participant "Service Validation" as svc_validation #lightcoral
+
+' === SERVICES TECHNIQUES ===
+participant "Service Auth" as svc_auth #lightgray
+participant "Service Notification" as svc_notification #lightcyan
+participant "Service Audit" as svc_audit #lightpink
+participant "Service Cache" as svc_cache #lavender
+
+' === INFRASTRUCTURE ===
+database "Base KYC" as db_kyc #yellow
+database "Base Audit" as db_audit #lightyellow
+database "Cache Redis" as cache_redis #lightcyan
+queue "Queue Events" as queue #lightgray
+
+' === SÉQUENCE PRINCIPALE ===
+activate client
+client -> ui_client : Finalisation onboarding client
+activate ui_client
+
+ui_client -> gateway : Requête Mise à jour réglementaire
+activate gateway
+
+gateway -> svc_auth : Vérifier authentification
+activate svc_auth
+svc_auth -> db_kyc : Valider token
+svc_auth --> gateway : Token valide
+deactivate svc_auth
+
+gateway -> orchestrator : Orchestrer Mise à jour réglementaire
+activate orchestrator
+
+' === GESTION DU CACHE ===
+orchestrator -> svc_cache : Vérifier cache
+activate svc_cache
+svc_cache -> cache_redis : Get données
+alt Cache hit
+    cache_redis --> svc_cache : Données en cache
+    svc_cache --> orchestrator : Données disponibles
+else Cache miss
+    svc_cache --> orchestrator : Cache vide
+    deactivate svc_cache
+    
+    ' === LOGIQUE MÉTIER ===
+    orchestrator -> svc_client : Traiter demande client
+    activate svc_client
+    svc_client -> db_kyc : Lire/Écrire données client
+    svc_client --> orchestrator : Résultat Mise à jour réglementaire
+    deactivate svc_client
+    
+    orchestrator -> svc_compte : Mise à jour compte
+    activate svc_compte
+    svc_compte -> db_kyc : Mettre à jour statut
+    svc_compte --> orchestrator : Compte mis à jour
+    deactivate svc_compte
+    
+    orchestrator -> svc_document : Gestion documents
+    activate svc_document
+    svc_document -> db_kyc : Sauvegarder documents
+    svc_document --> orchestrator : Documents traités
+    deactivate svc_document
+    
+    orchestrator -> svc_controle : Contrôles KYC
+    activate svc_controle
+    svc_controle -> db_kyc : Vérifier conformité
+    svc_controle --> orchestrator : Contrôles effectués
+    deactivate svc_controle
+    
+    orchestrator -> svc_validation : Validation finale
+    activate svc_validation
+    svc_validation -> db_kyc : Finaliser processus
+    svc_validation --> orchestrator : Validation terminée
+    deactivate svc_validation
+    
+    ' === MISE À JOUR DU CACHE ===
+    orchestrator -> svc_cache : Mettre à jour cache
+    activate svc_cache
+    svc_cache -> cache_redis : Set nouvelles données
+    deactivate svc_cache
+end
+
+' === AUDIT ET NOTIFICATION ===
+orchestrator -> svc_audit : Enregistrer audit
+activate svc_audit
+svc_audit -> db_audit : Log opération
+svc_audit -> queue : Publier événement
+deactivate svc_audit
+
+orchestrator -> svc_notification : Envoyer notification
+activate svc_notification
+svc_notification -> queue : Publier notification
+deactivate svc_notification
+
+orchestrator --> gateway : Résultat Mise à jour réglementaire
+deactivate orchestrator
+
+gateway --> ui_client : Réponse Mise à jour réglementaire
+deactivate gateway
+
+ui_client --> client : Confirmation Mise à jour réglementaire
+deactivate ui_client
+deactivate client
+
+' === GESTION D'ERREURS ===
+note over orchestrator, svc_validation
+  Gestion d'erreurs standardisée :
+  - Timeout : 30s par service
+  - Retry : 3 tentatives avec backoff
+  - Circuit breaker sur échecs
+  - Logs détaillés pour debugging
+end note
+
+' === CONFORMITÉ RÉGLEMENTAIRE ===
+note over svc_audit, db_audit
+  Traçabilité complète :
+  - Horodatage précis
+  - Identification utilisateur
+  - Actions effectuées
+  - Données modifiées
+  - Conformité RGPD/AML
+end note
 
 @enduml

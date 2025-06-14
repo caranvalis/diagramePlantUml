@@ -1,45 +1,147 @@
-@startuml UC062
-skinparam actorStyle awesome
+@startuml
+!theme aws-orange
+title Déclaration automatique échange
 
-actor "Gestionnaire" as Gestionnaire
-participant "Interface de classement" as UI
-participant "Système de gestion documentaire" as Système
-database "Base documentaire" as BDD
+' === ACTEURS ===
+actor "Client" as client #lightblue
+actor "Agent Bancaire" as agent #lightgreen
+actor "Administrateur KYC" as admin #orange
 
-== Enregistrement d’un document classé ==
-Gestionnaire -> UI : Soumettre un document classé
-activate Gestionnaire
-activate UI
-UI -> Système : Demande de génération du code de classification
-activate Système
+' === INTERFACES ===
+participant "Interface Client" as ui_client #lightblue
+participant "Interface Agent" as ui_agent #lightgreen
+participant "Interface Admin" as ui_admin #orange
 
-alt Plan de classification actif et données complètes
-    Système -> BDD : Vérifier unicité du code généré (ex: CLI/ENT/STATUT/0012)
-    activate BDD
+' === API GATEWAY ===
+participant "API Gateway KYC" as gateway #gold
 
-    alt Code unique
-        BDD --> Système : Code accepté
-    else Doublon détecté
-        BDD --> Système : Conflit de code
-        Système -> BDD : Générer code avec suffixe incrémenté
-        BDD --> Système : Nouveau code (ex: CLI/ENT/STATUT/0012-01)
-    end
-    deactivate BDD
+' === ORCHESTRATION ===
+participant "Orchestrateur KYC" as orchestrator #red
 
-    Système -> BDD : Enregistrer le code dans les métadonnées du document
-    activate BDD
-    BDD --> Système : Enregistrement confirmé
-    deactivate BDD
+' === SERVICES MÉTIER ===
+participant "Service Client" as svc_client #lightblue
+participant "Service Compte" as svc_compte #lightgreen
+participant "Service Document" as svc_document #lightyellow
+participant "Service Contrôle" as svc_controle #orange
+participant "Service Validation" as svc_validation #lightcoral
 
-    Système --> UI : Afficher code de classification généré
-    UI --> Gestionnaire : Code affiché (utilisable pour archivage/recherche)
+' === SERVICES TECHNIQUES ===
+participant "Service Auth" as svc_auth #lightgray
+participant "Service Notification" as svc_notification #lightcyan
+participant "Service Audit" as svc_audit #lightpink
+participant "Service Cache" as svc_cache #lavender
 
-else Catégorie manquante / Erreur de structure
-    Système --> UI : Erreur : génération impossible
-    UI --> Gestionnaire : Blocage + message d’erreur
+' === INFRASTRUCTURE ===
+database "Base KYC" as db_kyc #yellow
+database "Base Audit" as db_audit #lightyellow
+database "Cache Redis" as cache_redis #lightcyan
+queue "Queue Events" as queue #lightgray
+
+' === SÉQUENCE PRINCIPALE ===
+activate client
+client -> ui_client : Finalisation onboarding client
+activate ui_client
+
+ui_client -> gateway : Requête Déclaration automatique échange
+activate gateway
+
+gateway -> svc_auth : Vérifier authentification
+activate svc_auth
+svc_auth -> db_kyc : Valider token
+svc_auth --> gateway : Token valide
+deactivate svc_auth
+
+gateway -> orchestrator : Orchestrer Déclaration automatique échange
+activate orchestrator
+
+' === GESTION DU CACHE ===
+orchestrator -> svc_cache : Vérifier cache
+activate svc_cache
+svc_cache -> cache_redis : Get données
+alt Cache hit
+    cache_redis --> svc_cache : Données en cache
+    svc_cache --> orchestrator : Données disponibles
+else Cache miss
+    svc_cache --> orchestrator : Cache vide
+    deactivate svc_cache
+    
+    ' === LOGIQUE MÉTIER ===
+    orchestrator -> svc_client : Traiter demande client
+    activate svc_client
+    svc_client -> db_kyc : Lire/Écrire données client
+    svc_client --> orchestrator : Résultat Déclaration automatique échange
+    deactivate svc_client
+    
+    orchestrator -> svc_compte : Mise à jour compte
+    activate svc_compte
+    svc_compte -> db_kyc : Mettre à jour statut
+    svc_compte --> orchestrator : Compte mis à jour
+    deactivate svc_compte
+    
+    orchestrator -> svc_document : Gestion documents
+    activate svc_document
+    svc_document -> db_kyc : Sauvegarder documents
+    svc_document --> orchestrator : Documents traités
+    deactivate svc_document
+    
+    orchestrator -> svc_controle : Contrôles KYC
+    activate svc_controle
+    svc_controle -> db_kyc : Vérifier conformité
+    svc_controle --> orchestrator : Contrôles effectués
+    deactivate svc_controle
+    
+    orchestrator -> svc_validation : Validation finale
+    activate svc_validation
+    svc_validation -> db_kyc : Finaliser processus
+    svc_validation --> orchestrator : Validation terminée
+    deactivate svc_validation
+    
+    ' === MISE À JOUR DU CACHE ===
+    orchestrator -> svc_cache : Mettre à jour cache
+    activate svc_cache
+    svc_cache -> cache_redis : Set nouvelles données
+    deactivate svc_cache
 end
 
-deactivate Système
-deactivate UI
-deactivate Gestionnaire
+' === AUDIT ET NOTIFICATION ===
+orchestrator -> svc_audit : Enregistrer audit
+activate svc_audit
+svc_audit -> db_audit : Log opération
+svc_audit -> queue : Publier événement
+deactivate svc_audit
+
+orchestrator -> svc_notification : Envoyer notification
+activate svc_notification
+svc_notification -> queue : Publier notification
+deactivate svc_notification
+
+orchestrator --> gateway : Résultat Déclaration automatique échange
+deactivate orchestrator
+
+gateway --> ui_client : Réponse Déclaration automatique échange
+deactivate gateway
+
+ui_client --> client : Confirmation Déclaration automatique échange
+deactivate ui_client
+deactivate client
+
+' === GESTION D'ERREURS ===
+note over orchestrator, svc_validation
+  Gestion d'erreurs standardisée :
+  - Timeout : 30s par service
+  - Retry : 3 tentatives avec backoff
+  - Circuit breaker sur échecs
+  - Logs détaillés pour debugging
+end note
+
+' === CONFORMITÉ RÉGLEMENTAIRE ===
+note over svc_audit, db_audit
+  Traçabilité complète :
+  - Horodatage précis
+  - Identification utilisateur
+  - Actions effectuées
+  - Données modifiées
+  - Conformité RGPD/AML
+end note
+
 @enduml
