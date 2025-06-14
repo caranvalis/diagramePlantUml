@@ -1,0 +1,103 @@
+@startuml DiagrammeActiviteCollecteDocuments
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Collecte de Documents KYC
+
+|Client|
+start
+:Se connecter avec NIU;
+
+|Système Collecte|
+:Récupérer profil client;
+:Définir liste des documents requis;
+:Afficher checklist personnalisée;
+
+|Client|
+:Consulter liste des documents;
+:Préparer documents physiques;
+
+repeat
+    |Client|
+    :Sélectionner type de document;
+    :Scanner/Photographier document;
+    :Uploader fichier;
+    
+    |Système Collecte|
+    :Contrôler format de fichier;
+    :Vérifier taille et résolution;
+    :Analyser qualité de l'image;
+    :Extraire métadonnées;
+    
+    if (Fichier conforme ?) then (Oui)
+        :Sauvegarder document;
+        :Vérifier date d'expiration;
+        :Mettre à jour taux de complétude;
+        
+        if (Document expiré ?) then (Oui)
+            :Signaler expiration;
+            :Demander document récent;
+        else (Non)
+            :Valider document;
+            :Marquer comme reçu;
+        endif
+        
+    else (Non)
+        :Générer message d'erreur;
+        :Indiquer critères de conformité;
+        |Client|
+        :Reprendre capture du document;
+    endif
+    
+    |Système Collecte|
+    :Calculer taux de complétude global;
+    :Mettre à jour statut dossier;
+    
+repeat while (Dossier incomplet ?)
+
+|Système Collecte|
+:Analyser complétude du dossier;
+:Générer rapport de collecte;
+
+if (Tous documents reçus ?) then (Oui)
+    :Marquer dossier comme complet;
+    :Déclencher phase de contrôles KYC;
+    :Notifier passage à l'étape suivante;
+    
+    |Client|
+    :Recevoir confirmation de complétude;
+    
+    stop
+    
+else (Documents manquants)
+    :Identifier documents manquants;
+    :Calculer délai de relance;
+    
+    |Notification|
+    :Envoyer rappel personnalisé;
+    :Lister documents manquants;
+    :Indiquer délai d'expiration;
+    
+    |Client|
+    :Recevoir notification de relance;
+    
+    if (Délai dépassé ?) then (Oui)
+        |Système Collecte|
+        :Marquer dossier comme abandonné;
+        :Archiver données partielles;
+        :Envoyer notification d'expiration;
+        stop
+    else (Non)
+        :Poursuivre collecte;
+        :Sélectionner type de document;
+    endif
+endif
+
+@enduml

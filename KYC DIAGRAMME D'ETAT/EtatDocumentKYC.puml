@@ -1,0 +1,100 @@
+@startuml EtatDocumentKYC
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #0D47A1
+}
+
+hide empty description
+title Diagramme d'Etat - Gestion des Documents KYC
+
+[*] -[#blue]-> NonDefini : Creation document
+
+NonDefini : Document requis identifie
+NonDefini : Aucun fichier associe
+NonDefini : Statut MANQUANT
+
+NonDefini -[#blue]-> EnAttente : Demande upload
+
+EnAttente : Upload demande au client
+EnAttente : Notification envoyee
+EnAttente : Delai de reponse actif
+
+EnAttente -[#green]-> Recu : Fichier uploade
+EnAttente -[#orange]-> Relance : Premiere relance
+EnAttente -[#red]-> Expire : Delai depasse
+
+Relance : Relance automatique envoyee
+Relance : Nouveau delai accorde
+Relance : Compteur de relances
+
+Relance -[#green]-> Recu : Fichier recu
+Relance -[#orange]-> DerniereChance : Relance finale
+Relance -[#red]-> Expire : Delai final depasse
+
+DerniereChance : Ultime relance
+DerniereChance : Delai reduit
+DerniereChance : Menace d'abandon
+
+DerniereChance -[#green]-> Recu : Fichier recu in extremis
+DerniereChance -[#red]-> Expire : Abandon definitif
+
+Recu : Fichier telecharge
+Recu : En attente de controle
+Recu : Metadonnees extraites
+
+Recu -[#blue]-> EnControle : Lancement controles
+
+EnControle : Controles automatiques
+EnControle : Verification format
+EnControle : Analyse qualite image
+EnControle : Extraction donnees OCR
+
+EnControle -[#green]-> Valide : Controles OK
+EnControle -[#orange]-> ControleManuel : Controle humain requis
+EnControle -[#red]-> Invalide : Controles KO
+
+ControleManuel : Verification gestionnaire
+ControleManuel : Analyse manuelle
+ControleManuel : Validation superviseur
+
+ControleManuel -[#green]-> Valide : Validation manuelle OK
+ControleManuel -[#red]-> Invalide : Validation manuelle KO
+
+Valide : Document conforme
+Valide : Donnees extraites
+Valide : Pret pour utilisation KYC
+Valide : Statut VALIDE
+
+Invalide : Document non conforme
+Invalide : Motifs de rejet documentes
+Invalide : Nouveau document requis
+Invalide : Statut REJETE
+
+Expire : Delai de fourniture depasse
+Expire : Document manquant definitivement
+Expire : Impact sur dossier KYC
+Expire : Statut EXPIRE
+
+PrimeDateExpiration : Date d'expiration proche
+PrimeDateExpiration : Renouvellement requis
+PrimeDateExpiration : Statut PERIME
+
+Archive : Document archive
+Archive : Conservation reglementaire
+Archive : Acces restreint
+Archive : Statut ARCHIVE
+
+Invalide -[#orange]-> EnAttente : Nouveau document requis
+Valide -[#orange]-> PrimeDateExpiration : Date d'expiration atteinte
+PrimeDateExpiration -[#green]-> Valide : Document renouvele
+PrimeDateExpiration -[#red]-> Expire : Non renouvele
+
+Valide -[#black]-> Archive : Fin de conservation
+Invalide -[#black]-> Archive : Archivage rejet
+Expire -[#black]-> Archive : Archivage expiration
+
+Archive -[#black]-> [*]
+
+@enduml

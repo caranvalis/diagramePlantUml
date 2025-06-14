@@ -1,82 +1,190 @@
 @startuml DiagrammeComposantsKYC
-skinparam BackgroundColor transparent
+skinparam backgroundColor #F8FBFF
 skinparam componentStyle uml2
 skinparam component {
-    BackgroundColor #E0F7FA
-    BorderColor #0097A7
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
 }
-skinparam linetype ortho
-
-[Entrée] as i
-[Sortie] as o
-
-package "Système KYC" {
-    [Interface Web KYC] as Web
-    [Module Pré-enregistrement] as Preenr
-    [Module Enregistrement] as Enr
-    [Module Gestion Comptes] as Comptes
-    [Module Mandataires] as Mandat
-    [Module Blocage/Déblocage] as Blocage
-    [Module Contrôles Conformité] as Controle
-    [Module Signature Électronique] as Signature
-    [Module Documents KYC] as Docs
-    [Module Audit/Journalisation] as Audit
-
-    portin p1
-    portin p2
-    portin p3
-    portout po1
-    portout po2
-    portout po3
-
-    component c1
+skinparam package {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam database {
+    BackgroundColor #FFF3E0
+    BorderColor #FF8F00
+}
+skinparam cloud {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
 }
 
-[Base de Données KYC] as DB
-[GED (Gestion Électronique de Documents)] as GED
-[CBS (Système Bancaire Central)] as CBS
-[Systèmes Externes (Blacklist, PPE, FATCA)] as EXT
-[Serveur Signature] as SIG
+title Diagramme de Composants - Architecture KYC
 
-i --> p1
-i --> p2
-i --> p3
-p1 --> c1
-p2 --> c1
-po1 --> o
-po2 --> o
-po3 --> o
-c1 --> po1
+' === ACTEURS EXTERNES ===
+actor "Client" as CLIENT
+actor "Gestionnaire KYC" as MANAGER
+actor "Superviseur" as SUPERVISOR
+actor "Auditeur" as AUDITOR
 
-Web --> Preenr
-Web --> Enr
-Web --> Comptes
-Web --> Mandat
-Web --> Blocage
-Web --> Docs
+' === INTERFACES UTILISATEUR ===
+package "Couche Presentation" {
+    [Interface Web Client] as WebClient
+    [Interface Mobile] as Mobile
+    [Interface Gestionnaire] as WebManager
+    [Interface Administration] as WebAdmin
+    [API REST KYC] as RESTAPI
+}
 
-Preenr --> Enr
-Enr --> Comptes
-Comptes --> Blocage
-Comptes --> Mandat
-Comptes --> Controle
-Comptes --> Docs
-Comptes --> Audit
+' === COUCHE METIER KYC ===
+package "Services Metier KYC" {
+    [Service Pre-enregistrement] as SvcPreenr
+    [Service Collecte Documents] as SvcDocs
+    [Service Controles KYC] as SvcControles
+    [Service Validation Finale] as SvcValidation
+    [Service Signature Electronique] as SvcSignature
+    [Service Gestion Operationnelle] as SvcGestion
+    [Service Orchestration KYC] as SvcOrchestration
+    [Service Notification] as SvcNotification
+    [Service Audit Trail] as SvcAudit
+}
 
-Blocage --> CBS
-Blocage --> Audit
+' === COMPOSANTS TECHNIQUES ===
+package "Services Techniques" {
+    [Moteur de Regles] as RuleEngine
+    [Gestionnaire de Workflow] as WorkflowEngine
+    [Service de Messagerie] as MessageService
+    [Service de Fichiers] as FileService
+    [Service de Securite] as SecurityService
+    [Service de Configuration] as ConfigService
+}
 
-Controle --> EXT
-Controle --> Audit
+' === SYSTEMES EXTERNES ===
+cloud "Services Externes" {
+    [Service Blacklists] as BlacklistAPI
+    [Service PPE] as PPEAPI
+    [Service FATCA/CRS] as FATCAAPI
+    [Service Verification Identite] as IdCheckAPI
+    [Service OCR/MRZ] as OCRAPI
+}
 
-Docs --> GED
-Docs --> Audit
+' === SYSTEMES INTERNES ===
+package "Systemes Bancaires" {
+    [CBS (Core Banking System)] as CBS
+    [Systeme de Paiement] as PaymentSys
+    [CRM Bancaire] as CRM
+    [Systeme de Reporting] as Reporting
+}
 
-Signature --> SIG
-Signature --> Docs
+' === STOCKAGE ET DONNEES ===
+database "Base de Donnees KYC" as KYCDB {
+    [Tables Clients] as ClientTables
+    [Tables Documents] as DocTables
+    [Tables Controles] as ControlTables
+    [Tables Audit] as AuditTables
+    [Tables Parametrage] as ConfigTables
+}
 
-Comptes --> DB
-Mandat --> DB
-Audit --> DB
+database "GED (Gestion Electronique Documents)" as GED {
+    [Documents Scannés] as ScannedDocs
+    [Signatures Electroniques] as DigitalSigs
+    [Metadonnees] as Metadata
+}
+
+database "Cache Redis" as CACHE
+database "Files d'Attente" as QUEUE
+
+' === CONNEXIONS ACTEURS ===
+CLIENT --> WebClient : Acces web
+CLIENT --> Mobile : Acces mobile
+MANAGER --> WebManager : Gestion KYC
+SUPERVISOR --> WebManager : Validation
+AUDITOR --> WebAdmin : Consultation audit
+
+' === CONNEXIONS INTERFACES ===
+WebClient --> RESTAPI : Appels API
+Mobile --> RESTAPI : Appels API
+WebManager --> RESTAPI : Appels API
+WebAdmin --> RESTAPI : Appels API
+
+' === ORCHESTRATION METIER ===
+RESTAPI --> SvcOrchestration : Coordination
+SvcOrchestration --> SvcPreenr : Demarrage processus
+SvcOrchestration --> SvcDocs : Collecte documents
+SvcOrchestration --> SvcControles : Lancement controles
+SvcOrchestration --> SvcValidation : Decision finale
+SvcOrchestration --> SvcSignature : Finalisation
+SvcOrchestration --> SvcGestion : Operations post-creation
+
+' === SERVICES TECHNIQUES ===
+SvcOrchestration --> WorkflowEngine : Gestion etats
+SvcPreenr --> ConfigService : Parametres saisie
+SvcDocs --> FileService : Gestion fichiers
+SvcControles --> RuleEngine : Regles metier
+SvcValidation --> RuleEngine : Grille validation
+SvcNotification --> MessageService : Envoi notifications
+SvcAudit --> MessageService : Journalisation
+
+' === CONNEXIONS EXTERNES ===
+SvcControles --> BlacklistAPI : Consultation listes
+SvcControles --> PPEAPI : Verification PPE
+SvcControles --> FATCAAPI : Controle FATCA
+SvcControles --> IdCheckAPI : Verification identite
+SvcDocs --> OCRAPI : Extraction donnees
+
+' === SYSTEMES BANCAIRES ===
+SvcValidation --> CBS : Creation compte
+SvcGestion --> CBS : Blocage/Deblocage
+SvcOrchestration --> CRM : Mise a jour profil
+SvcAudit --> Reporting : Rapports KYC
+
+' === PERSISTENCE ===
+SvcPreenr --> KYCDB : Donnees client
+SvcDocs --> GED : Stockage documents
+SvcControles --> KYCDB : Resultats controles
+SvcValidation --> KYCDB : Decisions
+SvcSignature --> GED : Signatures
+SvcGestion --> KYCDB : Operations
+SvcAudit --> KYCDB : Traces audit
+
+' === CACHE ET FILES ===
+SvcOrchestration --> CACHE : Cache sessions
+SvcNotification --> QUEUE : Files messages
+WorkflowEngine --> CACHE : Cache etats
+
+' === INTERFACES SPECIALISEES ===
+interface "IPreEnregistrement" as IPreen
+interface "ICollecteDocuments" as IDocs
+interface "IControlesKYC" as IControles
+interface "IValidationFinale" as IValidation
+interface "ISignatureElectronique" as ISignature
+interface "IGestionOperationnelle" as IGestion
+interface "IAuditTrail" as IAudit
+
+SvcPreenr .up.|> IPreen
+SvcDocs .up.|> IDocs
+SvcControles .up.|> IControles
+SvcValidation .up.|> IValidation
+SvcSignature .up.|> ISignature
+SvcGestion .up.|> IGestion
+SvcAudit .up.|> IAudit
+
+note top of SvcOrchestration
+  Service central orchestrant
+  toutes les etapes KYC
+  selon les etats definis
+end note
+
+note right of RuleEngine
+  Moteur executant les regles
+  metier configurables pour
+  controles et validations
+end note
+
+note bottom of KYCDB
+  Base centrale stockant
+  toutes les donnees KYC
+  avec historique complet
+end note
 
 @enduml

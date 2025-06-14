@@ -1,67 +1,162 @@
 @startuml GlobalKYC
-skinparam backgroundColor #E0F7FA
+skinparam backgroundColor #F8FBFF
 skinparam activity {
-    StartColor #0097A7
-    EndColor #0097A7
-    BarColor #006064
-    ArrowColor #006064
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
 }
-skinparam colorArrowSeparationSpace 1
 
-|Client / Gestionnaire|
+title Diagramme d'Activité - Processus KYC Global
+
+|Client|
 start
-:Pré-enregistrement du client;
+:Initier demande d'ouverture de compte;
 
-|INTRA|
-if (Données valides ?) then (oui)
--[#green]->
-    :Enregistrement des données;
-    :Vérification complétude des documents;
-    if (Documents complets ?) then (oui)
-    -[#green]->
-        :Contrôle conformité (inclut identité);
-    else (non)
-    -[#red]->
-        |Client / Gestionnaire|
-        :Demande de compléments au client;
+|Pré-enregistrement|
+:Sélectionner canal de saisie;
+:Remplir formulaire pré-enregistrement;
+:Valider données minimales;
+if (Données valides ?) then (Oui)
+    :Générer numéro unique NIU;
+    :Créer session temporaire;
+else (Non)
+    :Corriger données;
+    stop
+endif
+
+|Collecte Documents|
+:Définir liste documents requis;
+:Uploader documents obligatoires;
+:Contrôler format et taille;
+:Vérifier dates d'expiration;
+:Calculer taux de complétude;
+
+repeat
+    if (Dossier complet ?) then (Oui)
+        break
+    else (Non)
+        |Client|
+        :Notifier documents manquants;
+        :Relancer client;
+        |Collecte Documents|
+        if (Délai dépassé ?) then (Oui)
+            :Rejeter demande;
+            stop
+        else (Non)
+            :Attendre compléments;
+        endif
+    endif
+repeat while (Dossier incomplet ?)
+
+|Contrôles KYC|
+:Orchestrer contrôles automatiques;
+:Contrôle identité;
+:Consultation blacklists;
+:Identification PPE;
+:Vérification FATCA;
+:Détection doublons;
+:Contrôle conformité réglementaire;
+:Consolider résultats contrôles;
+:Calculer score de risque global;
+
+if (Contrôles conformes ?) then (Oui)
+    :Poursuivre processus;
+else (Alertes détectées)
+    |Gestionnaire KYC|
+    :Analyser alertes manuellement;
+    if (Validation manuelle OK ?) then (Oui)
+        :Poursuivre processus;
+    else (Non)
+        :Escalader vers superviseur;
+        if (Validation superviseur OK ?) then (Oui)
+            :Poursuivre processus;
+        else (Non)
+            :Rejeter définitivement;
+            :Notifier rejet;
+            stop
+        endif
+    endif
+endif
+
+|Validation Finale|
+:Analyser dossier global;
+:Appliquer grille de validation;
+:Calculer score final;
+
+if (Score acceptable ?) then (Oui)
+    :Décision ACCEPTER;
+else if (Score révision ?) then (Révision)
+    :Demander compléments d'information;
+    |Client|
+    :Fournir compléments;
+    |Validation Finale|
+    :Réévaluer dossier;
+    if (Complément satisfaisant ?) then (Oui)
+        :Décision ACCEPTER;
+    else (Non)
+        :Décision REJETER;
+        :Notifier rejet avec motifs;
+        :Archiver dossier rejeté;
         stop
     endif
-else (non)
--[#red]->
-    |Client / Gestionnaire|
-    :Rejet de la demande;
+else (Non)
+    :Décision REJETER;
+    :Notifier rejet avec motifs;
+    :Archiver dossier rejeté;
     stop
 endif
 
-|INTRA|
-if (Conformité OK ?) then (oui)
--[#green]->
-    :Préparation des données pour CBS;
-else (non)
--[#red]->
-    :Notification des anomalies;
+|Création Compte CBS|
+:Préparer paramètres CBS;
+:Construire requête de création;
+:Transmettre au système CBS;
+:Traiter réponse CBS;
+
+if (Création CBS réussie ?) then (Oui)
+    :Générer numéro de compte;
+    :Créer RIB/IBAN;
+    :Synchroniser données locales;
+else (Échec)
+    :Gérer erreur technique;
+    :Notifier incident;
     stop
 endif
 
-|CBS|
-:Création du compte;
-:Génération du RIB;
+|Signature Électronique|
+:Préparer documents à signer;
+:Authentifier signataire;
+|Client|
+:Capturer signature électronique;
+|Signature Électronique|
+:Générer certificat numérique;
+:Horodater signature qualifiée;
+:Valider conformité signature;
+:Archiver preuve de signature;
 
-| Signature|
-:Capture de signature électronique;
-:Génération des documents KYC;
+|Attribution Statut|
+:Mettre à jour statut client ACTIF;
+:Assigner code couleur selon profil;
+:Configurer produits/services autorisés;
+:Générer fiche client complète;
+:Notifier création compte réussie;
 
-|INTRA|
-:Attribution du statut client;
-:Audit et journalisation;
+|Audit et Archivage|
+:Journaliser toutes les actions;
+:Tracer modifications de statut;
+:Archiver dossier complet;
+:Générer rapport KYC;
 
-if (Blocage/Déblocage/Clôture demandé ?) then (oui)
--[#orange]->
-    :Traiter la demande (blocage, déblocage, clôture);
-    stop
-else (non)
--[#green]->
-    stop
-endif
+|Client|
+:Recevoir confirmation + RIB;
+:Accéder aux services bancaires;
+
+stop
+
+note right : Fin du processus KYC principal
+
+floating note left : Les processus opérationnels\n(blocage, déblocage, clôture)\nsont gérés séparément\nvia des demandes spécifiques
 
 @enduml

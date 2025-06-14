@@ -1,0 +1,103 @@
+@startuml DiagrammeActiviteBlocageDeblocage
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Gestion Opérationnelle KYC\n(Blocage, Déblocage, Clôture)
+
+|Demandeur|
+start
+:Initier demande opérationnelle;
+
+|Gestion Opérationnelle|
+:Recevoir demande;
+:Identifier type d'opération;
+
+if (Type de demande ?) then (Blocage)
+    :Analyser motif de blocage;
+    :Vérifier autorisation demandeur;
+    :Valider critères de blocage;
+    
+    if (Blocage autorisé ?) then (Oui)
+        :Exécuter blocage client/compte;
+        :Mettre à jour statut dans CBS;
+        :Journaliser action de blocage;
+        :Notifier parties prenantes;
+        :Générer rapport de blocage;
+        stop
+    else (Non)
+        :Rejeter demande de blocage;
+        :Notifier refus avec motifs;
+        stop
+    endif
+
+elseif (Déblocage) then (Déblocage)
+    :Vérifier conditions de déblocage;
+    :Contrôler documents justificatifs;
+    :Valider autorisation hiérarchique;
+    
+    if (Déblocage autorisé ?) then (Oui)
+        :Exécuter déblocage;
+        :Restaurer statut client actif;
+        :Synchroniser avec CBS;
+        :Journaliser action de déblocage;
+        :Notifier réactivation;
+        :Générer attestation de déblocage;
+        stop
+    else (Non)
+        :Rejeter demande de déblocage;
+        :Notifier refus avec motifs;
+        stop
+    endif
+
+elseif (Clôture) then (Clôture)
+    :Vérifier conditions de clôture;
+    :Calculer solde final;
+    :Contrôler absence d'opérations en cours;
+    
+    if (Clôture possible ?) then (Oui)
+        :Générer relevé final;
+        :Clôturer compte dans CBS;
+        :Archiver données historiques;
+        :Générer attestation de clôture;
+        :Notifier clôture définitive;
+        stop
+    else (Non)
+        :Rejeter demande de clôture;
+        :Notifier obstacles à la clôture;
+        stop
+    endif
+
+elseif (Modification Profil) then (Modification)
+    :Analyser modification demandée;
+    :Vérifier impact réglementaire;
+    :Valider nouveaux critères KYC;
+    
+    if (Modification autorisée ?) then (Oui)
+        :Mettre à jour profil client;
+        :Recalculer score de risque;
+        :Synchroniser avec CBS;
+        :Journaliser modification;
+        :Notifier mise à jour;
+        stop
+    else (Non)
+        :Rejeter modification;
+        :Notifier refus avec motifs;
+        stop
+    endif
+
+else (Autre)
+    :Traiter demande spécifique;
+    :Appliquer procédure ad-hoc;
+    :Journaliser action;
+    :Notifier résultat;
+    stop
+endif
+
+@enduml

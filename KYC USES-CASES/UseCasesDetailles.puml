@@ -1,0 +1,188 @@
+@startuml UseCasesDetailles
+skinparam backgroundColor #F8FBFF
+skinparam packageBackgroundColor #E3F2FD
+skinparam packageBorderColor #1976D2
+skinparam actor {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam usecase {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+
+title Diagramme des Use Cases Détaillés - Processus KYC Complet
+
+' === ACTEURS PRINCIPAUX ===
+actor "Client" as Client
+actor "Gestionnaire KYC" as Gestionnaire
+actor "Superviseur" as Superviseur
+actor "Système CBS" as CBS
+actor "Service Conformité" as Conformite
+actor "Auditeur" as Auditeur
+
+' === USE CASES DÉTAILLÉS PAR ÉTAPE ===
+
+package "Pré-enregistrement" #E3F2FD {
+    usecase "Initier pré-enregistrement" as PreEnreg
+    usecase "Sélectionner canal saisie" as Canal
+    usecase "Remplir formulaire" as Formulaire
+    usecase "Valider données minimales" as ValidMin
+    usecase "Générer numéro unique" as NumUnique
+    usecase "Créer session temporaire" as Session
+    
+    PreEnreg .> Canal : include
+    PreEnreg .> Formulaire : include
+    Formulaire .> ValidMin : include
+    ValidMin .> NumUnique : include
+    PreEnreg .> Session : include
+}
+
+package "Collecte Documents" #E8F5E8 {
+    usecase "Définir liste documents requis" as ListeDoc
+    usecase "Uploader documents" as Upload
+    usecase "Contrôler format/taille" as Format
+    usecase "Extraire métadonnées" as Metadata
+    usecase "Vérifier expiration" as Expiration
+    usecase "Calculer complétude" as Completude
+    usecase "Notifier manquants" as Notifier
+    
+    ListeDoc .> Upload : include
+    Upload .> Format : include
+    Upload .> Metadata : include
+    Format .> Expiration : include
+    Completude .> Notifier : extend
+}
+
+package "Contrôles KYC" #FFF3E0 {
+    usecase "Orchestrer contrôles" as Orchestrer
+    usecase "Exécuter contrôle identité" as ControleId
+    usecase "Consulter blacklists" as Blacklist
+    usecase "Identifier PPE" as PPE
+    usecase "Vérifier FATCA" as FATCA
+    usecase "Détecter doublons" as Doublons
+    usecase "Calculer score risque" as Score
+    usecase "Consolider résultats" as Consolider
+    
+    Orchestrer .> ControleId : include
+    Orchestrer .> Blacklist : include
+    Orchestrer .> PPE : include
+    Orchestrer .> FATCA : include
+    Orchestrer .> Doublons : include
+    Orchestrer .> Score : include
+    Orchestrer .> Consolider : include
+}
+
+package "Validation Finale" #E0F2F1 {
+    usecase "Analyser dossier global" as Analyser
+    usecase "Appliquer grille validation" as Grille
+    usecase "Calculer score final" as ScoreFinal
+    usecase "Prendre décision" as Decision
+    usecase "Justifier décision" as Justifier
+    usecase "Communiquer résultat" as Communiquer
+    
+    Analyser .> Grille : include
+    Grille .> ScoreFinal : include
+    ScoreFinal .> Decision : include
+    Decision .> Justifier : include
+    Decision .> Communiquer : include
+}
+
+package "Création Compte CBS" #FCE4EC {
+    usecase "Préparer paramètres CBS" as PrepCBS
+    usecase "Construire requête création" as RequeteCBS
+    usecase "Transmettre au CBS" as TransmetCBS
+    usecase "Traiter réponse CBS" as ReponseCBS
+    usecase "Générer numéro compte" as NumCompte
+    usecase "Créer RIB/IBAN" as RIB
+    usecase "Synchroniser données locales" as SyncLocal
+    
+    PrepCBS .> RequeteCBS : include
+    RequeteCBS .> TransmetCBS : include
+    TransmetCBS .> ReponseCBS : include
+    ReponseCBS .> NumCompte : include
+    NumCompte .> RIB : include
+    ReponseCBS .> SyncLocal : include
+}
+
+package "Signature Électronique" #F3E5F5 {
+    usecase "Préparer documents à signer" as PrepSign
+    usecase "Authentifier signataire" as AuthSign
+    usecase "Capturer signature biométrique" as CaptBio
+    usecase "Générer certificat numérique" as Certificat
+    usecase "Horodater signature" as Horodatage
+    usecase "Valider conformité signature" as ValidSign
+    usecase "Archiver preuve signature" as ArchiveSign
+    
+    PrepSign .> AuthSign : include
+    AuthSign .> CaptBio : include
+    CaptBio .> Certificat : include
+    Certificat .> Horodatage : include
+    Horodatage .> ValidSign : include
+    ValidSign .> ArchiveSign : include
+}
+
+package "Gestion Opérationnelle" #FFEBEE {
+    usecase "Évaluer motif action" as EvalMotif
+    usecase "Autoriser opération" as Autoriser
+    usecase "Exécuter blocage/déblocage" as Executer
+    usecase "Notifier parties prenantes" as NotifOp
+    usecase "Mettre à jour statuts" as MAJStatut
+    usecase "Planifier révision" as PlanRevision
+    
+    EvalMotif .> Autoriser : include
+    Autoriser .> Executer : include
+    Executer .> NotifOp : include
+    Executer .> MAJStatut : include
+    MAJStatut .> PlanRevision : extend
+}
+
+package "Audit et Conformité" #F1F8E9 {
+    usecase "Enregistrer trace audit" as TraceAudit
+    usecase "Contrôler conformité processus" as ControleProc
+    usecase "Générer rapport conformité" as RapportConf
+    usecase "Détecter anomalies" as DetectAnomalie
+    usecase "Alerter non-conformités" as AlerteNC
+    
+    TraceAudit .> ControleProc : include
+    ControleProc .> DetectAnomalie : include
+    DetectAnomalie .> AlerteNC : extend
+    ControleProc .> RapportConf : include
+}
+
+' === RELATIONS ACTEURS ===
+Client --> PreEnreg
+Client --> Upload
+Client --> CaptBio
+
+Gestionnaire --> PreEnreg
+Gestionnaire --> ListeDoc
+Gestionnaire --> Orchestrer
+Gestionnaire --> Analyser
+Gestionnaire --> PrepCBS
+Gestionnaire --> PrepSign
+Gestionnaire --> EvalMotif
+
+Superviseur --> Decision
+Superviseur --> Autoriser
+Superviseur --> ControleProc
+
+CBS --> TransmetCBS
+CBS --> ReponseCBS
+
+Conformite --> PPE
+Conformite --> FATCA
+Conformite --> Blacklist
+
+Auditeur --> TraceAudit
+Auditeur --> RapportConf
+
+' === RELATIONS ENTRE PACKAGES ===
+PreEnreg --> ListeDoc : trigger
+Completude --> Orchestrer : trigger
+Consolider --> Analyser : trigger
+Decision --> PrepCBS : trigger
+SyncLocal --> PrepSign : trigger
+ArchiveSign --> MAJStatut : trigger
+
+@enduml

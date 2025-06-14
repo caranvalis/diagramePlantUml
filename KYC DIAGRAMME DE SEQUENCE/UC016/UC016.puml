@@ -1,50 +1,254 @@
 @startuml UC016
+!theme cerulean
+
+title UC016 - Modification Informations Entreprise
 skinparam actorStyle awesome
+skinparam sequenceBoxBorderColor #1E88E5
+skinparam participantBackgroundColor #E3F2FD
+skinparam lifeline {
+    BackgroundColor #BBDEFB
+}
 
-actor "Gestionnaire" as Gestionnaire
-participant "Système" as System
-database "Base de Données Entreprise" as BDE
+' Acteurs externes
+actor "Gestionnaire KYC" as Gestionnaire #LightBlue
 
-== Scénario Nominal ==
-Gestionnaire -> System : Ouvrir la fiche entreprise
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Gestionnaire\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nEntreprise" as EntrepriseService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nHistorique" as HistoriqueService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+end box
+
+== Ouverture fiche entreprise ==
+
+Gestionnaire -> WebUI : Ouvrir fiche entreprise\npour modification
 activate Gestionnaire
-activate System
-System -> BDE : Charger les données de l’entreprise
-activate BDE
-BDE --> System : Données de l’entreprise
-Gestionnaire -> System : Cliquer sur "Modifier"
-Gestionnaire -> System : Mettre à jour les données (adresse, dirigeant, NIF…)
-alt 1a. Champ obligatoire vide
-    System --> Gestionnaire : Saisie bloquée
-else
-    System -> System : Vérifier la validité des données
+activate WebUI
 
-    alt 2a. Erreur de format
-        System --> Gestionnaire : Message d’erreur (format)
-    else
-        Gestionnaire -> System : Soumettre les modifications
-        System -> BDE : Enregistrer les modifications
-        System -> BDE : Journaliser l’historique des modifications
+WebUI -> Gateway : GET /entreprise/{id}/edit
+activate Gateway
 
-        alt 3a. Échec de mise à jour
-            System --> Gestionnaire : Message d’erreur (échec)
-        else
-            System --> Gestionnaire : Confirmation de mise à jour
+Gateway -> Orchestrator : accederModificationEntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxModificationEntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(MODIFICATION_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+Orchestrator -> EntrepriseService : chargerDonneesEntreprise()
+activate EntrepriseService
+
+EntrepriseService -> CacheService : getEntrepriseInfo()
+activate CacheService
+
+alt Entreprise en cache
+    CacheService --> EntrepriseService : Données trouvées
+    deactivate CacheService
+    
+else Pas en cache
+    CacheService --> EntrepriseService : Non trouvé
+    deactivate CacheService
+    
+    EntrepriseService -> DB : SELECT entreprise_details
+    activate DB
+    DB --> EntrepriseService : Données entreprise
+    deactivate DB
+    
+    EntrepriseService -> CacheService : cacheEntrepriseInfo()
+    activate CacheService
+    CacheService --> EntrepriseService : Mis en cache
+    deactivate CacheService
+end
+
+EntrepriseService --> Orchestrator : Fiche entreprise chargée
+deactivate EntrepriseService
+
+Orchestrator --> Gateway : Données disponibles
+Gateway --> WebUI : Fiche entreprise
+WebUI --> Gestionnaire : **Fiche entreprise**\nMode modification activé
+
+== Modification des informations ==
+
+Gestionnaire -> WebUI : Cliquer "Modifier"
+Gestionnaire -> WebUI : Mettre à jour données\n(adresse, dirigeant, NIF, etc.)
+Gestionnaire -> WebUI : Soumettre modifications
+
+WebUI -> Gateway : PUT /entreprise/{id}/update
+
+Gateway -> Orchestrator : modifierInformationsEntreprise()
+
+Orchestrator -> ValidationService : validerNouvellesDonneesEntreprise()
+activate ValidationService
+
+ValidationService -> ValidationService : Vérifier champs\nobligatoires
+ValidationService -> ValidationService : Contrôler format\ndonnées
+
+alt Champ obligatoire vide
+    ValidationService --> Orchestrator : Champs manquants
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Erreur validation
+    Gateway --> WebUI : Saisie bloquée
+    WebUI --> Gestionnaire : **Erreur**: Champs obligatoires\nmanquants
+    
+else Champs complets mais erreur format
+    ValidationService --> Orchestrator : Format invalide
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Erreur format
+    Gateway --> WebUI : Message erreur format
+    WebUI --> Gestionnaire : **Erreur**: Format incorrect\n(NIF, adresse, etc.)
+    
+else Données valides
+    ValidationService --> Orchestrator : Validation OK
+    deactivate ValidationService
+    
+    Orchestrator -> DoublonService : verifierDoublonModificationEntreprise()
+    activate DoublonService
+    
+    DoublonService -> DB : SELECT entreprises_similaires
+    activate DB
+    DB --> DoublonService : Résultats recherche
+    deactivate DB
+    
+    DoublonService -> DoublonService : Analyser risque\ndoublon
+    
+    alt Pas de risque doublon
+        DoublonService --> Orchestrator : Validation OK
+        deactivate DoublonService
+        
+        ' Sauvegarde état avant modification
+        Orchestrator -> HistoriqueService : sauvegarderEtatAvantEntreprise()
+        activate HistoriqueService
+        
+        HistoriqueService -> DB : INSERT historique_entreprise
+        activate DB
+        DB --> HistoriqueService : Historique créé
+        deactivate DB
+        
+        HistoriqueService --> Orchestrator : État sauvegardé
+        deactivate HistoriqueService
+        
+        ' Mise à jour entreprise
+        Orchestrator -> EntrepriseService : mettreAJourDonneesEntreprise()
+        activate EntrepriseService
+        
+        EntrepriseService -> DB : UPDATE entreprise SET nouvelles_donnees
+        activate DB
+        
+        alt Mise à jour réussie
+            DB --> EntrepriseService : Données mises à jour
+            deactivate DB
+            
+            EntrepriseService -> CacheService : invalidateEntrepriseCache()
+            activate CacheService
+            CacheService --> EntrepriseService : Cache invalidé
+            deactivate CacheService
+            
+            EntrepriseService --> Orchestrator : Entreprise mise à jour
+            deactivate EntrepriseService
+            
+            ' Journalisation historique
+            Orchestrator -> HistoriqueService : journaliserModificationEntreprise()
+            activate HistoriqueService
+            
+            HistoriqueService -> DB : UPDATE historique_entreprise
+            activate DB
+            DB --> HistoriqueService : Modification tracée
+            deactivate DB
+            
+            HistoriqueService --> Orchestrator : Historique complet
+            deactivate HistoriqueService
+            
+            ' Audit et notification
+            Orchestrator -> AuditService : logModificationEntrepriseReussie()
+            activate AuditService
+            AuditService -> DB : INSERT audit_actions
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : notifierModificationEntreprise()
+            activate NotificationService
+            NotificationService --> Orchestrator : Notification envoyée
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : Modification réussie
+            Gateway --> WebUI : Confirmation
+            WebUI --> Gestionnaire : **Succès**: Informations\nentreprise mises à jour
+            
+        else Échec mise à jour
+            DB --> EntrepriseService : Erreur base données
+            deactivate DB
+            
+            EntrepriseService -> AuditService : logEchecMiseAJour()
+            activate AuditService
+            AuditService -> DB : INSERT audit_erreurs
+            AuditService --> EntrepriseService : OK
+            deactivate AuditService
+            
+            EntrepriseService --> Orchestrator : Échec mise à jour
+            deactivate EntrepriseService
+            
+            Orchestrator --> Gateway : Erreur système
+            Gateway --> WebUI : Message erreur échec
+            WebUI --> Gestionnaire : **Erreur**: Échec mise à jour\nRéessayer
         end
+        
+    else Risque doublon
+        DoublonService --> Orchestrator : Doublon potentiel
+        deactivate DoublonService
+        
+        Orchestrator --> Gateway : Doublon détecté
+        Gateway --> WebUI : Modification annulée
+        WebUI --> Gestionnaire : **Erreur**: Risque doublon\nModification annulée
     end
 end
-alt 3a. Donnée incohérente fiscalement
-    System --> Gestionnaire : Message d’erreur (règles fiscales)
-else
-    System -> System : Vérifier les modifications
 
-    alt 4a. Erreur technique
-        System --> Gestionnaire : Message d’erreur technique
-    else
-        Gestionnaire -> System : Confirmer la mise à jour
-        System -> BDE : Mettre à jour et journaliser le dossier
-        System --> Gestionnaire : Confirmation de mise à jour
-    end
-end
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxModificationEntreprise()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Gestionnaire
 
 @enduml

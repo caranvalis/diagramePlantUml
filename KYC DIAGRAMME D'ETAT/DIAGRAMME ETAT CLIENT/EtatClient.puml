@@ -1,46 +1,207 @@
 @startuml EtatClient
-scale 350 width
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #0D47A1
+}
+
+scale 400 width
 hide empty description
+title Diagramme d'État Client - Processus KYC Détaillé
 
 [*] -[#blue]-> ProspectInput <<inputPin>>
 
-state Prospect {
+state "Phase Prospect" as Prospect {
     state ProspectInput <<inputPin>>
     state ProspectOutput <<outputPin>>
+    
     [*] -[#blue]-> SaisieInfos
-    SaisieInfos : Saisie des infos de base
+    
+    state SaisieInfos {
+        SaisieInfos : Saisie informations de base
+        SaisieInfos : Validation format données
+        SaisieInfos : Génération NIU
+    }
+    
+    state AttentePieces {
+        AttentePieces : Upload documents KYC
+        AttentePieces : Contrôle qualité fichiers
+        AttentePieces : Calcul taux complétude
+    }
+    
+    state DossierComplet {
+        DossierComplet : Tous documents reçus
+        DossierComplet : Prêt pour validation
+        DossierComplet : Score complétude = 100%
+    }
+    
     SaisieInfos -[#orange]-> AttentePieces : Pièces justificatives requises
-    AttentePieces : Attente de dépôt des pièces
-    AttentePieces -[#red]-> SaisieInfos : Correction infos
-    AttentePieces -[#green]-> EnAttenteValidation : Dossier soumis
+    AttentePieces -[#red]-> SaisieInfos : Correction informations
+    AttentePieces -[#green]-> DossierComplet : Documents complets
+    AttentePieces -[#orange]-> AttenteRelance : Documents manquants
+    
+    state AttenteRelance {
+        AttenteRelance : Relance client automatique
+        AttenteRelance : Délai de réponse actif
+        AttenteRelance : Surveillance expiration
+    }
+    
+    AttenteRelance -[#green]-> AttentePieces : Documents reçus
+    AttenteRelance -[#red]-> DossierAbandonne : Délai dépassé
+    
     ProspectInput -[#blue]-> SaisieInfos
-    EnAttenteValidation -[#green]-> ProspectOutput
+    DossierComplet -[#green]-> ProspectOutput
 }
 
-state EnAttenteValidation {
+state DossierAbandonne {
+    DossierAbandonne : Dossier abandonné par timeout
+    DossierAbandonne : Archivage données partielles
+    DossierAbandonne : Statut couleur ORANGE
+}
+
+state "Phase Validation KYC" as EnAttenteValidation {
     state ValidationInput <<inputPin>>
     state ValidationOutput <<outputPin>>
+    
     [*] -[#blue]-> ControleConformite
-    ControleConformite : Contrôle conformité (inclut identité) par INTRA
-    ControleConformite -[#green]-> Actif : Validation OK
-    ControleConformite -[#red]-> Rejete : Validation KO
+    
+    state ControleConformite {
+        ControleConformite : Contrôles automatiques INTRA
+        ControleConformite : Vérification identité
+        ControleConformite : Consultation blacklists/PPE
+        ControleConformite : Calcul score de risque
+    }
+    
+    state AnalyseManuelle {
+        AnalyseManuelle : Révision gestionnaire KYC
+        AnalyseManuelle : Validation superviseur
+        AnalyseManuelle : Compléments d'information
+    }
+    
+    state DecisionFinale {
+        DecisionFinale : Synthèse dossier
+        DecisionFinale : Score final
+        DecisionFinale : Décision ACCEPTER/REJETER
+    }
+    
+    ControleConformite -[#green]-> DecisionFinale : Contrôles OK
+    ControleConformite -[#orange]-> AnalyseManuelle : Alertes détectées
+    AnalyseManuelle -[#green]-> DecisionFinale : Validation manuelle OK
+    AnalyseManuelle -[#red]-> DossierRejete : Validation KO
+    
     ValidationInput -[#blue]-> ControleConformite
-    ControleConformite -[#green]-> ValidationOutput
+    DecisionFinale -[#green]-> ValidationOutput : Acceptation
 }
 
-EnAttenteValidation : Contrôles KYC (INTRA) en cours
+state DossierRejete {
+    DossierRejete : Souscription refusée définitivement
+    DossierRejete : Motifs documentés
+    DossierRejete : Statut couleur ROUGE
+}
 
-Actif : Client validé
-Actif -[#orange]-> Inactif : Désactivation demandée
-Inactif : Client désactivé
+state "Phase Post-Validation" as PostValidation {
+    [*] -[#blue]-> CreationCompte
+    
+    state CreationCompte {
+        CreationCompte : Création compte CBS
+        CreationCompte : Génération RIB/IBAN
+        CreationCompte : Synchronisation systèmes
+    }
+    
+    state SignatureElectronique {
+        SignatureElectronique : Authentification client
+        SignatureElectronique : Capture signature numérique
+        SignatureElectronique : Génération certificat
+    }
+    
+    state ActivationCompte {
+        ActivationCompte : Attribution statut ACTIF
+        ActivationCompte : Configuration produits/services
+        ActivationCompte : Notification client
+    }
+    
+    CreationCompte -[#green]-> SignatureElectronique : Compte créé
+    CreationCompte -[#red]-> EchecTechnique : Erreur CBS
+    SignatureElectronique -[#green]-> ActivationCompte : Signature OK
+    SignatureElectronique -[#red]-> EchecTechnique : Erreur signature
+    ActivationCompte -[#green]-> ClientActif : Activation réussie
+}
 
-Actif -[#red]-> Cloture : Clôture demandée
-Cloture : Client clôturé
+state ClientActif {
+    ClientActif : Client validé et opérationnel
+    ClientActif : Toutes opérations autorisées
+    ClientActif : Statut couleur VERT
+    ClientActif : Surveillance continue KYC
+}
 
-Rejete : Souscription refusée
+state ClientBloque {
+    ClientBloque : Compte suspendu temporairement
+    ClientBloque : Opérations bloquées
+    ClientBloque : Statut couleur ROUGE
+    ClientBloque : Raison de blocage documentée
+}
 
-Rejete -[#black]-> [*]
-Cloture -[#black]-> [*]
-Inactif -[#black]-> [*]
+state ClientInactif {
+    ClientInactif : Client désactivé
+    ClientInactif : Opérations limitées
+    ClientInactif : Statut couleur ORANGE
+    ClientInactif : Possibilité de réactivation
+}
+
+state ClotureEnCours {
+    ClotureEnCours : Processus de clôture initié
+    ClotureEnCours : Vérification conditions
+    ClotureEnCours : Calcul solde final
+}
+
+state ClientCloture {
+    ClientCloture : Compte fermé définitivement
+    ClientCloture : Archivage complet
+    ClientCloture : Statut couleur GRIS
+}
+
+state EchecTechnique {
+    EchecTechnique : Erreur système bloquante
+    EchecTechnique : Intervention technique requise
+    EchecTechnique : Statut couleur JAUNE
+}
+
+' Transitions principales
+Prospect -[#green]-> EnAttenteValidation : Dossier soumis
+EnAttenteValidation -[#green]-> PostValidation : Validation OK
+PostValidation -[#green]-> ClientActif : Activation réussie
+
+' Transitions opérationnelles
+ClientActif -[#orange]-> ClientBloque : Blocage demandé
+ClientActif -[#orange]-> ClientInactif : Désactivation demandée
+ClientActif -[#red]-> ClotureEnCours : Clôture demandée
+
+ClientBloque -[#green]-> ClientActif : Déblocage validé
+ClientBloque -[#red]-> ClotureEnCours : Clôture sur blocage
+
+ClientInactif -[#green]-> ClientActif : Réactivation
+ClientInactif -[#red]-> ClotureEnCours : Clôture sur inactivité
+
+ClotureEnCours -[#green]-> ClientCloture : Clôture validée
+ClotureEnCours -[#orange]-> ClientActif : Annulation clôture
+
+' Gestion des erreurs
+EchecTechnique -[#green]-> ClientActif : Erreur résolue
+EchecTechnique -[#red]-> DossierRejete : Erreur non résolue
+
+' États finaux
+DossierRejete -[#black]-> [*]
+ClientCloture -[#black]-> [*]
+DossierAbandonne -[#black]-> [*]
+
+note bottom
+  Codes couleur des statuts client :
+  VERT : Client actif et operationnel
+  ROUGE : Client bloque ou rejete
+  ORANGE : Client inactif ou dossier abandonne
+  JAUNE : Erreur technique en cours
+  GRIS : Client cloture definitivement
+end note
 
 @enduml

@@ -1,0 +1,268 @@
+@startuml DiagrammeClasseValidationFinale
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Validation Finale KYC
+
+class ValidationFinale {
+    - id: String
+    - numeroValidation: String
+    - clientId: String
+    - typeValidation: TypeValidationFinale
+    - dateDemande: Date
+    - dateValidation: Date
+    - delaiValidation: Integer
+    - statutValidation: StatutValidationFinale
+    - resultatValidation: ResultatValidationFinale
+    - validateur: String
+    - superviseur: String
+    - scoreGlobalKYC: Float
+    - commentaires: String
+    - documentsAnalyses: List<String>
+    - controlesVerifies: List<String>
+    + demarrer(): Boolean
+    + analyser(): Boolean
+    + valider(): Boolean
+    + rejeter(motif: String): Boolean
+    + demanderComplement(): Boolean
+    + escalader(): Boolean
+    + genererDecision(): String
+}
+
+enum TypeValidationFinale {
+    VALIDATION_STANDARD
+    VALIDATION_APPROFONDIE
+    VALIDATION_EXCEPTIONNELLE
+    VALIDATION_URGENTE
+    VALIDATION_COLLECTIVE
+}
+
+class StatutValidationFinale {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - actionSuivante: String
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+}
+
+enum ResultatValidationFinale {
+    ACCEPTE
+    REJETE
+    COMPLEMENT_REQUIS
+    ESCALADE_REQUISE
+    REVISION_NECESSAIRE
+    VALIDATION_CONDITIONNELLE
+}
+
+class CritereValidation {
+    - id: String
+    - nom: String
+    - description: String
+    - categorieValidation: CategorieValidation
+    - poids: Float
+    - seuilAcceptation: Float
+    - seuilRejet: Float
+    - estObligatoire: Boolean
+    - formulesCalcul: String
+    + evaluer(): Float
+    + calculerScore(): Float
+    + determinerSeuil(): Float
+}
+
+enum CategorieValidation {
+    COMPLETUDE_DOSSIER
+    CONFORMITE_DOCUMENTS
+    RESULTATS_CONTROLES
+    PROFIL_RISQUE
+    COHERENCE_INFORMATIONS
+    RESPECT_REGLEMENTATION
+}
+
+class GrilleValidation {
+    - id: String
+    - nom: String
+    - version: String
+    - typeClient: String
+    - typeCompte: String
+    - criteres: List<CritereValidation>
+    - scoreMinimal: Float
+    - dateCreation: Date
+    - estActive: Boolean
+    + appliquer(): Float
+    + calculerScoreGlobal(): Float
+    + determinerResultat(): ResultatValidationFinale
+    + genererRapport(): String
+}
+
+class DecisionValidation {
+    - id: String
+    - validationFinale: ValidationFinale
+    - typeDecision: TypeDecision
+    - motifDecision: String
+    - conditionsAcceptation: List<String>
+    - actionsRequises: List<String>
+    - delaiRevision: Integer
+    - dateDecision: Date
+    - valideur: String
+    - approbateur: String
+    + prendre(): Boolean
+    + justifier(): String
+    + communiquer(): Boolean
+    + suivre(): Boolean
+}
+
+enum TypeDecision {
+    ACCEPTATION_SIMPLE
+    ACCEPTATION_CONDITIONNELLE
+    REJET_DEFINITIF
+    REJET_TEMPORAIRE
+    DEMANDE_COMPLEMENT
+    TRANSFERT_EXPERT
+}
+
+class ComplementInformation {
+    - id: String
+    - validationFinale: ValidationFinale
+    - typeComplement: TypeComplement
+    - description: String
+    - priorite: Integer
+    - delaiReponse: Integer
+    - dateDemande: Date
+    - dateReception: Date
+    - statutComplement: StatutComplement
+    - reponse: String
+    + demander(): Boolean
+    + recevoir(): Boolean
+    + valider(): Boolean
+    + relancer(): Boolean
+}
+
+enum TypeComplement {
+    DOCUMENT_SUPPLEMENTAIRE
+    CLARIFICATION_INFORMATION
+    JUSTIFICATION_ACTIVITE
+    ATTESTATION_TIERS
+    VERIFICATION_TERRAIN
+    ENTRETIEN_CLIENT
+}
+
+enum StatutComplement {
+    DEMANDE
+    EN_ATTENTE
+    RECU
+    VALIDE
+    REJETE
+    EXPIRE
+}
+
+class CommissionValidation {
+    - id: String
+    - nom: String
+    - composition: List<String>
+    - president: String
+    - secretaire: String
+    - domaineCompetence: String
+    - frequenceReunion: String
+    - quorumMinimal: Integer
+    + convoquer(): Boolean
+    + deliberer(): Boolean
+    + voter(): ResultatValidationFinale
+    + rediger(): String
+}
+
+class EscaladeValidation {
+    - id: String
+    - validationFinale: ValidationFinale
+    - niveauEscalade: Integer
+    - motifEscalade: String
+    - responsableEscalade: String
+    - dateEscalade: Date
+    - delaiReponse: Integer
+    - statutEscalade: StatutEscalade
+    - resolutionEscalade: String
+    + escalader(): Boolean
+    + assigner(): Boolean
+    + resoudre(): Boolean
+    + notifierResolution(): Boolean
+}
+
+enum StatutEscalade {
+    INITIE
+    ASSIGNE
+    EN_COURS
+    RESOLU
+    CLOTURE
+    EXPIRE
+}
+
+class NotificationValidation {
+    - id: String
+    - validationFinale: ValidationFinale
+    - typeNotification: TypeNotificationValidation
+    - destinataire: String
+    - contenu: String
+    - dateEnvoi: Date
+    - canalNotification: String
+    - statutEnvoi: StatutEnvoi
+    + creer(): Boolean
+    + envoyer(): Boolean
+    + confirmerReception(): Boolean
+}
+
+enum TypeNotificationValidation {
+    DECISION_ACCEPTATION
+    DECISION_REJET
+    DEMANDE_COMPLEMENT
+    ESCALADE_VALIDATION
+    RAPPEL_DELAI
+    VALIDATION_COMPLETE
+}
+
+class AuditValidation {
+    - id: String
+    - validationFinale: ValidationFinale
+    - action: String
+    - utilisateur: String
+    - dateAction: Date
+    - ancienneValeur: String
+    - nouvelleValeur: String
+    - justification: String
+    + enregistrer(): Boolean
+    + consulter(): List<AuditValidation>
+    + genererRapport(): String
+}
+
+' Relations principales
+ValidationFinale "1" -- "1" TypeValidationFinale : type
+ValidationFinale "1" -- "1" StatutValidationFinale : statut
+ValidationFinale "1" -- "1" ResultatValidationFinale : resultat
+ValidationFinale "1" -- "1" GrilleValidation : grille
+ValidationFinale "1" -- "0..1" DecisionValidation : decision
+ValidationFinale "1" -- "0..*" ComplementInformation : complements
+ValidationFinale "1" -- "0..*" EscaladeValidation : escalades
+ValidationFinale "1" -- "0..*" NotificationValidation : notifications
+ValidationFinale "1" -- "0..*" AuditValidation : audit
+
+GrilleValidation "1" -- "1..*" CritereValidation : criteres
+CritereValidation "1" -- "1" CategorieValidation : categorie
+
+DecisionValidation "1" -- "1" TypeDecision : type
+ComplementInformation "1" -- "1" TypeComplement : type
+ComplementInformation "1" -- "1" StatutComplement : statut
+EscaladeValidation "1" -- "1" StatutEscalade : statut
+NotificationValidation "1" -- "1" TypeNotificationValidation : type
+
+ValidationFinale "0..*" -- "0..1" CommissionValidation : commission
+
+@enduml

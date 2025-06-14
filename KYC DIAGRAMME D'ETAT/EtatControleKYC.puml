@@ -1,0 +1,188 @@
+@startuml EtatControleKYC
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #0D47A1
+}
+
+hide empty description
+title Diagramme d'État - Contrôles KYC
+
+[*] -[#blue]-> NonInitie : Création contrôle
+
+state NonInitie {
+    NonInitie : Contrôle défini mais non lancé
+    NonInitie : Paramètres configurés
+    NonInitie : Statut ATTENTE_EXECUTION
+}
+
+NonInitie -[#blue]-> EnCours : Lancement contrôle
+
+state "Contrôles Automatiques" as EnCours {
+    [*] -[#blue]-> ControleIdentite
+    
+    state ControleIdentite {
+        ControleIdentite : Vérification pièce d'identité
+        ControleIdentite : Contrôle MRZ/OCR
+        ControleIdentite : Validation format
+    }
+    
+    state ConsultationBlacklists {
+        ConsultationBlacklists : Consultation listes sanctions
+        ConsultationBlacklists : Vérification interdits bancaires
+        ConsultationBlacklists : Contrôle FICP/FCC
+    }
+    
+    state IdentificationPPE {
+        IdentificationPPE : Détection Personnes Politiquement Exposées
+        IdentificationPPE : Consultation bases officielles
+        IdentificationPPE : Analyse risque politique
+    }
+    
+    state VerificationFATCA {
+        VerificationFATCA : Contrôle réglementation FATCA
+        VerificationFATCA : Identification résidence fiscale
+        VerificationFATCA : Obligations déclaratives
+    }
+    
+    state DetectionDoublons {
+        DetectionDoublons : Recherche clients existants
+        DetectionDoublons : Algorithme de rapprochement
+        DetectionDoublons : Détection identités multiples
+    }
+    
+    state CalculScoreRisque {
+        CalculScoreRisque : Agrégation résultats contrôles
+        CalculScoreRisque : Application pondérations
+        CalculScoreRisque : Score final de risque
+    }
+    
+    ControleIdentite -[#blue]-> ConsultationBlacklists
+    ConsultationBlacklists -[#blue]-> IdentificationPPE
+    IdentificationPPE -[#blue]-> VerificationFATCA
+    VerificationFATCA -[#blue]-> DetectionDoublons
+    DetectionDoublons -[#blue]-> CalculScoreRisque
+    CalculScoreRisque -[#green]-> ControlesTermines
+    
+    state ControlesTermines <<end>>
+}
+
+EnCours -[#green]-> Conforme : Aucune alerte
+EnCours -[#orange]-> AlerteDetectee : Alertes identifiées
+EnCours -[#red]-> EchecTechnique : Erreur système
+
+state Conforme {
+    Conforme : Tous contrôles passés
+    Conforme : Aucune alerte majeure
+    Conforme : Score risque acceptable
+    Conforme : Statut CONFORME
+}
+
+state AlerteDetectee {
+    AlerteDetectee : Une ou plusieurs alertes
+    AlerteDetectee : Nécessite analyse manuelle
+    AlerteDetectee : Statut ALERTE
+}
+
+AlerteDetectee -[#blue]-> AnalyseManuelle : Escalade gestionnaire
+
+state "Analyse Manuelle" as AnalyseManuelle {
+    [*] -[#blue]-> ExamenGestionnaire
+    
+    state ExamenGestionnaire {
+        ExamenGestionnaire : Analyse détaillée alertes
+        ExamenGestionnaire : Recherches complémentaires
+        ExamenGestionnaire : Évaluation risque métier
+    }
+    
+    state ValidationSuperviseur {
+        ValidationSuperviseur : Validation hiérarchique
+        ValidationSuperviseur : Décision finale
+        ValidationSuperviseur : Justification documentée
+    }
+    
+    state DemandeComplements {
+        DemandeComplements : Informations supplémentaires
+        DemandeComplements : Documents complémentaires
+        DemandeComplements : Clarifications client
+    }
+    
+    ExamenGestionnaire -[#green]-> Leve : Alerte levée
+    ExamenGestionnaire -[#orange]-> ValidationSuperviseur : Escalade superviseur
+    ExamenGestionnaire -[#blue]-> DemandeComplements : Infos manquantes
+    
+    ValidationSuperviseur -[#green]-> Leve : Validation OK
+    ValidationSuperviseur -[#red]-> Bloquant : Validation KO
+    
+    DemandeComplements -[#green]-> ExamenGestionnaire : Compléments reçus
+    DemandeComplements -[#red]-> Bloquant : Pas de réponse
+    
+    state Leve <<end>>
+    state Bloquant <<end>>
+}
+
+AnalyseManuelle -[#green]-> Conforme : Alerte levée
+AnalyseManuelle -[#red]-> NonConforme : Alerte confirmée
+
+state NonConforme {
+    NonConforme : Contrôles bloquants
+    NonConforme : Risque inacceptable
+    NonConforme : Motifs documentés
+    NonConforme : Statut NON_CONFORME
+}
+
+state EchecTechnique {
+    EchecTechnique : Erreur système/réseau
+    EchecTechnique : Indisponibilité service
+    EchecTechnique : Relance automatique prévue
+    EchecTechnique : Statut ECHEC_TECHNIQUE
+}
+
+state Expire {
+    Expire : Délai de traitement dépassé
+    Expire : Contrôle abandonné
+    Expire : Impact sur validation KYC
+    Expire : Statut EXPIRE
+}
+
+state Archive {
+    Archive : Contrôle archivé
+    Archive : Conservation réglementaire
+    Archive : Traçabilité complète
+    Archive : Statut ARCHIVE
+}
+
+' Gestion des timeouts et reprises
+EchecTechnique -[#orange]-> EnCours : Relance automatique
+EchecTechnique -[#red]-> Expire : Échec définitif
+AlerteDetectee -[#red]-> Expire : Délai dépassé
+
+' Archivage
+Conforme -[#black]-> Archive : Fin de conservation
+NonConforme -[#black]-> Archive : Archivage rejet
+Expire -[#black]-> Archive : Archivage expiration
+
+' États finaux
+Archive -[#black]-> [*]
+
+note top
+  Types de controles KYC :
+  - Controle d'identite (OCR/MRZ)
+  - Consultation blacklists/sanctions
+  - Identification PPE (Personnes Politiquement Exposees)
+  - Verification FATCA/CRS
+  - Detection de doublons
+  - Calcul score de risque global
+end note
+
+note bottom
+  Niveaux d'alerte :
+  VERT : Aucune alerte (score < 30)
+  JAUNE : Alerte mineure (score 30-60)
+  ORANGE : Alerte majeure (score 60-80)
+  ROUGE : Alerte bloquante (score > 80)
+  Controle technique en echec
+end note
+
+@enduml

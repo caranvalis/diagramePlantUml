@@ -443,13 +443,19 @@ class Actionnaire {
     + verifierConformiteActionnaire(): Boolean
 }
 
-enum StatutClient {
-    ACTIF
-    INACTIF
-    BLOQUE
-    SUSPENDU
-    EN_ATTENTE
-    ARCHIVE
+class StatutClient {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estActif: Boolean
+    + creerStatut(): Boolean
+    + modifierStatut(): Boolean
+    + activerStatut(): Boolean
+    + desactiverStatut(): Boolean
+    + obtenirCouleur(): String
 }
 
 ' ===== RELATIONS AVEC CARDINALITÉS =====
@@ -503,5 +509,78 @@ Compte "1" -- "1" TypeCompte : type
 
 ' Relations ClientEntreprise et Actionnaire
 ClientEntreprise "1" -- "0..*" Actionnaire : actionnaires
+
+' === GRANDES ÉTAPES KYC MANQUANTES ===
+
+class PreEnregistrement {
+    - id: String
+    - numeroPreEnregistrement: String
+    - canalSaisie: String
+    - dateCreation: Date
+    - statutPreEnregistrement: String
+    - donneesCollectees: String
+    + initier(): Boolean
+    + completer(): Boolean
+    + valider(): Boolean
+    + transformer(): Client
+}
+
+class ValidationFinale {
+    - id: String
+    - dateValidation: Date
+    - validateur: Utilisateur
+    - resultat: String
+    - commentaires: String
+    - documentsValides: List<Document>
+    + validerDossier(): Boolean
+    + rejeterDossier(motif: String): Boolean
+    + demanderComplement(): Boolean
+}
+
+class SignatureElectronique {
+    - id: String
+    - typeSignature: String
+    - dateSignature: Date
+    - certificat: String
+    - empreinteDocument: String
+    - statutSignature: String
+    + capturerSignature(): Boolean
+    + validerSignature(): Boolean
+    + genererCertificat(): String
+}
+
+class CreationCompteCBS {
+    - id: String
+    - numeroTransactionCBS: String
+    - dateCreation: Date
+    - statutCreation: String
+    - parametresCBS: String
+    - messageRetour: String
+    + creerCompteDansCBS(): Boolean
+    + verifierCreation(): Boolean
+    + synchroniser(): Boolean
+}
+
+class GestionBlocageDeblocage {
+    - id: String
+    - typeAction: String
+    - motif: String
+    - dateAction: Date
+    - utilisateurAction: Utilisateur
+    - commentaires: String
+    + bloquerClient(): Boolean
+    + debloquerClient(): Boolean
+    + bloquerCompte(): Boolean
+    + debloquerCompte(): Boolean
+    + journaliserAction(): Boolean
+}
+
+' Relations avec les étapes
+Client "1" -- "0..1" PreEnregistrement : origine
+Client "1" -- "0..1" ValidationFinale : validation
+Client "1" -- "0..*" SignatureElectronique : signatures
+Compte "1" -- "0..1" CreationCompteCBS : creation
+Client "1" -- "0..*" GestionBlocageDeblocage : actions
+Compte "1" -- "0..*" GestionBlocageDeblocage : actions
 
 @enduml

@@ -1,0 +1,302 @@
+@startuml DiagrammeClasseSignatureElectronique
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Signature Électronique KYC
+
+class SignatureElectronique {
+    - id: String
+    - numeroSignature: String
+    - clientId: String
+    - documentId: String
+    - typeSignature: TypeSignature
+    - dateSignature: Date
+    - heureSignature: Time
+    - lieuSignature: String
+    - statutSignature: StatutSignature
+    - certificatSignature: String
+    - empreinteDocument: String
+    - algorithmeSelling: String
+    - adresseIPSignataire: String
+    - dispositifSignature: String
+    - dureeSignature: Integer
+    + initier(): Boolean
+    + capturer(): Boolean
+    + valider(): Boolean
+    + certifier(): Boolean
+    + horodater(): Boolean
+    + archiver(): Boolean
+}
+
+enum TypeSignature {
+    SIGNATURE_MANUSCRITE_NUMERISEE
+    SIGNATURE_ELECTRONIQUE_SIMPLE
+    SIGNATURE_ELECTRONIQUE_AVANCEE
+    SIGNATURE_ELECTRONIQUE_QUALIFIEE
+    SIGNATURE_BIOMETRIQUE
+    SIGNATURE_OTP
+}
+
+class StatutSignature {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - validiteJuridique: String
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+    + verifierValidite(): Boolean
+}
+
+class CertificatSignature {
+    - id: String
+    - numeroCertificat: String
+    - autoriteCertification: String
+    - algorithmeChiffrement: String
+    - clePublique: String
+    - clePrivee: String
+    - dateEmission: Date
+    - dateExpiration: Date
+    - empreinteNumerique: String
+    - statutCertificat: StatutCertificat
+    - chaineConfiance: String
+    + generer(): Boolean
+    + valider(): Boolean
+    + revoquer(): Boolean
+    + renouveler(): Boolean
+    + verifierChaineConfiance(): Boolean
+}
+
+enum StatutCertificat {
+    ACTIF
+    EXPIRE
+    REVOQUE
+    SUSPENDU
+    EN_ATTENTE
+}
+
+class DispositifSignature {
+    - id: String
+    - nom: String
+    - typeDispositif: TypeDispositif
+    - fabricant: String
+    - modele: String
+    - numeroSerie: String
+    - versionFirmware: String
+    - certificationSecurite: String
+    - dateInstallation: Date
+    - estActif: Boolean
+    + configurer(): Boolean
+    + calibrer(): Boolean
+    + tester(): Boolean
+    + certifier(): Boolean
+}
+
+enum TypeDispositif {
+    TABLETTE_SIGNATURE
+    STYLO_ELECTRONIQUE
+    ECRAN_TACTILE
+    LECTEUR_BIOMETRIQUE
+    TOKEN_USB
+    CARTE_A_PUCE
+    SMARTPHONE
+}
+
+class ProcessusSignature {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - etapeCourante: EtapeSignature
+    - etapesRealisees: List<EtapeSignature>
+    - dureeProcessus: Integer
+    - utilisateurAccompagnant: String
+    - commentaires: String
+    + demarrer(): Boolean
+    + avancer(): Boolean
+    + validerEtape(): Boolean
+    + terminer(): Boolean
+    + annuler(): Boolean
+}
+
+enum EtapeSignature {
+    PREPARATION_DOCUMENT
+    IDENTIFICATION_SIGNATAIRE
+    PRESENTATION_DOCUMENT
+    CAPTURE_SIGNATURE
+    VERIFICATION_SIGNATURE
+    CERTIFICATION
+    ARCHIVAGE
+}
+
+class DonneesBiometriques {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - typeDonnee: TypeDonneeBiometrique
+    - donneesCapturees: String
+    - qualiteDonnees: Float
+    - templateBiometrique: String
+    - algorithmeExtraction: String
+    - scoreComparaison: Float
+    + capturer(): Boolean
+    + extraireTemplate(): String
+    + comparer(): Float
+    + valider(): Boolean
+}
+
+enum TypeDonneeBiometrique {
+    EMPREINTE_DIGITALE
+    RECONNAISSANCE_FACIALE
+    DYNAMIQUE_SIGNATURE
+    RECONNAISSANCE_VOCALE
+    GEOMETRIE_MAIN
+    IRIS
+}
+
+class HorodatageQualifie {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - autoriteTPS: String
+    - timestampToken: String
+    - dateHorodatage: Date
+    - heureHorodatage: Time
+    - precisionTempo: Integer
+    - certificatTPS: String
+    - numeroSequence: Long
+    + generer(): Boolean
+    + valider(): Boolean
+    + verifierIntegrite(): Boolean
+}
+
+class ValidationSignature {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - typeValidation: TypeValidationSignature
+    - resultatValidation: Boolean
+    - scoreValidation: Float
+    - anomaliesDetectees: List<String>
+    - dateValidation: Date
+    - validateur: String
+    + executer(): Boolean
+    + analyserIntegrite(): Boolean
+    + verifierAuthenticite(): Boolean
+    + detecterAnomalies(): List<String>
+    + genererRapport(): String
+}
+
+enum TypeValidationSignature {
+    VALIDATION_CERTIFICAT
+    VALIDATION_INTEGRITE
+    VALIDATION_HORODATAGE
+    VALIDATION_BIOMETRIQUE
+    VALIDATION_JURIDIQUE
+    VALIDATION_TECHNIQUE
+}
+
+class ArchivageSignature {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - formatArchivage: FormatArchivage
+    - cheminArchivage: String
+    - dureeConservation: Integer
+    - dateArchivage: Date
+    - checksum: String
+    - certificatArchivage: String
+    - niveauSecurite: String
+    + archiver(): Boolean
+    + verifierIntegrite(): Boolean
+    + prolongerConservation(): Boolean
+    + restaurer(): Boolean
+}
+
+enum FormatArchivage {
+    PDF_A
+    XADES
+    CADES
+    PADES
+    ASICE
+    XML_DSIG
+}
+
+class AuditSignature {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - action: String
+    - utilisateur: String
+    - dateAction: Date
+    - ancienneValeur: String
+    - nouvelleValeur: String
+    - adresseIP: String
+    - userAgent: String
+    - justification: String
+    + enregistrer(): Boolean
+    + consulter(): List<AuditSignature>
+    + genererRapport(): String
+}
+
+class NotificationSignature {
+    - id: String
+    - signatureElectronique: SignatureElectronique
+    - typeNotification: TypeNotificationSignature
+    - destinataire: String
+    - contenu: String
+    - dateEnvoi: Date
+    - canalNotification: String
+    - statutEnvoi: StatutEnvoi
+    + creer(): Boolean
+    + envoyer(): Boolean
+    + confirmerReception(): Boolean
+}
+
+enum TypeNotificationSignature {
+    SIGNATURE_REALISEE
+    SIGNATURE_VALIDEE
+    SIGNATURE_REJETEE
+    CERTIFICAT_EXPIRE
+    ERREUR_TECHNIQUE
+    RAPPEL_SIGNATURE
+}
+
+class ConformiteReglementaire {
+    - id: String
+    - reglementationApplicable: String
+    - niveauConformite: String
+    - exigencesLegales: List<String>
+    - preuveConformite: String
+    - dateEvaluation: Date
+    - auditeur: String
+    + evaluer(): String
+    + certifier(): Boolean
+    + genererAttestation(): String
+}
+
+' Relations principales
+SignatureElectronique "1" -- "1" TypeSignature : type
+SignatureElectronique "1" -- "1" StatutSignature : statut
+SignatureElectronique "1" -- "0..1" CertificatSignature : certificat
+SignatureElectronique "1" -- "1" DispositifSignature : dispositif
+SignatureElectronique "1" -- "1" ProcessusSignature : processus
+SignatureElectronique "1" -- "0..*" DonneesBiometriques : biometrie
+SignatureElectronique "1" -- "0..1" HorodatageQualifie : horodatage
+SignatureElectronique "1" -- "0..*" ValidationSignature : validations
+SignatureElectronique "1" -- "0..1" ArchivageSignature : archivage
+SignatureElectronique "1" -- "0..*" AuditSignature : audit
+SignatureElectronique "1" -- "0..*" NotificationSignature : notifications
+SignatureElectronique "1" -- "0..1" ConformiteReglementaire : conformite
+
+CertificatSignature "1" -- "1" StatutCertificat : statut
+DispositifSignature "1" -- "1" TypeDispositif : type
+ProcessusSignature "1" -- "1" EtapeSignature : etape
+DonneesBiometriques "1" -- "1" TypeDonneeBiometrique : type
+ValidationSignature "1" -- "1" TypeValidationSignature : type
+ArchivageSignature "1" -- "1" FormatArchivage : format
+NotificationSignature "1" -- "1" TypeNotificationSignature : type
+
+@enduml

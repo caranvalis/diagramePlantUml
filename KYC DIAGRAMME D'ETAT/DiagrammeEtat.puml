@@ -1,38 +1,117 @@
 @startuml DiagrammeEtatKYC
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #0D47A1
+}
+
 hide empty description
+title Diagramme d'Etat - Processus KYC Global
 
-[*] --> PreEnregistrement
-PreEnregistrement : Saisie des informations client
-PreEnregistrement : Aucune validation effectuee
+[*] -[#blue]-> PreEnregistrement : Creation dossier
 
-PreEnregistrement --> EnAttenteValidation : Donnees soumises
-EnAttenteValidation : Controles KYC en cours
-EnAttenteValidation : Verification des documents
+PreEnregistrement : Saisie informations client
+PreEnregistrement : Generation NIU
+PreEnregistrement : Validation donnees minimales
 
-EnAttenteValidation --> Actif : Validation OK
-EnAttenteValidation --> Rejete : Validation KO
+PreEnregistrement -[#green]-> CollecteDocuments : Donnees validees
+PreEnregistrement -[#red]-> Rejete : Donnees invalides
+
+CollecteDocuments : Upload documents obligatoires
+CollecteDocuments : Controle format et taille
+CollecteDocuments : Calcul taux completude
+
+CollecteDocuments -[#orange]-> AttenteComplements : Documents manquants
+AttenteComplements : Relance client
+AttenteComplements : Attente documents supplementaires
+
+AttenteComplements -[#green]-> CollecteDocuments : Documents recus
+AttenteComplements -[#red]-> Abandonne : Delai depasse
+
+CollecteDocuments -[#green]-> ControlesKYC : Dossier complet
+
+ControlesKYC : Controles automatiques
+ControlesKYC : Verification identite
+ControlesKYC : Consultation blacklists
+ControlesKYC : Calcul score risque
+
+ControlesKYC -[#green]-> ValidationFinale : Controles conformes
+ControlesKYC -[#orange]-> RevisionManuelle : Alertes detectees
+
+RevisionManuelle : Analyse gestionnaire KYC
+RevisionManuelle : Validation superviseur
+RevisionManuelle : Complements d'information
+
+RevisionManuelle -[#green]-> ValidationFinale : Validation manuelle OK
+RevisionManuelle -[#red]-> Rejete : Validation manuelle KO
+
+ValidationFinale : Analyse dossier global
+ValidationFinale : Calcul score final
+ValidationFinale : Decision finale
+
+ValidationFinale -[#green]-> CreationCompteCBS : Acceptation
+ValidationFinale -[#orange]-> AttenteComplements : Revision necessaire
+ValidationFinale -[#red]-> Rejete : Refus definitif
+
+CreationCompteCBS : Creation compte bancaire
+CreationCompteCBS : Generation numero compte
+CreationCompteCBS : Synchronisation CBS
+
+CreationCompteCBS -[#green]-> SignatureElectronique : Compte cree
+CreationCompteCBS -[#red]-> EchecTechnique : Erreur CBS
+
+SignatureElectronique : Authentification signataire
+SignatureElectronique : Capture signature
+SignatureElectronique : Generation certificat
+
+SignatureElectronique -[#green]-> Actif : Signature validee
+SignatureElectronique -[#red]-> EchecTechnique : Erreur signature
 
 Actif : Compte utilisable
 Actif : Operations autorisees
+Actif : Client valide KYC
 
-Actif --> Bloque : Blocage demande
 Bloque : Compte suspendu
-Bloque : Aucune operation possible
+Bloque : Aucune operation
 
-Bloque --> Actif : Deblocage valide
-Actif --> ClotureEnCours : Cloture demandee
-Bloque --> ClotureEnCours : Cloture demandee
+Inactif : Compte desactive
+Inactif : Operations limitees
 
-ClotureEnCours : Traitement de la cloture
-ClotureEnCours : Verification des conditions
+ClotureEnCours : Traitement cloture
+ClotureEnCours : Verification conditions
+ClotureEnCours : Calcul solde final
 
-ClotureEnCours --> Cloture : Cloture validee
-Cloture : Compte ferme
-Cloture : Aucune operation possible
+Cloture : Compte ferme definitivement
+Cloture : Archivage donnees
 
 Rejete : Souscription refusee
+Rejete : Motifs documentes
 
-Rejete --> [*]
-Cloture --> [*]
+Abandonne : Dossier abandonne
+Abandonne : Delai depasse
+
+EchecTechnique : Erreur systeme
+EchecTechnique : Intervention technique requise
+
+Actif -[#orange]-> Bloque : Blocage demande
+Actif -[#orange]-> Inactif : Desactivation
+Actif -[#red]-> ClotureEnCours : Cloture demandee
+
+Bloque -[#green]-> Actif : Deblocage valide
+Bloque -[#red]-> ClotureEnCours : Cloture sur blocage
+
+Inactif -[#green]-> Actif : Reactivation
+Inactif -[#red]-> ClotureEnCours : Cloture sur inactivite
+
+ClotureEnCours -[#green]-> Cloture : Cloture validee
+ClotureEnCours -[#red]-> Actif : Annulation cloture
+
+EchecTechnique -[#green]-> Actif : Erreur corrigee
+EchecTechnique -[#red]-> Rejete : Erreur non resolue
+
+Rejete -[#black]-> [*]
+Cloture -[#black]-> [*]
+Abandonne -[#black]-> [*]
 
 @enduml

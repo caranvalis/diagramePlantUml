@@ -1,0 +1,72 @@
+@startuml DiagrammeActivitePreEnregistrement
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Pré-enregistrement KYC
+
+|Client|
+start
+:Accéder au formulaire de pré-enregistrement;
+
+|Interface Web/Mobile|
+:Afficher formulaire initial;
+:Présenter liste des documents requis;
+
+|Client|
+:Sélectionner type de compte désiré;
+:Saisir informations personnelles;
+:Sélectionner canal de saisie préféré;
+
+|Système Pré-enregistrement|
+:Valider format des données saisies;
+:Contrôler cohérence des informations;
+:Vérifier existence préalable (dédoublonnage);
+
+if (Données valides ?) then (Oui)
+    :Générer Numéro d'Identification Unique (NIU);
+    :Créer session temporaire;
+    :Sauvegarder données partielles;
+    :Définir profil de contrôles KYC requis;
+    :Calculer score de complétude initial;
+    
+    |Notification|
+    :Envoyer confirmation de pré-enregistrement;
+    :Transmettre NIU au client;
+    :Planifier relances automatiques;
+    
+    |Client|
+    :Recevoir confirmation avec NIU;
+    note right : Le client peut reprendre\nle processus ultérieurement\navec son NIU
+    
+    stop
+
+else (Non)
+    :Identifier erreurs de saisie;
+    :Générer messages d'erreur contextuels;
+    
+    |Interface Web/Mobile|
+    :Afficher erreurs de validation;
+    :Mettre en surbrillance champs incorrects;
+    
+    |Client|
+    :Corriger les données erronées;
+    note left : Maximum 3 tentatives\nde correction autorisées
+    
+    if (Nombre de tentatives dépassé ?) then (Oui)
+        :Bloquer temporairement l'accès;
+        :Proposer assistance téléphonique;
+        stop
+    else (Non)
+        :Permettre nouvelle saisie;
+        :Saisir informations personnelles;
+    endif
+endif
+
+@enduml

@@ -1,23 +1,245 @@
 @startuml DiagrammeDeploiementKYC
+skinparam backgroundColor #F8FBFF
 skinparam node {
-    BackgroundColor #E0F7FA
-    BorderColor #0097A7
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam artifact {
+    BackgroundColor #FFF3E0
+    BorderColor #FF8F00
+}
+skinparam cloud {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+skinparam database {
+    BackgroundColor #FCE4EC
+    BorderColor #E91E63
 }
 
-node "Poste Client\n(Web/Agence)" as Client
-node "Serveur Applicatif\nKYC/INTRA" as App
-node "Serveur Base de Données\nKYC" as DB
-node "Serveur CBS\n(Système Bancaire Central)" as CBS
-node "Serveur GED\n(Gestion Électronique de Documents)" as GED
-node "Serveur Signature\nÉlectronique" as SIG
-node "Système Externe\n(Blacklist, PPE, FATCA...)" as EXT
+title Diagramme de Deploiement - Infrastructure KYC
 
-Client --> App : Saisie/consultation KYC
-App --> DB : Lecture/écriture données KYC
-App --> CBS : Création/Clôture compte\nBlocage/Déblocage
-App --> GED : Stockage/Récupération documents
-App --> SIG : Capture/Validation signature
-App --> EXT : Contrôles conformité (Blacklist, PPE, FATCA)
-App --> Client : Notifications/statuts
+' === ZONE UTILISATEURS ===
+cloud "Zone Clients" {
+    node "Navigateur Web" as WebBrowser {
+        artifact "Interface Web KYC" as WebUI
+    }
+    
+    node "Application Mobile" as MobileApp {
+        artifact "App KYC Mobile" as MobileUI
+    }
+}
+
+cloud "Zone Interne Banque" {
+    node "Poste Gestionnaire" as ManagerPC {
+        artifact "Interface Gestionnaire" as ManagerUI
+    }
+    
+    node "Poste Administration" as AdminPC {
+        artifact "Interface Admin" as AdminUI
+    }
+}
+
+' === ZONE DMZ ===
+node "DMZ (Zone Demilitarisee)" {
+    node "Load Balancer" as LB {
+        artifact "HAProxy/Nginx" as Proxy
+    }
+    
+    node "Serveur Web 1" as Web1 {
+        artifact "Apache/Nginx" as WebServer1
+    }
+    
+    node "Serveur Web 2" as Web2 {
+        artifact "Apache/Nginx" as WebServer2
+    }
+}
+
+' === ZONE APPLICATIVE ===
+node "Zone Applicative Interne" {
+    node "Cluster App KYC" as AppCluster {
+        node "Serveur App 1" as App1 {
+            artifact "Service KYC Core" as KYCCore1
+            artifact "API REST" as REST1
+            artifact "Moteur Workflow" as Workflow1
+        }
+        
+        node "Serveur App 2" as App2 {
+            artifact "Service KYC Core" as KYCCore2
+            artifact "API REST" as REST2
+            artifact "Moteur Workflow" as Workflow2
+        }
+    }
+    
+    node "Serveur Services" as ServicesNode {
+        artifact "Service Controles" as ControlService
+        artifact "Service Documents" as DocService
+        artifact "Service Notifications" as NotifService
+        artifact "Service Audit" as AuditService
+    }
+    
+    node "Serveur Cache" as CacheNode {
+        artifact "Redis Cluster" as Redis
+    }
+    
+    node "Serveur Files" as QueueNode {
+        artifact "RabbitMQ/Kafka" as MessageQueue
+    }
+}
+
+' === ZONE DONNEES ===
+node "Zone Base de Donnees" {
+    node "Cluster BDD KYC" as DBCluster {
+        database "BDD KYC Principale" as MainDB
+        database "BDD KYC Replica" as ReplicaDB
+    }
+    
+    node "Serveur GED" as GEDNode {
+        database "Stockage Documents" as GEDStorage
+        artifact "Service GED" as GEDService
+    }
+    
+    node "Serveur Backup" as BackupNode {
+        database "Sauvegarde KYC" as BackupDB
+        artifact "Agent Backup" as BackupAgent
+    }
+}
+
+' === SYSTEMES BANCAIRES ===
+node "Infrastructure Bancaire" {
+    node "Serveur CBS" as CBSNode {
+        artifact "Core Banking System" as CBS
+        database "Base CBS" as CBSDatabase
+    }
+    
+    node "Serveur CRM" as CRMNode {
+        artifact "CRM Bancaire" as CRM
+        database "Base CRM" as CRMDatabase
+    }
+    
+    node "Serveur Reporting" as ReportNode {
+        artifact "Systeme Reporting" as Reporting
+        database "Datawarehouse" as DWH
+    }
+}
+
+' === SERVICES EXTERNES ===
+cloud "Services Externes Internet" {
+    node "Service Blacklists" as BlacklistSvc {
+        artifact "API Blacklists" as BlacklistAPI
+    }
+    
+    node "Service PPE" as PPESvc {
+        artifact "API PPE" as PPEAPI
+    }
+    
+    node "Service FATCA" as FATCASvc {
+        artifact "API FATCA/CRS" as FATCAAPI
+    }
+    
+    node "Service Verification ID" as IDSvc {
+        artifact "API Verification" as IDAPI
+    }
+    
+    node "Service Signature" as SignatureSvc {
+        artifact "Serveur Signature" as SignatureServer
+    }
+}
+
+' === MONITORING ET SECURITE ===
+node "Infrastructure Transverse" {
+    node "Serveur Monitoring" as MonitorNode {
+        artifact "Prometheus/Grafana" as Monitoring
+        artifact "ELK Stack" as Logging
+    }
+    
+    node "Serveur Securite" as SecurityNode {
+        artifact "LDAP/AD" as Authentication
+        artifact "Firewall Rules" as Firewall
+        artifact "Antivirus" as Antivirus
+    }
+}
+
+' === CONNEXIONS UTILISATEURS ===
+WebBrowser --> LB : HTTPS
+MobileApp --> LB : HTTPS/REST
+ManagerPC --> LB : HTTPS
+AdminPC --> LB : HTTPS
+
+' === LOAD BALANCING ===
+LB --> Web1 : HTTP
+LB --> Web2 : HTTP
+
+' === SERVEURS WEB ===
+Web1 --> App1 : HTTP/REST
+Web1 --> App2 : HTTP/REST
+Web2 --> App1 : HTTP/REST
+Web2 --> App2 : HTTP/REST
+
+' === CLUSTER APPLICATIF ===
+App1 --> ServicesNode : HTTP/RPC
+App2 --> ServicesNode : HTTP/RPC
+App1 --> CacheNode : Redis Protocol
+App2 --> CacheNode : Redis Protocol
+App1 --> QueueNode : AMQP
+App2 --> QueueNode : AMQP
+
+' === SERVICES VERS DONNEES ===
+ServicesNode --> MainDB : SQL/JDBC
+ServicesNode --> GEDNode : HTTP/REST
+ServicesNode --> CacheNode : Redis Protocol
+ServicesNode --> QueueNode : AMQP
+
+' === REPLICATION BDD ===
+MainDB --> ReplicaDB : Replication
+MainDB --> BackupNode : Backup
+
+' === INTEGRATION BANCAIRE ===
+ServicesNode --> CBSNode : SOAP/REST
+ServicesNode --> CRMNode : HTTP/REST
+ServicesNode --> ReportNode : HTTP/REST
+
+' === SERVICES EXTERNES ===
+ServicesNode --> BlacklistSvc : HTTPS/REST
+ServicesNode --> PPESvc : HTTPS/REST
+ServicesNode --> FATCASvc : HTTPS/REST
+ServicesNode --> IDSvc : HTTPS/REST
+ServicesNode --> SignatureSvc : HTTPS/REST
+
+' === MONITORING ===
+AppCluster --> MonitorNode : Metrics/Logs
+ServicesNode --> MonitorNode : Metrics/Logs
+DBCluster --> MonitorNode : Metrics/Logs
+
+' === SECURITE ===
+LB --> SecurityNode : Auth/Audit
+AppCluster --> SecurityNode : Auth/Audit
+ServicesNode --> SecurityNode : Auth/Audit
+
+note top of LB
+  Point d'entree unique
+  avec repartition de charge
+  et terminaison SSL
+end note
+
+note right of AppCluster
+  Cluster applicatif en
+  haute disponibilite avec
+  auto-scaling possible
+end note
+
+note bottom of DBCluster
+  Base de donnees avec
+  replication maitre-esclave
+  et sauvegarde automatique
+end note
+
+note left of "Services Externes Internet"
+  Appels securises vers
+  services tiers avec
+  authentification et
+  controle des quotas
+end note
 
 @enduml

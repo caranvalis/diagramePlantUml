@@ -1,0 +1,227 @@
+@startuml IntegrationExterneKYC
+skinparam backgroundColor #F8FBFF
+skinparam componentStyle uml2
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam package {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam cloud {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+skinparam database {
+    BackgroundColor #FFF3E0
+    BorderColor #FF8F00
+}
+
+title Integration Systemes Externes - Architecture KYC
+
+' === COEUR KYC ===
+package "Systeme KYC Central" {
+    [Orchestrateur KYC] as KYCCore
+    [Service Controles] as ControlService
+    [Service Documents] as DocService
+    [Service Validation] as ValidationService
+    [Service Integration] as IntegrationService
+}
+
+' === COUCHE INTEGRATION ===
+package "Couche Integration" {
+    [Adapter CBS] as CBSAdapter
+    [Adapter GED] as GEDAdapter
+    [Adapter Services Externes] as ExternalAdapter
+    [Adapter CRM] as CRMAdapter
+    [Adapter Notification] as NotificationAdapter
+    [Gateway API Externes] as ExternalGateway
+}
+
+' === SERVICES DE TRANSFORMATION ===
+package "Services Transformation" {
+    [Transformateur CBS] as CBSTransform
+    [Transformateur Documents] as DocTransform
+    [Transformateur Donnees Client] as ClientTransform
+    [Service Mapping] as MappingService
+    [Service Validation Format] as FormatValidator
+}
+
+' === GESTION ERREURS ET RESILIENCE ===
+package "Resilience et Monitoring" {
+    [Circuit Breaker] as CircuitBreaker
+    [Retry Manager] as RetryManager
+    [Timeout Manager] as TimeoutManager
+    [Health Check Service] as HealthCheck
+    [Monitoring Integration] as IntegrationMonitoring
+}
+
+' === CBS (CORE BANKING SYSTEM) ===
+cloud "CBS - Core Banking System" {
+    [API CBS Comptes] as CBSAccounts
+    [API CBS Operations] as CBSOperations
+    [API CBS Clients] as CBSClients
+    [Service Authentification CBS] as CBSAuth
+    database "Base CBS" as CBSDatabase
+}
+
+' === GED (GESTION ELECTRONIQUE DOCUMENTS) ===
+cloud "GED - Gestion Electronique Documents" {
+    [API GED Upload] as GEDUpload
+    [API GED Download] as GEDDownload
+    [API GED Search] as GEDSearch
+    [Service Indexation] as GEDIndexing
+    [Service OCR] as GEDOCR
+    database "Stockage GED" as GEDStorage
+}
+
+' === SERVICES TIERS CONFORMITE ===
+cloud "Services Conformite Tiers" {
+    [API Blacklists OFAC] as OFACApi
+    [API PPE (Personnes Politiquement Exposees)] as PPEApi
+    [API FATCA/CRS] as FATCAApi
+    [API Verification Identite] as IDCheckApi
+    [API Sanctions] as SanctionsApi
+    [Service Anti-Blanchiment] as AMLService
+}
+
+' === CRM BANCAIRE ===
+cloud "CRM Bancaire" {
+    [API CRM Clients] as CRMClients
+    [API CRM Interactions] as CRMInteractions
+    [API CRM Segmentation] as CRMSegmentation
+    [Service Marketing] as CRMMarketing
+    database "Base CRM" as CRMDatabase
+}
+
+' === SERVICES NOTIFICATION ===
+cloud "Services Notification" {
+    [Service Email] as EmailService
+    [Service SMS] as SMSService
+    [Service Push Mobile] as PushService
+    [Service Courrier] as MailService
+    [Service Messagerie Interne] as InternalMsg
+}
+
+' === REPORTING ET ANALYTICS ===
+cloud "Reporting et Analytics" {
+    [Service Reporting Reglementaire] as RegulatoryReporting
+    [Analytics KYC] as KYCAnalytics
+    [Dashboard Operationnel] as OpsDashboard
+    [Service Export] as ExportService
+    database "Data Warehouse" as DataWarehouse
+}
+
+' === CONNEXIONS PRINCIPALES ===
+KYCCore --> IntegrationService : Coordination integrations
+IntegrationService --> CBSAdapter : Integration CBS
+IntegrationService --> GEDAdapter : Integration GED
+IntegrationService --> ExternalAdapter : Services tiers
+IntegrationService --> CRMAdapter : Integration CRM
+IntegrationService --> NotificationAdapter : Notifications
+
+' === ADAPTERS VERS TRANSFORMATEURS ===
+CBSAdapter --> CBSTransform : Transformation donnees
+GEDAdapter --> DocTransform : Transformation documents
+CRMAdapter --> ClientTransform : Transformation client
+ExternalAdapter --> MappingService : Mapping formats
+
+' === RESILIENCE ===
+CBSAdapter --> CircuitBreaker : Protection CBS
+GEDAdapter --> CircuitBreaker : Protection GED
+ExternalAdapter --> CircuitBreaker : Protection externes
+CBSAdapter --> RetryManager : Retry CBS
+GEDAdapter --> RetryManager : Retry GED
+ExternalAdapter --> RetryManager : Retry externes
+
+' === MONITORING ===
+CBSAdapter --> IntegrationMonitoring : Metriques CBS
+GEDAdapter --> IntegrationMonitoring : Metriques GED
+ExternalAdapter --> IntegrationMonitoring : Metriques externes
+CRMAdapter --> IntegrationMonitoring : Metriques CRM
+
+' === CONNEXIONS CBS ===
+CBSAdapter --> CBSAuth : Authentification
+CBSAdapter --> CBSAccounts : Gestion comptes
+CBSAdapter --> CBSOperations : Operations bancaires
+CBSAdapter --> CBSClients : Donnees clients
+
+' === CONNEXIONS GED ===
+GEDAdapter --> GEDUpload : Upload documents
+GEDAdapter --> GEDDownload : Download documents
+GEDAdapter --> GEDSearch : Recherche documents
+DocService --> GEDOCR : Extraction donnees
+
+' === CONNEXIONS SERVICES TIERS ===
+ExternalGateway --> OFACApi : Controle OFAC
+ExternalGateway --> PPEApi : Verification PPE
+ExternalGateway --> FATCAApi : Controle FATCA
+ExternalGateway --> IDCheckApi : Verification ID
+ExternalGateway --> SanctionsApi : Listes sanctions
+ExternalGateway --> AMLService : Anti-blanchiment
+
+ControlService --> ExternalGateway : Controles externes
+
+' === CONNEXIONS CRM ===
+CRMAdapter --> CRMClients : Donnees clients
+CRMAdapter --> CRMInteractions : Historique interactions
+CRMAdapter --> CRMSegmentation : Segmentation client
+
+' === CONNEXIONS NOTIFICATION ===
+NotificationAdapter --> EmailService : Emails
+NotificationAdapter --> SMSService : SMS
+NotificationAdapter --> PushService : Push mobile
+NotificationAdapter --> MailService : Courrier postal
+
+' === CONNEXIONS REPORTING ===
+ValidationService --> RegulatoryReporting : Rapports reglementaires
+KYCCore --> KYCAnalytics : Analytics KYC
+IntegrationMonitoring --> OpsDashboard : Dashboard ops
+
+' === HEALTH CHECKS ===
+HealthCheck --> CBSAccounts : Health CBS
+HealthCheck --> GEDUpload : Health GED
+HealthCheck --> OFACApi : Health OFAC
+HealthCheck --> CRMClients : Health CRM
+
+' === INTERFACES ===
+interface "ICBSIntegration" as ICBSInteg
+interface "IGEDIntegration" as IGEDInteg
+interface "IExternalServices" as IExternal
+interface "ICRMIntegration" as ICRMInteg
+interface "INotificationService" as INotif
+
+CBSAdapter .up.|> ICBSInteg
+GEDAdapter .up.|> IGEDInteg
+ExternalAdapter .up.|> IExternal
+CRMAdapter .up.|> ICRMInteg
+NotificationAdapter .up.|> INotif
+
+note top of ExternalGateway
+  Gateway unifie pour tous
+  les appels vers services
+  externes avec authentification
+  et gestion des quotas
+end note
+
+note right of CircuitBreaker
+  Protection contre les pannes
+  en cascade avec fallback
+  et recuperation automatique
+end note
+
+note bottom of "Services Transformation"
+  Transformation et validation
+  des formats de donnees entre
+  systemes heterogenes
+end note
+
+note left of HealthCheck
+  Surveillance continue de
+  la disponibilite des
+  systemes externes
+end note
+
+@enduml
