@@ -1,4 +1,4 @@
-@startuml
+@startuml DiagrammeSequenceFinalisationOnboardingClient
 !theme aws-orange
 title Finalisation onboarding client
 

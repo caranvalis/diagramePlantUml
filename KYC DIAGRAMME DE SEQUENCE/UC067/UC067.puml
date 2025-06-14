@@ -1,4 +1,4 @@
-@startuml
+@startuml DiagrammeSequenceSignatureContratPrincipal
 !theme aws-orange
 title Signature contrat principal
 
