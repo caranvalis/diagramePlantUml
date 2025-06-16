@@ -1,0 +1,156 @@
+@startuml UC070_GestionNotificationAvecAccuseReception
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam sequenceArrow {
+    Color #0D47A1
+}
+
+title UC070 - Gestion des Notifications avec Accusé de Réception
+
+actor Client as C
+participant "Interface\nWeb/Mobile" as UI
+participant "Orchestrateur\nKYC" as ORC
+participant "Service\nNotification" as SN
+participant "Gestionnaire\nNotification" as GN
+participant "Canal\nNotification" as CN
+participant "Service\nAccusé Réception" as SAR
+participant "Base de Données\nNotification" as BDN
+
+== Déclenchement de Notification ==
+
+ORC -> SN : demanderNotification(typeEvent, clientId, donnees)
+activate SN
+
+SN -> GN : creerNotification(type, destinataire, contenu)
+activate GN
+
+GN -> BDN : sauvegarderNotification(notification)
+GN -> GN : determinerCanal(preferences, type)
+GN -> GN : selectionnerModele(type, canal)
+GN -> GN : personnaliserContenu(modele, donnees)
+
+== Configuration Accusé de Réception ==
+
+alt Type nécessite accusé de réception
+    GN -> SAR : configurerAccuseReception(notification)
+    activate SAR
+    SAR -> SAR : genererCodeConfirmation()
+    SAR -> SAR : definirTypeAccuse(auto/manuel)
+    SAR -> BDN : sauvegarderConfigAccuse(accuseConfig)
+    SAR --> GN : configurationPrete
+    deactivate SAR
+end
+
+== Envoi de la Notification ==
+
+GN -> CN : envoyerNotification(notification, canal)
+activate CN
+
+CN -> CN : validerFormatage(contenu, canal)
+CN -> CN : ajouterLienAccuse(urlCallback)
+
+alt Canal = EMAIL
+    CN -> C : email(sujet, contenu, lienAccuse)
+    CN --> GN : statutEnvoi(ENVOYE)
+else Canal = SMS
+    CN -> C : sms(contenu, codeAccuse)
+    CN --> GN : statutEnvoi(ENVOYE)
+else Canal = PUSH
+    CN -> UI : pushNotification(contenu, actionAccuse)
+    CN --> GN : statutEnvoi(ENVOYE)
+end
+
+deactivate CN
+
+GN -> BDN : mettreAJourStatut(ENVOYE)
+GN --> SN : notificationEnvoyee(id, statut)
+deactivate GN
+
+== Réception par le Client ==
+
+alt Canal = EMAIL
+    C -> C : ouvrirEmail()
+    C -> C : clicLienAccuse()
+    C -> SAR : confirmerReception(codeConfirmation, timestamp)
+else Canal = SMS
+    C -> C : lireSMS()
+    C -> CN : repondreSMS(codeAccuse)
+    CN -> SAR : traiterReponseSMS(code, numeroTel)
+else Canal = PUSH
+    C -> UI : clicNotification()
+    UI -> SAR : confirmerLecture(notificationId, deviceId)
+end
+
+== Traitement Accusé de Réception ==
+
+activate SAR
+SAR -> SAR : validerCodeConfirmation()
+SAR -> SAR : enregistrerMetadonnees(ip, userAgent, localisation)
+SAR -> BDN : sauvegarderAccuse(accuse)
+
+alt Accusé valide
+    SAR -> GN : accuseReceptionValide(notificationId)
+    activate GN
+    GN -> BDN : mettreAJourStatut(ACCUSE_RECU)
+    GN -> SN : notifierAccuseReception(notificationId)
+    GN --> ORC : accuseReceptionConfirme(clientId, notificationId)
+    deactivate GN
+else Accusé invalide
+    SAR -> GN : accuseReceptionInvalide(notificationId, motif)
+    activate GN
+    GN -> GN : programmerRelance(delai)
+    deactivate GN
+end
+
+deactivate SAR
+
+== Gestion des Relances ==
+
+alt Pas d'accusé après délai
+    GN -> GN : verifierDelaiAccuse()
+    GN -> GN : incrementerTentatives()
+    
+    alt Nombre tentatives < max
+        GN -> CN : relancerNotification(notification, canalSecondaire)
+        activate CN
+        CN -> C : notificationRelance(contenu, urgence)
+        CN --> GN : relanceEnvoyee
+        deactivate CN
+    else Max tentatives atteint
+        GN -> BDN : marquerCommeEchec(ECHEC_ACCUSE)
+        GN -> SN : alerteEchecAccuse(notificationId)
+        SN -> ORC : escaladerEchecNotification(clientId)
+    end
+end
+
+== Génération de Rapports ==
+
+ORC -> SN : demanderRapportNotifications(periode)
+SN -> GN : genererStatistiques(periode)
+activate GN
+
+GN -> BDN : extraireDonneesStatistiques(periode)
+GN -> GN : calculerTauxLivraison()
+GN -> GN : calculerTauxAccuseReception()
+GN -> GN : analyserCanauxPlusEfficaces()
+
+GN --> SN : rapportStatistiques(donnees)
+deactivate GN
+
+SN --> ORC : rapportComplet(statistiques)
+
+deactivate SN
+
+note over C, BDN
+    Le système de notification garantit :
+    - Traçabilité complète de chaque notification
+    - Accusé de réception fiable avec métadonnées
+    - Gestion automatique des relances
+    - Statistiques détaillées par canal
+    - Escalade en cas d'échec persistant
+end note
+
+@enduml

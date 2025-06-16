@@ -1,0 +1,40 @@
+Ajoute des classes ou tables de paramètres (ex : TypeDocument, TypeBlocage, StatutClient, TypeCompte, etc.).
+Utilise des attributs génériques (clé/valeur) pour permettre l’ajout de champs dynamiques sans modifier le code.
+
+2. Gestion des workflows
+Modélise les étapes du processus KYC comme des entités paramétrables (ex : Workflow, Etape, Transition).
+Permets de configurer l’ordre, les conditions et les actions de chaque étape.
+
+3. Contrôles dynamiques
+Ajoute une entité RegleControle ou ControleParametre pour définir dynamiquement les contrôles à appliquer (identité, blacklist, etc.).
+Permets d’activer/désactiver des contrôles ou d’en ajouter de nouveaux sans toucher au code métier.
+
+4. Gestion des rôles et droits
+Ajoute une gestion fine des rôles, profils et droits d’accès sur chaque opération ou donnée.
+
+5. Historisation et audit
+Prévoyez une table ou classe d’Audit pour tracer toutes les actions et modifications
+
+Le paramétrage est au cœur de l’architecture de ce projet KYC. Il permet :
+
+- D’adapter rapidement l’application à toute évolution métier ou réglementaire, sans modifier le code source.
+- De réduire les coûts de maintenance et d’accélérer la mise en œuvre des changements.
+- De garantir la pérennité et la flexibilité de la solution.
+
+**Principes clés du paramétrage :**
+1. **Référentiels et entités dynamiques**  
+   Toutes les listes métiers (types de documents, statuts, motifs, etc.) sont gérées dans des tables de paramètres. Les entités métiers peuvent recevoir des attributs dynamiques (clé/valeur) pour ajouter de nouveaux champs sans développement.
+
+2. **Workflows configurables**  
+   Les étapes du processus KYC sont modélisées comme des entités paramétrables. L’ordre, les conditions et les actions de chaque étape sont configurables.
+
+3. **Contrôles dynamiques**  
+   Les contrôles (identité, blacklist, PPE, FATCA, etc.) sont définis dans des entités de règles paramétrables, activables ou désactivables sans toucher au code.
+
+4. **Gestion des rôles et droits**  
+   Les profils utilisateurs, rôles et droits d’accès sont paramétrables pour une gestion fine de la sécurité.
+
+5. **Historisation et audit**  
+   Toutes les actions et modifications sont historisées pour garantir la traçabilité et la conformité.
+
+En résumé, le paramétrage garantit une application KYC flexible, évolutive et conforme à toutes les exigences.

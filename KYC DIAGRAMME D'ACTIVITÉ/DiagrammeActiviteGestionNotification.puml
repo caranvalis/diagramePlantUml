@@ -1,0 +1,130 @@
+@startuml DiagrammeActiviteGestionNotification
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Gestion des Notifications avec Accusé de Réception
+
+|Déclencheur|
+start
+:Événement KYC détecté;
+:Identifier type de notification;
+:Récupérer données contextuelles;
+
+|Gestionnaire Notification|
+:Créer notification;
+:Déterminer destinataire;
+:Sélectionner canal préféré;
+:Choisir modèle approprié;
+
+if (Accusé de réception requis ?) then (Oui)
+    :Générer code de confirmation;
+    :Configurer type d'accusé;
+    :Définir délai d'attente;
+else (Non)
+    :Marquer comme sans accusé;
+endif
+
+:Personnaliser contenu;
+:Ajouter liens/codes accusé;
+
+|Canal de Communication|
+:Valider format de message;
+:Envoyer notification;
+
+if (Envoi réussi ?) then (Oui)
+    :Marquer comme envoyée;
+    :Enregistrer horodatage;
+else (Non)
+    :Enregistrer erreur d'envoi;
+    :Programmer tentative suivante;
+    :Notifier échec temporaire;
+endif
+
+|Client|
+:Recevoir notification;
+:Lire contenu;
+
+if (Action accusé disponible ?) then (Oui)
+    if (Client accuse réception ?) then (Oui)
+        :Cliquer lien/répondre code;
+        :Transmettre confirmation;
+    else (Non)
+        :Ignorer notification;
+    endif
+else (Non)
+    :Traitement terminé côté client;
+endif
+
+|Service Accusé|
+if (Accusé reçu ?) then (Oui)
+    :Valider code de confirmation;
+    :Enregistrer métadonnées;
+    :Horodater réception;
+    
+    if (Accusé valide ?) then (Oui)
+        :Marquer comme accusée;
+        :Notifier succès;
+        :Archiver preuve;
+    else (Non)
+        :Rejeter accusé invalide;
+        :Programmer relance;
+    endif
+else (Non)
+    :Attendre délai configuré;
+endif
+
+|Gestionnaire Notification|
+:Vérifier délai d'attente;
+
+if (Délai dépassé ?) then (Oui)
+    :Incrémenter compteur tentatives;
+    
+    if (Tentatives < maximum ?) then (Oui)
+        :Sélectionner canal alternatif;
+        :Modifier urgence message;
+        :Programmer relance;
+        :Relancer notification;
+    else (Non)
+        :Marquer comme échec définitif;
+        :Alerter supervision;
+        :Escalader si critique;
+        :Archiver avec statut échec;
+    endif
+else (Non)
+    :Continuer surveillance;
+endif
+
+|Système de Reporting|
+:Collecter statistiques;
+:Calculer taux de livraison;
+:Calculer taux d'accusé;
+:Analyser performance canaux;
+:Générer rapports périodiques;
+
+note right
+    Métriques surveillées :
+    - Taux de livraison par canal
+    - Délai moyen de réception
+    - Taux d'accusé par type
+    - Efficacité des relances
+    - Coût par notification
+end note
+
+if (Notification traitée complètement ?) then (Oui)
+    :Archiver notification;
+    :Mettre à jour statistiques;
+    :Nettoyer données temporaires;
+    stop
+else (Non)
+    :Maintenir en surveillance;
+    :Continuer traitement;
+endif
+
+@enduml

@@ -1,0 +1,288 @@
+@startuml UC030
+!theme superhero-outline
+skinparam backgroundColor #1e1e1e
+skinparam actorStyle awesome
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC030 - Détection Avancée des Personnes Politiquement Exposées (PEP)</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager Conformité</color>" as Conformite
+actor "<color:#ff9ff3>Analyste PEP</color>" as AnalystePEP
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service PEP</color>" as PEPService
+participant "<color:#96ceb4>Service Fonction</color>" as FunctionService
+participant "<color:#96ceb4>Service Filiation</color>" as FiliationService
+participant "<color:#96ceb4>Service Scoring</color>" as ScoringService
+participant "<color:#96ceb4>Service Due Diligence</color>" as DDService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+participant "<color:#9c88ff>Service ML</color>" as MLService
+
+' APIs et Bases Externes
+participant "<color:#ffa726>Base PEP Mondiale</color>" as GlobalPEPDB
+participant "<color:#ffa726>API Fonctions Sensibles</color>" as SensitiveFuncAPI
+participant "<color:#ffa726>Base Sanctions PEP</color>" as PEPSanctionsDB
+participant "<color:#ffa726>Registre État Civil</color>" as CivilRegistryAPI
+
+' Infrastructure
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+database "<color:#5f27cd>Cache PEP</color>" as PEPCache
+
+== Déclenchement de l'Analyse PEP ==
+
+note over Orchestrator : <color:#ffa726>Déclenchement automatique lors de :</color>\n<color:#ffa726>• Onboarding nouveau client</color>\n<color:#ffa726>• Mise à jour profil client</color>\n<color:#ffa726>• Revue périodique obligatoire</color>
+
+Orchestrator -> PEPService : <color:#96ceb4>Analyze statut PEP client [CLIENT_ID]</color>
+activate Orchestrator
+activate PEPService
+
+PEPService -> AuditService : <color:#feca57>Log début analyse PEP</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début + contexte client
+AuditService --> PEPService : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Vérification Cache PEP ==
+
+PEPService -> CacheService : <color:#54a0ff>Verify cache PEP récent</color>
+activate CacheService
+
+CacheService -> PEPCache : <color:#5f27cd>SELECT * FROM pep_cache WHERE client_id=? AND created_at > NOW() - INTERVAL 7 DAY</color>
+activate PEPCache
+
+alt <color:#00ff00>Cache PEP valide (< 7 jours)</color>
+    PEPCache --> CacheService : <color:#00d2d3>Résultats PEP en cache</color>
+    CacheService --> PEPService : <color:#54a0ff>Statut PEP en cache</color>
+    
+    PEPService -> AuditService : <color:#feca57>Log utilisation cache PEP</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre cache hit
+    deactivate AuditService
+    
+    PEPService --> Orchestrator : <color:#00ff00>Statut PEP depuis cache</color>
+    
+else <color:#ff6348>Cache expiré ou absent</color>
+    PEPCache --> CacheService : <color:#ff6348>Analyse PEP requise</color>
+    deactivate PEPCache
+    CacheService --> PEPService : <color:#ff6348>Nouvelle analyse nécessaire</color>
+    deactivate CacheService
+    
+    == Analyse des Fonctions Professionnelles ==
+    
+    PEPService -> FunctionService : <color:#96ceb4>Analyze fonction et secteur d'activité</color>
+    activate FunctionService
+    
+    FunctionService -> KYCDB : <color:#00d2d3>SELECT profession, sector, employer FROM clients WHERE id=?</color>
+    activate KYCDB
+    KYCDB --> FunctionService : <color:#00d2d3>Données professionnelles</color>
+    deactivate KYCDB
+    
+    FunctionService -> SensitiveFuncAPI : <color:#ffa726>Verify fonction sensible</color>
+    activate SensitiveFuncAPI
+    
+    SensitiveFuncAPI -> SensitiveFuncAPI : <color:#ffa726>Recherche dans référentiel</color>
+    SensitiveFuncAPI -> SensitiveFuncAPI : <color:#ffa726>• Fonctions gouvernementales</color>
+    SensitiveFuncAPI -> SensitiveFuncAPI : <color:#ffa726>• Mandats électifs</color>
+    SensitiveFuncAPI -> SensitiveFuncAPI : <color:#ffa726>• Hautes fonctions internationales</color>
+    SensitiveFuncAPI -> SensitiveFuncAPI : <color:#ffa726>• Dirigeants entreprises publiques</color>
+    
+    alt <color:#ff6b6b>Fonction sensible détectée</color>
+        SensitiveFuncAPI --> FunctionService : <color:#ff6b6b>FONCTION SENSIBLE: Niveau de risque élevé</color>
+        FunctionService --> PEPService : <color:#ff6b6b>Client potentiellement PEP direct</color>
+        
+    else <color:#00ff00>Fonction non sensible</color>
+        SensitiveFuncAPI --> FunctionService : <color:#00ff00>Fonction standard</color>
+        FunctionService --> PEPService : <color:#00ff00>Pas de PEP direct détecté</color>
+    end
+    deactivate SensitiveFuncAPI
+    deactivate FunctionService
+    
+    == Recherche PEP dans Bases Mondiales ==
+    
+    PEPService -> GlobalPEPDB : <color:#ffa726>Recherche PEP mondial</color>
+    activate GlobalPEPDB
+    
+    GlobalPEPDB -> GlobalPEPDB : <color:#ffa726>Recherche nom/prénom exact</color>
+    GlobalPEPDB -> GlobalPEPDB : <color:#ffa726>Recherche variantes orthographiques</color>
+    GlobalPEPDB -> GlobalPEPDB : <color:#ffa726>Recherche translittérations</color>
+    
+    alt <color:#ff6b6b>Correspondance PEP trouvée</color>
+        GlobalPEPDB --> PEPService : <color:#ff6b6b>CORRESPONDANCE PEP: Données détaillées</color>
+        
+        PEPService -> ScoringService : <color:#96ceb4>Calculate score correspondance</color>
+        activate ScoringService
+        ScoringService -> MLService : <color:#9c88ff>Analyze similarité avancée</color>
+        activate MLService
+        MLService -> MLService : <color:#ffa726>Algorithme fuzzy matching</color>
+        MLService -> MLService : <color:#ffa726>Analyse métadonnées</color>
+        MLService --> ScoringService : <color:#9c88ff>Score similarité calculé</color>
+        deactivate MLService
+        ScoringService --> PEPService : <color:#96ceb4>Score de correspondance</color>
+        deactivate ScoringService
+        
+    else <color:#00ff00>Aucune correspondance directe</color>
+        GlobalPEPDB --> PEPService : <color:#00ff00>Pas de correspondance directe</color>
+    end
+    deactivate GlobalPEPDB
+    
+    == Analyse des Liens Familiaux ==
+    
+    PEPService -> FiliationService : <color:#96ceb4>Analyze liens familiaux</color>
+    activate FiliationService
+    
+    FiliationService -> KYCDB : <color:#00d2d3>SELECT family_members, birth_place, nationality FROM clients</color>
+    activate KYCDB
+    KYCDB --> FiliationService : <color:#00d2d3>Données familiales disponibles</color>
+    deactivate KYCDB
+    
+    alt <color:#ffa726>Données familiales incomplètes</color>
+        FiliationService -> CivilRegistryAPI : <color:#ffa726>Requête registre état civil</color>
+        activate CivilRegistryAPI
+        
+        alt <color:#ff6b6b>Registre inaccessible</color>
+            CivilRegistryAPI --> FiliationService : <color:#ff6b6b>Données indisponibles</color>
+            FiliationService --> PEPService : <color:#ffa726>Analyse filiation limitée</color>
+            
+        else <color:#00ff00>Données obtenues</color>
+            CivilRegistryAPI --> FiliationService : <color:#00ff00>Données familiales complètes</color>
+        end
+        deactivate CivilRegistryAPI
+    end
+    
+    FiliationService -> GlobalPEPDB : <color:#ffa726>Rechercher membres famille dans PEP</color>
+    activate GlobalPEPDB
+    
+    loop <color:#ffa726>Pour chaque membre famille</color>
+        GlobalPEPDB -> GlobalPEPDB : <color:#ffa726>Recherche père/mère/conjoint/enfants</color>
+        
+        alt <color:#ff6b6b>Famille PEP trouvée</color>
+            GlobalPEPDB --> FiliationService : <color:#ff6b6b>FAMILLE PEP: Lien familial détecté</color>
+            FiliationService --> PEPService : <color:#ff6b6b>Client PEP par affiliation</color>
+            
+        else <color:#00ff00>Pas de lien PEP familial</color>
+            GlobalPEPDB --> FiliationService : <color:#00ff00>Aucun lien PEP familial</color>
+        end
+    end
+    deactivate GlobalPEPDB
+    deactivate FiliationService
+    
+    == Évaluation du Statut PEP Final ==
+    
+    PEPService -> ScoringService : <color:#96ceb4>Consolider analyse PEP</color>
+    activate ScoringService
+    
+    ScoringService -> ScoringService : <color:#ffa726>Analyze tous les indices</color>
+    ScoringService -> ScoringService : <color:#ffa726>Calculate score de risque PEP</color>
+    ScoringService -> ScoringService : <color:#ffa726>Déterminer niveau exposition</color>
+    
+    alt <color:#ff6b6b>PEP Direct Confirmé (Score > 90%)</color>
+        ScoringService --> PEPService : <color:#ff6b6b>PEP DIRECT: Exposition politique confirmée</color>
+        
+        PEPService -> KYCDB : <color:#00d2d3>UPDATE client_status='PEP_DIRECT', risk_level='HIGH'</color>
+        activate KYCDB
+        KYCDB --> PEPService : <color:#00d2d3>Statut PEP direct enregistré</color>
+        deactivate KYCDB
+        
+        PEPService -> DDService : <color:#96ceb4>Déclencher due diligence renforcée</color>
+        activate DDService
+        DDService -> DDService : <color:#ff6b6b>• Vérifications approfondies obligatoires</color>
+        DDService -> DDService : <color:#ff6b6b>• Source de richesse à vérifier</color>
+        DDService -> DDService : <color:#ff6b6b>• Surveillance continue requise</color>
+        DDService --> PEPService : <color:#ff6b6b>Due diligence renforcée activée</color>
+        deactivate DDService
+        
+        PEPService -> NotificationService : <color:#ff9ff3>Alerte PEP direct</color>
+        activate NotificationService
+        NotificationService -> Conformite : <color:#ff6b6b>🚨 PEP DIRECT détecté - Due diligence renforcée</color>
+        activate Conformite
+        NotificationService -> AnalystePEP : <color:#ff6b6b>🔍 Nouvelle analyse PEP direct à valider</color>
+        activate AnalystePEP
+        NotificationService --> PEPService : <color:#00d2d3>Alertes envoyées</color>
+        deactivate NotificationService
+        
+        note over Conformite, AnalystePEP : <color:#ff6b6b>**PROCÉDURES RENFORCÉES :**</color>\n<color:#ff6b6b>• Validation par management</color>\n<color:#ff6b6b>• Surveillance continue</color>\n<color:#ff6b6b>• Revue trimestrielle obligatoire</color>
+        
+    else <color:#ffa726>PEP par Affiliation (Score 60-90%)</color>
+        ScoringService --> PEPService : <color:#ffa726>PEP AFFILIATION: Lien familial avec PEP</color>
+        
+        PEPService -> KYCDB : <color:#00d2d3>UPDATE client_status='PEP_RELATED', risk_level='MEDIUM'</color>
+        activate KYCDB
+        KYCDB --> PEPService : <color:#00d2d3>Statut PEP affiliation enregistré</color>
+        deactivate KYCDB
+        
+        PEPService -> NotificationService : <color:#ff9ff3>Notification PEP affiliation</color>
+        activate NotificationService
+        NotificationService -> Conformite : <color:#ffa726>⚠️ PEP par affiliation - Vérifications renforcées</color>
+        NotificationService -> AnalystePEP : <color:#ffa726>📋 PEP affiliation à documenter</color>
+        NotificationService --> PEPService : <color:#00d2d3>Notifications envoyées</color>
+        deactivate NotificationService
+        
+    else <color:#00ff00>Pas de PEP détecté (Score < 60%)</color>
+        ScoringService --> PEPService : <color:#00ff00>NON-PEP: Aucune exposition politique</color>
+        deactivate ScoringService
+        
+        PEPService -> KYCDB : <color:#00d2d3>UPDATE client_status='NON_PEP', risk_level='STANDARD'</color>
+        activate KYCDB
+        KYCDB --> PEPService : <color:#00d2d3>Statut non-PEP confirmé</color>
+        deactivate KYCDB
+        
+        PEPService -> NotificationService : <color:#ff9ff3>Confirmer statut non-PEP</color>
+        activate NotificationService
+        NotificationService -> Conformite : <color:#00ff00>✅ Client non-PEP - Procédures standard</color>
+        NotificationService --> PEPService : <color:#00d2d3>Confirmation envoyée</color>
+        deactivate NotificationService
+        
+        note over PEPService : <color:#00ff00>**CLIENT STANDARD :**</color>\n<color:#00ff00>• Aucune exposition politique</color>\n<color:#00ff00>• Procédures KYC classiques</color>\n<color:#00ff00>• Revue annuelle standard</color>
+    end
+    
+    == Mise en Cache et Finalisation ==
+    
+    PEPService -> CacheService : <color:#54a0ff>Mettre résultats PEP en cache</color>
+    activate CacheService
+    CacheService -> PEPCache : <color:#5f27cd>INSERT pep_analysis_result</color>
+    activate PEPCache
+    PEPCache --> CacheService : <color:#00d2d3>Cache PEP mis à jour</color>
+    deactivate PEPCache
+    CacheService --> PEPService : <color:#00d2d3>Résultats cachés (7 jours)</color>
+    deactivate CacheService
+    
+    PEPService -> AuditService : <color:#feca57>Log analyse PEP terminée</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre résultat + score + sources
+    deactivate AuditService
+    
+    PEPService --> Orchestrator : <color:#00ff00>Analyse PEP terminée</color>
+    deactivate PEPService
+end
+
+Orchestrator -> Orchestrator : <color:#00ff00>Statut PEP déterminé</color>
+deactivate Orchestrator
+
+deactivate Conformite
+deactivate AnalystePEP
+
+note over KYCDB : <color:#ffa726>**DONNÉES PEP ENRICHIES :**</color>\n<color:#ffa726>• Statut PEP (Direct/Affiliation/Non)</color>\n<color:#ffa726>• Score de risque calculé</color>\n<color:#ffa726>• Sources de vérification</color>\n<color:#ffa726>• Historique des analyses</color>\n<color:#ffa726>• Date prochaine revue</color>
+
+@enduml

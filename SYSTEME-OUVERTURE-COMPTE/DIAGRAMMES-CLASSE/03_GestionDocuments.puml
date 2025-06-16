@@ -1,0 +1,343 @@
+@startuml GestionDocuments
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Gestion Documentaire
+
+package "Documents Principaux" #E8F5E8 {
+  class DocumentRequis {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - typeDocument: TypeDocument
+    - nom: String
+    - description: String
+    - fichier: Fichier
+    - estObligatoire: Boolean
+    - estFourni: Boolean
+    - estNumerise: Boolean
+    - estSigne: Boolean
+    - dateUpload: Date
+    - agentUpload: Agent
+    - checksum: String
+    - taille: Long
+    - format: String
+    - statutValidation: StatutValidation
+    - version: Integer
+    - commentaires: List<CommentaireDocument>
+    - historique: List<HistoriqueDocument>
+    + uploader(fichier: Fichier): Boolean
+    + numeriser(): Boolean
+    + valider(): Boolean
+    + rejeter(motif: String): Boolean
+    + archiver(): Boolean
+    + versioner(): Integer
+    + genererChecksum(): String
+  }
+
+  class Fichier {
+    - id: String
+    - nom: String
+    - cheminStockage: String
+    - taille: Long
+    - format: String
+    - mimeType: String
+    - checksum: String
+    - dateCreation: Date
+    - dateModification: Date
+    - estChiffre: Boolean
+    - cleChiffrement: String
+    - metadonnees: Map<String, String>
+    + sauvegarder(): Boolean
+    + charger(): byte[]
+    + chiffrer(): Boolean
+    + dechiffrer(): Boolean
+    + verifierIntegrite(): Boolean
+    + genererApercu(): FichierApercu
+  }
+
+  class CommentaireDocument {
+    - id: String
+    - document: DocumentRequis
+    - auteur: Agent
+    - commentaire: String
+    - typeCommentaire: TypeCommentaire
+    - dateCreation: Date
+    - estPublic: Boolean
+    - pieceJointe: Fichier
+    + ajouter(): Boolean
+    + modifier(nouveauCommentaire: String): Boolean
+    + supprimer(): Boolean
+  }
+
+  class HistoriqueDocument {
+    - id: String
+    - document: DocumentRequis
+    - action: ActionDocument
+    - agent: Agent
+    - dateAction: Date
+    - ancienneValeur: String
+    - nouvelleValeur: String
+    - commentaire: String
+    + enregistrer(): Boolean
+    + consulter(): List<HistoriqueDocument>
+  }
+}
+
+package "Documents Générés" #F0F8E8 {
+  class FicheClient {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - modele: ModeleDocument
+    - informationsClient: Map<String, String>
+    - dateGeneration: Date
+    - agentGenerateur: Agent
+    - statutFiche: StatutFiche
+    - estSignee: Boolean
+    - signatureClient: SignatureElectronique
+    - fichierPDF: Fichier
+    + generer(): Boolean
+    + preRemplir(): Boolean
+    + imprimer(): Fichier
+    + faireControler(): Boolean
+    + faireValider(): Boolean
+    + archiver(): Boolean
+  }
+
+  class ConventionOuverture {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - modeleConvention: ModeleConvention
+    - clauses: List<ClauseConvention>
+    - champsPreRemplis: Map<String, String>
+    - dateGeneration: Date
+    - agentGenerateur: Agent
+    - estSignee: Boolean
+    - signatureClient: SignatureElectronique
+    - signatureBanque: SignatureElectronique
+    - fichierPDF: Fichier
+    + generer(): Boolean
+    + preRemplir(): Boolean
+    + ajouterClause(clause: ClauseConvention): Boolean
+    + signerClient(): Boolean
+    + signerBanque(): Boolean
+    + valider(): Boolean
+    + archiver(): Boolean
+  }
+
+  class Document {
+    - id: String
+    - titre: String
+    - contenu: String
+    - typeDocument: TypeDocument
+    - format: FormatDocument
+    - fichier: Fichier
+    - dateCreation: Date
+    - auteur: Agent
+    - destinataires: List<Agent>
+    - estConfidentiel: Boolean
+    - estArchive: Boolean
+    + generer(): Boolean
+    + transmettre(): Boolean
+    + archiver(): Boolean
+    + imprimer(): Boolean
+  }
+}
+
+package "Signature et Sécurité" #E8F8F0 {
+  class SignatureElectronique {
+    - id: String
+    - signataire: String
+    - typeSignature: TypeSignature
+    - certificat: Certificat
+    - horodatage: Date
+    - empreinteDocument: String
+    - estValide: Boolean
+    - autoriteValidation: String
+    + signer(document: Document): Boolean
+    + verifier(): Boolean
+    + horodater(): Boolean
+    + invalider(): Boolean
+  }
+
+  class Certificat {
+    - id: String
+    - sujet: String
+    - emetteur: String
+    - dateDebut: Date
+    - dateExpiration: Date
+    - clePublique: String
+    - estValide: Boolean
+    - estRevoque: Boolean
+    + verifierValidite(): Boolean
+    + verifierRevocation(): Boolean
+    + renouveler(): Certificat
+  }
+
+  class ModeleDocument {
+    - id: String
+    - nom: String
+    - description: String
+    - typeDocument: TypeDocument
+    - template: String
+    - champsVariables: List<ChampVariable>
+    - version: String
+    - estActif: Boolean
+    - dateCreation: Date
+    - auteur: Agent
+    + genererDocument(donnees: Map<String, String>): Document
+    + previsualiser(): String
+    + valider(): Boolean
+    + archiver(): Boolean
+  }
+
+  class ChampVariable {
+    - nom: String
+    - libelle: String
+    - typeChamp: TypeChamp
+    - estObligatoire: Boolean
+    - valeurParDefaut: String
+    - masqueSaisie: String
+    - validationRegex: String
+  }
+
+  class ClauseConvention {
+    - id: String
+    - titre: String
+    - contenu: String
+    - typeClause: TypeClause
+    - estObligatoire: Boolean
+    - ordre: Integer
+    - conditions: List<String>
+    - estActive: Boolean
+  }
+}
+
+package "Énumérations Documents" #FFFACD {
+  enum TypeDocument {
+    PIECE_IDENTITE
+    JUSTIFICATIF_DOMICILE
+    JUSTIFICATIF_REVENUS
+    FICHE_CLIENT
+    CONVENTION_OUVERTURE
+    ATTESTATION_EMPLOYEUR
+    EXTRAIT_KBIS
+    STATUTS_ENTREPRISE
+    POUVOIR_SIGNATURE
+    QUESTIONNAIRE_KYC
+    RAPPORT_CONTROLE
+    DOCUMENT_FATCA
+  }
+
+  enum StatutValidation {
+    EN_ATTENTE
+    VALIDE
+    REJETE
+    EN_COURS_VALIDATION
+    NECESSITE_COMPLEMENT
+    EXPIRE
+  }
+
+  enum TypeCommentaire {
+    VALIDATION
+    REJET
+    DEMANDE_COMPLEMENT
+    INFORMATION
+    ALERTE
+    CORRECTION
+  }
+
+  enum ActionDocument {
+    UPLOAD
+    VALIDATION
+    REJET
+    MODIFICATION
+    SUPPRESSION
+    ARCHIVAGE
+    SIGNATURE
+    NUMERISATION
+  }
+
+  enum StatutFiche {
+    BROUILLON
+    GENEREE
+    CONTROLEE
+    VALIDEE
+    SIGNEE
+    ARCHIVEE
+  }
+
+  enum TypeSignature {
+    SIMPLE
+    AVANCEE
+    QUALIFIEE
+    HORODATEE
+  }
+
+  enum FormatDocument {
+    PDF
+    DOCX
+    HTML
+    XML
+    TXT
+    JPEG
+    PNG
+  }
+
+  enum TypeChamp {
+    TEXTE
+    NOMBRE
+    DATE
+    BOOLEEN
+    LISTE
+    EMAIL
+    TELEPHONE
+  }
+
+  enum TypeClause {
+    STANDARD
+    OPTIONNELLE
+    CONDITIONNELLE
+    REGLEMENTAIRE
+    COMMERCIALE
+  }
+}
+
+' Relations principales
+DocumentRequis ||--|| Fichier : "contient"
+DocumentRequis ||--o{ CommentaireDocument : "possède"
+DocumentRequis ||--o{ HistoriqueDocument : "historique"
+FicheClient ||--|| Fichier : "génère"
+ConventionOuverture ||--|| Fichier : "génère"
+Document ||--|| Fichier : "contient"
+
+FicheClient ||--o| SignatureElectronique : "signatureClient"
+ConventionOuverture ||--o| SignatureElectronique : "signatureClient"
+ConventionOuverture ||--o| SignatureElectronique : "signatureBanque"
+SignatureElectronique ||--|| Certificat : "utilise"
+
+FicheClient ||--|| ModeleDocument : "basé sur"
+ConventionOuverture ||--o{ ClauseConvention : "contient"
+ModeleDocument ||--o{ ChampVariable : "contient"
+
+DocumentRequis ||--|| TypeDocument
+DocumentRequis ||--|| StatutValidation
+CommentaireDocument ||--|| TypeCommentaire
+HistoriqueDocument ||--|| ActionDocument
+FicheClient ||--|| StatutFiche
+SignatureElectronique ||--|| TypeSignature
+Document ||--|| FormatDocument
+ChampVariable ||--|| TypeChamp
+ClauseConvention ||--|| TypeClause
+
+@enduml

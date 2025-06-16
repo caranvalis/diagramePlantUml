@@ -1,0 +1,159 @@
+@startuml VueEnsembleArchitecture
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classBackgroundColor #E8F5E8
+skinparam classFontSize 14
+skinparam packageFontSize 16
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 50
+skinparam ranksep 40
+
+title Vue d'Ensemble - Architecture Modulaire du Système d'Ouverture de Compte
+
+package "01. Gestion Workflow" as Workflow #E8F5E8 {
+  class DemandeOuvertureCompte
+  class EtapeValidation  
+  class TableauConformite
+  class LigneConformite
+}
+
+package "02. Contrôles Réglementaires" as Controles #FFE8E8 {
+  class ControleReglementaire
+  class ControleBlacklist
+  class ControlePPE
+  class ControleFATCA
+  class ControleKYC
+  class AlerteControle
+}
+
+package "03. Gestion Documents" as Documents #F0F8E8 {
+  class DocumentRequis
+  class FicheClient
+  class ConventionOuverture
+  class SignatureElectronique
+  class Fichier
+}
+
+package "04. Agents et Unités" as Agents #FFF8E1 {
+  class Agent
+  class UniteGestion
+  class Delegation
+  class Absence
+  class DroitAcces
+  class StatistiquesAgent
+}
+
+package "05. Client et Données" as Client #F3E5F5 {
+  class ClientPotentiel
+  class DocumentIdentite
+  class ProfileRisqueClient
+  class RepresentantLegal
+  class RIB
+  class ProduitBancaire
+}
+
+package "Intégrations Externes" as Externes #FFF0E0 {
+  class ServiceBlacklist {
+    + consulterListes(): List<String>
+    + verifierCorrespondance(): Boolean
+  }
+  
+  class ServicePPE {
+    + verifierStatut(): Boolean
+    + obtenirListePPE(): List<String>
+  }
+  
+  class ServiceFATCA {
+    + detecterAmericanite(): Boolean
+    + genererDeclaration(): Document
+  }
+  
+  class ServiceSIRH {
+    + authentifierAgent(): Boolean
+    + recupererInformations(): Agent
+  }
+  
+  class SystemeCBS {
+    + creerCompte(): String
+    + genererRIB(): RIB
+    + verifierDisponnibilite(): Boolean
+  }
+  
+  class ArchiveElectronique {
+    + stocker(): Boolean
+    + recuperer(): Document
+    + verifierIntegrite(): Boolean
+  }
+}
+
+package "Notifications et Monitoring" as Notifications #E0F7FA {
+  class GestionnaireNotifications {
+    + envoyerNotification(): Boolean
+    + planifierRappel(): Boolean
+    + genererTableauBord(): Dashboard
+  }
+  
+  class Dashboard {
+    + afficherStatistiques(): StatistiquesGlobales
+    + genererRapports(): List<Rapport>
+    + alerterAnomalies(): List<Alerte>
+  }
+  
+  class AuditTrail {
+    + enregistrerAction(): Boolean
+    + consulterHistorique(): List<ActionAudit>
+    + genererRapportAudit(): Rapport
+  }
+}
+
+' Relations inter-packages principales
+DemandeOuvertureCompte --> ClientPotentiel : "concerne"
+DemandeOuvertureCompte --> Agent : "traitée par"
+DemandeOuvertureCompte --> UniteGestion : "assignée à"
+DemandeOuvertureCompte --> DocumentRequis : "requiert"
+DemandeOuvertureCompte --> ControleReglementaire : "soumise à"
+
+EtapeValidation --> Agent : "responsable"
+TableauConformite --> LigneConformite : "contient"
+LigneConformite --> DocumentRequis : "évalue"
+
+ControleReglementaire --> Agent : "exécuté par"
+ControleReglementaire --> AlerteControle : "génère"
+ControleBlacklist --> ServiceBlacklist : "utilise"
+ControlePPE --> ServicePPE : "utilise"
+ControleFATCA --> ServiceFATCA : "utilise"
+
+DocumentRequis --> Fichier : "stocké en"
+FicheClient --> SignatureElectronique : "signée par"
+ConventionOuverture --> SignatureElectronique : "signée par"
+
+Agent --> ServiceSIRH : "authentifié par"
+Agent --> Delegation : "délègue à"
+Agent --> Absence : "déclare"
+Agent --> DroitAcces : "possède"
+
+ClientPotentiel --> DocumentIdentite : "possède"
+ClientPotentiel --> ProfileRisqueClient : "évalué par"
+ClientPotentiel --> RepresentantLegal : "représenté par"
+DemandeOuvertureCompte --> RIB : "génère"
+DemandeOuvertureCompte --> ProduitBancaire : "pour"
+
+' Relations avec systèmes externes
+DemandeOuvertureCompte --> SystemeCBS : "crée compte dans"
+Fichier --> ArchiveElectronique : "archivé dans"
+Agent --> GestionnaireNotifications : "notifié par"
+StatistiquesAgent --> Dashboard : "affiché dans"
+DemandeOuvertureCompte --> AuditTrail : "tracé dans"
+
+note top of Workflow : Package central orchestrant\nle workflow d'ouverture\nde compte
+note top of Controles : Tous les contrôles\nréglementaires obligatoires\n(Blacklist, PPE, FATCA, KYC)
+note top of Documents : Gestion complète\ndes documents avec\nsignature électronique
+note top of Agents : Gestion des agents,\nunités, délégations\net habilitations
+note top of Client : Informations client,\nidentité, risques\net produits
+note bottom of Externes : Intégrations avec\nsystèmes externes\n(CBS, SIRH, Archives)
+note bottom of Notifications : Notifications, monitoring\net audit du système
+
+@enduml

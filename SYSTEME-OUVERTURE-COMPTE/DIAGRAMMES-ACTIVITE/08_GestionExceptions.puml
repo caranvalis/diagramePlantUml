@@ -1,0 +1,134 @@
+@startuml GestionExceptions
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Gestion des Exceptions et Cas Particuliers
+
+start
+
+:Exception ou cas
+particulier détecté;
+
+:Classifier type
+d'exception;
+
+partition "Analyse Exception" {
+    if (Exception technique?) then (oui)
+        :Alerter équipe
+        technique;
+        
+        :Identifier impact
+        sur le dossier;
+        
+        :Estimer délai
+        de résolution;
+        
+    elseif (Exception métier?) then (oui)
+        :Analyser règles
+        métier applicables;
+        
+        :Identifier dérogation
+        possible;
+        
+    else (Exception réglementaire)
+        :Consulter département
+        conformité;
+        
+        :Vérifier possibilité
+        de traitement spécial;
+    endif
+}
+
+partition "Évaluation Impact" {
+    :Mesurer impact
+    sur délais SLA;
+    
+    :Évaluer risques
+    associés;
+    
+    :Déterminer niveau
+    d'escalade requis;
+}
+
+if (Traitement automatique possible?) then (oui)
+    :Appliquer règle
+    d'exception automatique;
+    
+    :Documenter traitement
+    dans historique;
+    
+else (non)
+    partition "Traitement Manuel" {
+        if (Niveau agent suffisant?) then (oui)
+            :Agent traite
+            l'exception;
+            
+        else (non)
+            :Escalader vers
+            niveau supérieur;
+            
+            :Manager analyse
+            le cas particulier;
+            
+            if (Autorisation accordée?) then (non)
+                :Refuser traitement
+                de l'exception;
+                
+                :Documenter justification
+                du refus;
+                
+                :Informer client
+                des contraintes;
+                
+                stop
+            else (oui)
+            endif
+        endif
+    }
+endif
+
+partition "Application Solution" {
+    :Mettre en œuvre
+    solution d'exception;
+    
+    :Adapter workflow
+    selon cas particulier;
+    
+    :Programmer contrôles
+    spécifiques si requis;
+}
+
+:Documenter exception
+et solution appliquée;
+
+:Mettre à jour base
+de connaissances;
+
+:Notifier parties
+prenantes concernées;
+
+if (Suivi spécial requis?) then (oui)
+    :Programmer alertes
+    de suivi;
+    
+    :Définir jalons
+    de vérification;
+else (non)
+endif
+
+:Reprendre processus
+normal adapté;
+
+stop
+
+@enduml

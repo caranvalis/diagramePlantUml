@@ -1,0 +1,137 @@
+@startuml IntegrationsExternes
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Intégrations Externes et Vérifications
+
+start
+
+:Déclenchement vérification
+externe requise;
+
+:Identifier services
+externes nécessaires;
+
+partition "Vérifications Identité" {
+    :Interroger registre
+    national d'identité;
+    
+    :Vérifier validité
+    documents d'identité;
+    
+    if (Identité confirmée?) then (non)
+        :Générer alerte
+        identité douteuse;
+        
+        :Demander vérifications
+        complémentaires;
+        
+        :Bloquer progression
+        temporaire;
+    else (oui)
+    endif
+}
+
+partition "Contrôles Réglementaires" {
+    :Consulter listes
+    de sanctions;
+    
+    :Vérifier base
+    PEP (Personnes Politiquement Exposées);
+    
+    :Contrôler registres
+    anti-blanchiment;
+    
+    if (Alerte détectée?) then (oui)
+        :Escalader vers
+        département conformité;
+        
+        :Suspendre ouverture
+        en attente d'analyse;
+        
+        :Documenter alertes
+        et justifications;
+    else (non)
+    endif
+}
+
+partition "Vérifications Financières" {
+    :Consulter centrales
+    des risques;
+    
+    :Vérifier historique
+    incidents bancaires;
+    
+    :Analyser capacité
+    financière déclarée;
+    
+    if (Risque financier élevé?) then (oui)
+        :Appliquer mesures
+        de vigilance renforcée;
+        
+        :Demander justificatifs
+        complémentaires;
+    else (non)
+    endif
+}
+
+partition "Consolidation Résultats" {
+    :Compiler résultats
+    de toutes vérifications;
+    
+    :Calculer score
+    de risque global;
+    
+    :Générer rapport
+    de synthèse;
+}
+
+if (Toutes vérifications OK?) then (oui)
+    :Valider conformité
+    externe;
+    
+    :Continuer processus
+    d'ouverture;
+    
+elseif (Risques mineurs) then
+    :Appliquer surveillance
+    renforcée;
+    
+    :Documenter mesures
+    compensatoires;
+    
+    :Continuer avec
+    restrictions;
+    
+else (Risques majeurs)
+    :Refuser ouverture
+    de compte;
+    
+    :Documenter justifications
+    réglementaires;
+    
+    :Notifier client
+    et archiver dossier;
+    
+    stop
+endif
+
+:Archiver résultats
+vérifications externes;
+
+:Mettre à jour profil
+risque client;
+
+stop
+
+@enduml

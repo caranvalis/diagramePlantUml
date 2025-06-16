@@ -1,0 +1,114 @@
+@startuml DelegationDirectionGenerale
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Délégation Direction Générale
+
+start
+
+:Dossier nécessite
+délégation DG;
+
+:Système identifie
+critères de délégation;
+
+partition "Vérification Critères" {
+    if (Montant > seuil DG?) then (oui)
+        :Marquer pour
+        délégation DG;
+    elseif (Profil risque élevé?) then (oui)
+        :Marquer pour
+        délégation DG;
+    elseif (Client stratégique?) then (oui)
+        :Marquer pour
+        délégation DG;
+    else (non)
+        :Traitement niveau
+        inférieur;
+        stop
+    endif
+}
+
+:Préparer dossier
+pour DG;
+
+:Compiler analyse
+de risque complète;
+
+:Joindre recommandations
+du niveau précédent;
+
+:Notifier Direction
+Générale;
+
+partition "Évaluation DG" {
+    :DG reçoit notification
+    et dossier;
+    
+    :Analyse approfondie
+    du dossier;
+    
+    if (Informations suffisantes?) then (non)
+        :Demander
+        compléments;
+        
+        :Agent complète
+        informations;
+        
+        :Retour vers DG;
+    else (oui)
+    endif
+    
+    :Prise de décision
+    Direction Générale;
+}
+
+if (Décision DG?) then (Approuvé)
+    :Enregistrer approbation
+    DG avec commentaires;
+    
+    :Notifier agent
+    et unité opérationnelle;
+    
+    :Continuer processus
+    d'ouverture;
+    
+elseif (Refusé) then
+    :Enregistrer refus DG
+    avec justifications;
+    
+    :Notifier toutes
+    parties prenantes;
+    
+    :Archiver dossier
+    avec statut refusé;
+    
+    stop
+    
+else (Délégué)
+    :Déléguer à niveau
+    hiérarchique approprié;
+    
+    :Traitement par
+    délégataire;
+endif
+
+:Mettre à jour historique
+des décisions;
+
+:Archiver trace
+de délégation;
+
+stop
+
+@enduml

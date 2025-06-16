@@ -1,0 +1,158 @@
+@startuml DiagrammeClassePreEnregistrement
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Pré-enregistrement KYC
+
+class PreEnregistrement {
+    - id: String
+    - numeroPreEnregistrement: String
+    - canalSaisie: CanalSaisie
+    - dateCreation: Date
+    - statutPreEnregistrement: StatutPreEnregistrement
+    - donneesCollectees: String
+    - typeClient: TypeClient
+    - adresseIP: String
+    - userAgent: String
+    - sessionId: String
+    - dureeSession: Integer
+    - nombreTentatives: Integer
+    + initier(): Boolean
+    + completer(): Boolean
+    + valider(): Boolean
+    + transformer(): Client
+    + sauvegarderBrouillon(): Boolean
+    + reprendre(): Boolean
+    + expirer(): Boolean
+}
+
+class CanalSaisie {
+    - id: String
+    - nom: String
+    - description: String
+    - typeCanal: TypeCanal
+    - urlAcces: String
+    - configuration: String
+    - estActif: Boolean
+    + configurer(): Boolean
+    + activer(): Boolean
+    + desactiver(): Boolean
+}
+
+enum TypeCanal {
+    WEB_PUBLIC
+    WEB_INTRA
+    MOBILE_APP
+    AGENCE_PHYSIQUE
+    CENTRE_APPEL
+    PARTENAIRE
+}
+
+class FormulairePreEnregistrement {
+    - id: String
+    - nom: String
+    - version: String
+    - typeClient: TypeClient
+    - champsObligatoires: List<String>
+    - champsOptionnels: List<String>
+    - regleValidation: String
+    - template: String
+    - estActif: Boolean
+    + genererFormulaire(): String
+    + validerSaisie(): Boolean
+    + appliquerRegles(): Boolean
+}
+
+class DonneePreEnregistrement {
+    - id: String
+    - preEnregistrement: PreEnregistrement
+    - nomChamp: String
+    - valeur: String
+    - typeChamp: TypeChamp
+    - estObligatoire: Boolean
+    - estValide: Boolean
+    - messageErreur: String
+    + saisir(): Boolean
+    + valider(): Boolean
+    + corriger(): Boolean
+}
+
+enum TypeChamp {
+    TEXTE
+    NUMERIQUE
+    DATE
+    EMAIL
+    TELEPHONE
+    ADRESSE
+    LISTE_DEROULANTE
+    FICHIER
+}
+
+class StatutPreEnregistrement {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+}
+
+class ValidationPreEnregistrement {
+    - id: String
+    - preEnregistrement: PreEnregistrement
+    - typeValidation: TypeValidation
+    - resultat: Boolean
+    - messageErreur: String
+    - dateValidation: Date
+    - utilisateurValidation: String
+    + executer(): Boolean
+    + genererMessage(): String
+}
+
+enum TypeValidation {
+    FORMAT_EMAIL
+    FORMAT_TELEPHONE
+    UNICITE_NIU
+    COHERENCE_DONNEES
+    COMPLETUDE_MINIMALE
+    VERIFICATION_DOUBLON
+}
+
+class SessionPreEnregistrement {
+    - id: String
+    - preEnregistrement: PreEnregistrement
+    - tokenSession: String
+    - dateDebut: Date
+    - dateFin: Date
+    - dureeMaximale: Integer
+    - estActive: Boolean
+    - adresseIP: String
+    - userAgent: String
+    + creerSession(): String
+    + prolonger(): Boolean
+    + terminer(): Boolean
+    + verifierValidite(): Boolean
+}
+
+' Relations
+PreEnregistrement "1" -- "1" CanalSaisie : canal
+PreEnregistrement "1" -- "1" StatutPreEnregistrement : statut
+PreEnregistrement "1" -- "1" FormulairePreEnregistrement : formulaire
+PreEnregistrement "1" -- "0..*" DonneePreEnregistrement : donnees
+PreEnregistrement "1" -- "0..*" ValidationPreEnregistrement : validations
+PreEnregistrement "1" -- "1" SessionPreEnregistrement : session
+
+CanalSaisie "1" -- "1" TypeCanal : type
+DonneePreEnregistrement "1" -- "1" TypeChamp : type
+ValidationPreEnregistrement "1" -- "1" TypeValidation : type
+
+@enduml

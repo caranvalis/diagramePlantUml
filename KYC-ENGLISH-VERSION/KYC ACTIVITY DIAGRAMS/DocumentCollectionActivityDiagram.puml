@@ -1,0 +1,103 @@
+@startuml DocumentCollectionActivityDiagram
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Activity Diagram - KYC Document Collection
+
+|Client|
+start
+:Log in with NIU;
+
+|Collection System|
+:Retrieve client profile;
+:Define required documents list;
+:Display personalized checklist;
+
+|Client|
+:Review documents list;
+:Prepare physical documents;
+
+repeat
+    |Client|
+    :Select document type;
+    :Scan/Photograph document;
+    :Upload file;
+    
+    |Collection System|
+    :Check file format;
+    :Verify size and resolution;
+    :Analyze image quality;
+    :Extract metadata;
+    
+    if (File compliant?) then (Yes)
+        :Save document;
+        :Check expiration date;
+        :Update completion rate;
+        
+        if (Document expired?) then (Yes)
+            :Report expiration;
+            :Request recent document;
+        else (No)
+            :Validate document;
+            :Mark as received;
+        endif
+        
+    else (No)
+        :Generate error message;
+        :Indicate compliance criteria;
+        |Client|
+        :Recapture document;
+    endif
+    
+    |Collection System|
+    :Calculate global completion rate;
+    :Update case status;
+    
+repeat while (Case incomplete?)
+
+|Collection System|
+:Analyze case completeness;
+:Generate collection report;
+
+if (All documents received?) then (Yes)
+    :Mark case as complete;
+    :Trigger KYC controls phase;
+    :Notify next step progression;
+    
+    |Client|
+    :Receive completion confirmation;
+    
+    stop
+    
+else (Missing documents)
+    :Identify missing documents;
+    :Calculate reminder delay;
+    
+    |Notification|
+    :Send personalized reminder;
+    :List missing documents;
+    :Indicate expiration deadline;
+    
+    |Client|
+    :Receive reminder notification;
+    
+    if (Deadline exceeded?) then (Yes)
+        |Collection System|
+        :Mark case as abandoned;
+        :Archive partial data;
+        :Send expiration notification;
+        stop
+    else (No)
+        :Continue collection;
+        :Select document type;
+    endif
+endif
+
+@enduml

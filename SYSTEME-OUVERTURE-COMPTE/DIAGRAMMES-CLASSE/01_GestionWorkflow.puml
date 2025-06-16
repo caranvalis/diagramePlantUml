@@ -1,0 +1,215 @@
+@startuml GestionWorkflow
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Gestion du Workflow d'Ouverture de Compte
+
+package "Workflow Principal" #DDFFDD {
+  class DemandeOuvertureCompte {
+    - id: String
+    - numeroReference: String
+    - typeClient: TypeClient
+    - canalInitiation: CanalInitiation
+    - agentInitiateur: Agent
+    - agentTraitant: Agent
+    - uniteGestion: UniteGestion
+    - statutDemande: StatutDemande
+    - priorite: PrioriteDemande
+    - dateCreation: Date
+    - dateValidation: Date
+    - dateDerniereModification: Date
+    - commentaireGlobal: String
+    - etapeActuelle: EtapeValidation
+    - historiqueEtapes: List<EtapeValidation>
+    - tableauConformite: TableauConformite
+    - numeroCompteGenere: String
+    - ribGenere: RIB
+    + creer(): Boolean
+    + initialiser(): Boolean
+    + soumettre(): Boolean
+    + valider(): Boolean
+    + rejeter(motif: String): Boolean
+    + transferer(nouveauAgent: Agent): Boolean
+    + progresser(): Boolean
+    + archiver(): Boolean
+  }
+
+  class EtapeValidation {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - typeEtape: TypeEtape
+    - numeroOrdre: Integer
+    - agentResponsable: Agent
+    - dateDebut: Date
+    - dateFin: Date
+    - dureeTraitement: Long
+    - statutEtape: StatutEtape
+    - commentaire: String
+    - actionEffectuee: ActionEtape
+    - etapeSuivante: EtapeValidation
+    - etapePrecedente: EtapeValidation
+    - estActive: Boolean
+    - estTerminee: Boolean
+    - necessiteRetour: Boolean
+    - motifRetour: String
+    + demarrer(): Boolean
+    + traiter(): Boolean
+    + valider(): Boolean
+    + rejeter(motif: String): Boolean
+    + deleguer(agent: Agent): Boolean
+    + calculerDuree(): Long
+    + notifierAgent(): Boolean
+  }
+
+  class TableauConformite {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - lignesConformite: List<LigneConformite>
+    - etapesValidation: List<EtapeValidation>
+    - pourcentageConformite: Float
+    - estComplet: Boolean
+    - estConforme: Boolean
+    - dateCreation: Date
+    - dateDerniereModification: Date
+    + creer(): Boolean
+    + ajouterLigne(document: DocumentRequis): LigneConformite
+    + mettreAJourConformite(ligne: LigneConformite, statut: StatutConformite): Boolean
+    + calculerPourcentage(): Float
+    + verifierCompletude(): Boolean
+    + genererRapport(): Document
+  }
+
+  class LigneConformite {
+    - id: String
+    - tableau: TableauConformite
+    - documentRequis: DocumentRequis
+    - conformiteGFC: StatutConformite
+    - commentaireGFC: String
+    - dateValidationGFC: Date
+    - conformiteDA: StatutConformite
+    - commentaireDA: String
+    - dateValidationDA: Date
+    - conformiteConformite: StatutConformite
+    - commentaireConformite: String
+    - dateValidationConformite: Date
+    - conformiteDG: StatutConformite
+    - commentaireDG: String
+    - dateValidationDG: Date
+    - estObligatoire: Boolean
+    - estComplete: Boolean
+    + validerParGFC(statut: StatutConformite, commentaire: String): Boolean
+    + validerParDA(statut: StatutConformite, commentaire: String): Boolean
+    + validerParConformite(statut: StatutConformite, commentaire: String): Boolean
+    + validerParDG(statut: StatutConformite, commentaire: String): Boolean
+    + obtenirStatutGlobal(): StatutConformite
+  }
+}
+
+package "Énumérations Workflow" #FFFACD {
+  enum StatutDemande {
+    BROUILLON
+    SOUMISE
+    EN_COURS_TRAITEMENT
+    EN_ATTENTE_DOCUMENTS
+    EN_VALIDATION_GFC
+    EN_VALIDATION_DA
+    EN_VALIDATION_CONFORMITE
+    EN_VALIDATION_DG
+    VALIDEE
+    REJETEE
+    ARCHIVEE
+    SUSPENDUE
+  }
+
+  enum TypeEtape {
+    INITIATION
+    COLLECTE_DOCUMENTS
+    CONTROLE_GFC
+    VALIDATION_DA
+    CONTROLES_REGLEMENTAIRES
+    VALIDATION_CONFORMITE
+    VALIDATION_DG
+    GENERATION_COMPTE
+    FINALISATION
+  }
+
+  enum StatutEtape {
+    EN_ATTENTE
+    EN_COURS
+    TERMINEE
+    REJETEE
+    SUSPENDUE
+    DELEGUE
+  }
+
+  enum ActionEtape {
+    DEMARRER
+    TRAITER
+    VALIDER
+    REJETER
+    DELEGUER
+    SUSPENDRE
+    REPRENDRE
+  }
+
+  enum StatutConformite {
+    NON_DEFINI
+    CONFORME
+    NON_CONFORME
+    EN_ATTENTE
+    DOCUMENTS_MANQUANTS
+    NECESSITE_COMPLEMENT
+  }
+
+  enum PrioriteDemande {
+    NORMALE
+    ELEVEE
+    URGENTE
+    CRITIQUE
+  }
+
+  enum TypeClient {
+    PARTICULIER
+    PROFESSIONNEL
+    ENTREPRISE
+    ASSOCIATION
+    COLLECTIVITE
+  }
+
+  enum CanalInitiation {
+    AGENCE
+    INTERNET
+    MOBILE
+    CALL_CENTER
+    PARTENAIRE
+    PRESCRIPTEUR
+  }
+}
+
+' Relations principales
+DemandeOuvertureCompte ||--|| TableauConformite : "possède"
+DemandeOuvertureCompte ||--o{ EtapeValidation : "contient"
+TableauConformite ||--o{ LigneConformite : "contient"
+EtapeValidation ||--o| EtapeValidation : "etapeSuivante"
+
+DemandeOuvertureCompte ||--|| StatutDemande
+EtapeValidation ||--|| TypeEtape
+EtapeValidation ||--|| StatutEtape
+EtapeValidation ||--|| ActionEtape
+LigneConformite ||--|| StatutConformite
+DemandeOuvertureCompte ||--|| PrioriteDemande
+DemandeOuvertureCompte ||--|| TypeClient
+DemandeOuvertureCompte ||--|| CanalInitiation
+
+@enduml

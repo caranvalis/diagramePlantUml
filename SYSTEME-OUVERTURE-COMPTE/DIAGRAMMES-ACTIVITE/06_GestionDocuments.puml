@@ -1,0 +1,120 @@
+@startuml GestionDocuments
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Gestion Documentaire Avancée
+
+start
+
+:Document reçu
+du client;
+
+:Identifier type
+de document;
+
+partition "Validation Initiale" {
+    :Vérifier format
+    et lisibilité;
+    
+    :Contrôler intégrité
+    du fichier;
+    
+    if (Document exploitable?) then (non)
+        :Demander nouveau
+        document au client;
+        
+        :Notifier problème
+        technique;
+        
+        stop
+    else (oui)
+    endif
+}
+
+partition "Analyse Contenu" {
+    :Extraire informations
+    clés automatiquement;
+    
+    :Vérifier cohérence
+    avec profil client;
+    
+    :Détecter anomalies
+    potentielles;
+    
+    if (Anomalies détectées?) then (oui)
+        :Marquer pour
+        vérification manuelle;
+        
+        :Alerter agent
+        responsable;
+    else (non)
+    endif
+}
+
+partition "Vérification Réglementaire" {
+    :Appliquer règles
+    de conformité;
+    
+    :Vérifier validité
+    temporelle;
+    
+    :Contrôler origine
+    et authenticité;
+    
+    if (Conformité OK?) then (non)
+        :Générer alerte
+        de non-conformité;
+        
+        :Bloquer progression
+        du dossier;
+        
+        :Demander document
+        conforme;
+    else (oui)
+    endif
+}
+
+partition "Stockage et Classification" {
+    :Classifier document
+    selon taxonomie;
+    
+    :Appliquer règles
+    de rétention;
+    
+    :Stocker avec
+    métadonnées;
+    
+    :Indexer pour
+    recherche;
+}
+
+:Mettre à jour
+statut dossier;
+
+:Notifier étape
+suivante du workflow;
+
+if (Tous documents requis?) then (oui)
+    :Déclencher phase
+    de validation;
+else (non)
+    :Attendre documents
+    manquants;
+    
+    :Programmer relances
+    automatiques;
+endif
+
+stop
+
+@enduml

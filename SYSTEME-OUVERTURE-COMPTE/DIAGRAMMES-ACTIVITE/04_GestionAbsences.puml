@@ -1,0 +1,119 @@
+@startuml GestionAbsences
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Gestion des Absences et Continuité
+
+start
+
+:Agent responsable
+du dossier absent;
+
+:Système détecte
+absence planifiée/imprévue;
+
+partition "Identification Remplaçant" {
+    if (Remplaçant désigné?) then (oui)
+        :Notifier remplaçant
+        désigné;
+    else (non)
+        :Identifier remplaçant
+        selon compétences;
+        
+        :Vérifier disponibilité
+        du remplaçant;
+        
+        if (Remplaçant disponible?) then (non)
+            :Escalader vers
+            responsable unité;
+            
+            :Réaffecter selon
+            charge de travail;
+        else (oui)
+        endif
+    endif
+}
+
+:Transférer responsabilité
+temporaire du dossier;
+
+:Donner accès au
+remplaçant;
+
+partition "Briefing Remplaçant" {
+    :Fournir contexte
+    du dossier;
+    
+    :Expliquer étapes
+    en cours;
+    
+    :Transmettre contacts
+    client et partenaires;
+    
+    :Définir limites
+    de délégation;
+}
+
+:Notifier client
+du changement temporaire;
+
+:Mettre à jour système
+avec nouvelle responsabilité;
+
+partition "Suivi Pendant Absence" {
+    :Remplaçant traite
+    les demandes urgentes;
+    
+    :Reporter les décisions
+    importantes si possible;
+    
+    if (Décision urgente requise?) then (oui)
+        if (Dans délégation remplaçant?) then (oui)
+            :Prendre décision
+            et documenter;
+        else (non)
+            :Escalader vers
+            hiérarchie;
+        endif
+    else (non)
+        :Mettre en attente
+        retour titulaire;
+    endif
+}
+
+:Agent titulaire
+de retour;
+
+partition "Retour Titulaire" {
+    :Briefing du remplaçant
+    sur actions menées;
+    
+    :Récupération de la
+    responsabilité du dossier;
+    
+    :Mise à jour des
+    suivis clients;
+    
+    :Remercier remplaçant
+    et clôturer délégation;
+}
+
+:Reprendre suivi
+normal du dossier;
+
+:Archiver historique
+de remplacement;
+
+stop
+
+@enduml

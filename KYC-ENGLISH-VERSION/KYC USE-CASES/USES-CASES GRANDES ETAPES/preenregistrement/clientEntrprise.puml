@@ -1,0 +1,34 @@
+@startuml UseCasePreenregistrementEntreprise
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Client entreprise" as Client #purple
+actor "Gestionnaire" as Gestionnaire #green
+
+package "INTRA" {
+    usecase "Saisir informations entreprise" as SaisieInfos
+    usecase "Soumettre pré-enregistrement" as Soumettre
+    usecase "Enregistrer données entreprise" as Enregistrer
+    usecase "Générer identifiant unique (code/QR code)" as GenererID
+}
+
+' Saisie et soumission par le client entreprise
+Client --> SaisieInfos #purple;text:purple
+Client --> Soumettre #purple;text:purple
+
+' Saisie et soumission par le gestionnaire (via INTRA)
+Gestionnaire --> SaisieInfos #green;text:green
+Gestionnaire --> Soumettre #green;text:green
+
+' Relations internes (inclusions) en pointillés
+SaisieInfos ..> Soumettre : <<include>>
+Soumettre ..> Enregistrer : <<include>>
+Enregistrer ..> GenererID : <<include>>
+
+@enduml

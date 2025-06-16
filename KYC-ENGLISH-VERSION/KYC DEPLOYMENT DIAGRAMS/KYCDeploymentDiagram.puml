@@ -1,0 +1,245 @@
+@startuml KYCDeploymentDiagram
+skinparam backgroundColor #F8FBFF
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam artifact {
+    BackgroundColor #FFF3E0
+    BorderColor #FF8F00
+}
+skinparam cloud {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+skinparam database {
+    BackgroundColor #FCE4EC
+    BorderColor #E91E63
+}
+
+title Deployment Diagram - KYC Infrastructure
+
+' === USER ZONE ===
+cloud "Client Zone" {
+    node "Web Browser" as WebBrowser {
+        artifact "KYC Web Interface" as WebUI
+    }
+    
+    node "Mobile Application" as MobileApp {
+        artifact "KYC Mobile App" as MobileUI
+    }
+}
+
+cloud "Bank Internal Zone" {
+    node "Manager Workstation" as ManagerPC {
+        artifact "Manager Interface" as ManagerUI
+    }
+    
+    node "Administration Workstation" as AdminPC {
+        artifact "Admin Interface" as AdminUI
+    }
+}
+
+' === DMZ ZONE ===
+node "DMZ (Demilitarized Zone)" {
+    node "Load Balancer" as LB {
+        artifact "HAProxy/Nginx" as Proxy
+    }
+    
+    node "Web Server 1" as Web1 {
+        artifact "Apache/Nginx" as WebServer1
+    }
+    
+    node "Web Server 2" as Web2 {
+        artifact "Apache/Nginx" as WebServer2
+    }
+}
+
+' === APPLICATION ZONE ===
+node "Internal Application Zone" {
+    node "KYC App Cluster" as AppCluster {
+        node "App Server 1" as App1 {
+            artifact "KYC Core Service" as KYCCore1
+            artifact "REST API" as REST1
+            artifact "Workflow Engine" as Workflow1
+        }
+        
+        node "App Server 2" as App2 {
+            artifact "KYC Core Service" as KYCCore2
+            artifact "REST API" as REST2
+            artifact "Workflow Engine" as Workflow2
+        }
+    }
+    
+    node "Services Server" as ServicesNode {
+        artifact "Controls Service" as ControlService
+        artifact "Documents Service" as DocService
+        artifact "Notifications Service" as NotifService
+        artifact "Audit Service" as AuditService
+    }
+    
+    node "Cache Server" as CacheNode {
+        artifact "Redis Cluster" as Redis
+    }
+    
+    node "Queue Server" as QueueNode {
+        artifact "RabbitMQ/Kafka" as MessageQueue
+    }
+}
+
+' === DATA ZONE ===
+node "Database Zone" {
+    node "KYC DB Cluster" as DBCluster {
+        database "Main KYC Database" as MainDB
+        database "KYC Replica Database" as ReplicaDB
+    }
+    
+    node "DMS Server" as GEDNode {
+        database "Document Storage" as GEDStorage
+        artifact "DMS Service" as GEDService
+    }
+    
+    node "Backup Server" as BackupNode {
+        database "KYC Backup" as BackupDB
+        artifact "Backup Agent" as BackupAgent
+    }
+}
+
+' === BANKING SYSTEMS ===
+node "Banking Infrastructure" {
+    node "CBS Server" as CBSNode {
+        artifact "Core Banking System" as CBS
+        database "CBS Database" as CBSDatabase
+    }
+    
+    node "CRM Server" as CRMNode {
+        artifact "Banking CRM" as CRM
+        database "CRM Database" as CRMDatabase
+    }
+    
+    node "Reporting Server" as ReportNode {
+        artifact "Reporting System" as Reporting
+        database "Datawarehouse" as DWH
+    }
+}
+
+' === EXTERNAL SERVICES ===
+cloud "External Internet Services" {
+    node "Blacklist Service" as BlacklistSvc {
+        artifact "Blacklist API" as BlacklistAPI
+    }
+    
+    node "PEP Service" as PPESvc {
+        artifact "PEP API" as PPEAPI
+    }
+    
+    node "FATCA Service" as FATCASvc {
+        artifact "FATCA/CRS API" as FATCAAPI
+    }
+    
+    node "ID Verification Service" as IDSvc {
+        artifact "Verification API" as IDAPI
+    }
+    
+    node "Signature Service" as SignatureSvc {
+        artifact "Signature Server" as SignatureServer
+    }
+}
+
+' === MONITORING AND SECURITY ===
+node "Cross-cutting Infrastructure" {
+    node "Monitoring Server" as MonitorNode {
+        artifact "Prometheus/Grafana" as Monitoring
+        artifact "ELK Stack" as Logging
+    }
+    
+    node "Security Server" as SecurityNode {
+        artifact "LDAP/AD" as Authentication
+        artifact "Firewall Rules" as Firewall
+        artifact "Antivirus" as Antivirus
+    }
+}
+
+' === USER CONNECTIONS ===
+WebBrowser --> LB : HTTPS
+MobileApp --> LB : HTTPS/REST
+ManagerPC --> LB : HTTPS
+AdminPC --> LB : HTTPS
+
+' === LOAD BALANCING ===
+LB --> Web1 : HTTP
+LB --> Web2 : HTTP
+
+' === WEB SERVERS ===
+Web1 --> App1 : HTTP/REST
+Web1 --> App2 : HTTP/REST
+Web2 --> App1 : HTTP/REST
+Web2 --> App2 : HTTP/REST
+
+' === APPLICATION CLUSTER ===
+App1 --> ServicesNode : HTTP/RPC
+App2 --> ServicesNode : HTTP/RPC
+App1 --> CacheNode : Redis Protocol
+App2 --> CacheNode : Redis Protocol
+App1 --> QueueNode : AMQP
+App2 --> QueueNode : AMQP
+
+' === SERVICES TO DATA ===
+ServicesNode --> MainDB : SQL/JDBC
+ServicesNode --> GEDNode : HTTP/REST
+ServicesNode --> CacheNode : Redis Protocol
+ServicesNode --> QueueNode : AMQP
+
+' === DATABASE REPLICATION ===
+MainDB --> ReplicaDB : Replication
+MainDB --> BackupNode : Backup
+
+' === BANKING INTEGRATION ===
+ServicesNode --> CBSNode : SOAP/REST
+ServicesNode --> CRMNode : HTTP/REST
+ServicesNode --> ReportNode : HTTP/REST
+
+' === EXTERNAL SERVICES ===
+ServicesNode --> BlacklistSvc : HTTPS/REST
+ServicesNode --> PPESvc : HTTPS/REST
+ServicesNode --> FATCASvc : HTTPS/REST
+ServicesNode --> IDSvc : HTTPS/REST
+ServicesNode --> SignatureSvc : HTTPS/REST
+
+' === MONITORING ===
+AppCluster --> MonitorNode : Metrics/Logs
+ServicesNode --> MonitorNode : Metrics/Logs
+DBCluster --> MonitorNode : Metrics/Logs
+
+' === SECURITY ===
+LB --> SecurityNode : Auth/Audit
+AppCluster --> SecurityNode : Auth/Audit
+ServicesNode --> SecurityNode : Auth/Audit
+
+note top of LB
+  Single entry point
+  with load balancing
+  and SSL termination
+end note
+
+note right of AppCluster
+  High availability
+  application cluster with
+  possible auto-scaling
+end note
+
+note bottom of DBCluster
+  Database with
+  master-slave replication
+  and automatic backup
+end note
+
+note left of "External Internet Services"
+  Secure calls to
+  third-party services with
+  authentication and
+  quota control
+end note
+
+@enduml

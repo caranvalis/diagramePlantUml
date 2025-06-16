@@ -1,0 +1,54 @@
+@startuml UseCasesGlobalKYC
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+left to right direction
+
+actor "Client" as Client #purple
+actor "Gestionnaire" as Gestionnaire #green
+actor "Analyste conformité" as Analyste #blue
+
+package "Système INTRA" as INTRA {
+    usecase "Pré-enregistrer client" as Preenr
+    usecase "Enregistrer client" as Enr
+    usecase "Vérifier documents" as VerifDocs
+    usecase "Contrôle conformité (identité incluse)" as Conformite
+    usecase "Créer compte" as CreerCompte
+    usecase "Capturer signature électronique" as Signature
+    usecase "Attribuer statut client" as Statut
+    usecase "Bloquer/Débloquer/Clôturer" as BlocDebloc
+}
+
+' Interactions Client
+Client --> Preenr #purple;text:purple
+Client --> Enr #purple;text:purple
+Client --> VerifDocs #purple;text:purple
+Client --> Signature #purple;text:purple
+
+' Interactions Gestionnaire
+Gestionnaire --> Preenr #green;text:green
+Gestionnaire --> Enr #green;text:green
+Gestionnaire --> VerifDocs #green;text:green
+Gestionnaire --> Conformite #green;text:green
+Gestionnaire --> CreerCompte #green;text:green
+Gestionnaire --> Statut #green;text:green
+Gestionnaire --> BlocDebloc #green;text:green
+
+' Interactions Analyste conformité
+Analyste --> Conformite #blue;text:blue
+Analyste --> BlocDebloc #blue;text:blue
+
+' Relations internes (inclusions et extensions) en pointillés
+Preenr ..> VerifDocs : <<include>>
+VerifDocs ..> Conformite : <<include>>
+Conformite ..> CreerCompte : <<include>>
+CreerCompte ..> Signature : <<include>>
+Signature ..> Statut : <<include>>
+BlocDebloc ..> Statut : <<extend>>
+
+@enduml

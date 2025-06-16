@@ -1,0 +1,425 @@
+@startuml AgentsEtUnites
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Gestion des Agents et Unités
+
+package "Agents" #FFF8E1 {
+  class Agent {
+    - id: String
+    - matricule: String
+    - nom: String
+    - prenoms: String
+    - email: String
+    - telephone: String
+    - fonction: Fonction
+    - grade: Grade
+    - classe: Classe
+    - uniteAffectation: UniteGestion
+    - superieurHierarchique: Agent
+    - numeroCompte: String
+    - estEnFonction: Boolean
+    - dateAffectation: Date
+    - dateFinAffectation: Date
+    - droitsAcces: List<DroitAcces>
+    - delegations: List<Delegation>
+    - absences: List<Absence>
+    - backup: Agent
+    - demandesEnCours: List<DemandeOuvertureCompte>
+    - statistiques: StatistiquesAgent
+    - profileCompetences: ProfileCompetences
+    + authentifier(): Boolean
+    + recupererInformationsSIRH(): Boolean
+    + deleguerPouvoir(delegataire: Agent, typePouvoir: TypePouvoir): Delegation
+    + transfererDossier(demande: DemandeOuvertureCompte, nouveauAgent: Agent): Boolean
+    + declarerAbsence(dateDebut: Date, dateFin: Date): Absence
+    + obtenirDossiersEnAttente(): List<DemandeOuvertureCompte>
+    + genererStatistiques(): StatistiquesAgent
+    + changerMotDePasse(): Boolean
+    + mettreAJourProfile(): Boolean
+  }
+
+  class ProfileCompetences {
+    - id: String
+    - agent: Agent
+    - competences: List<Competence>
+    - niveauxHabilitation: List<NiveauHabilitation>
+    - formations: List<Formation>
+    - certifications: List<Certification>
+    - dateEvaluation: Date
+    - evaluateur: Agent
+    - scoreGlobal: Float
+    + evaluer(): Float
+    + ajouterCompetence(competence: Competence): Boolean
+    + mettreAJourNiveau(competence: Competence, niveau: Integer): Boolean
+    + planifierFormation(formation: Formation): Boolean
+  }
+
+  class Competence {
+    - id: String
+    - nom: String
+    - description: String
+    - categorie: CategorieCompetence
+    - niveau: Integer
+    - estCertifiee: Boolean
+    - dateCertification: Date
+    - dureeValidite: Integer
+    - estObligatoire: Boolean
+  }
+
+  class StatistiquesAgent {
+    - id: String
+    - agent: Agent
+    - periodeDebut: Date
+    - periodeFin: Date
+    - nombreDossiersTraites: Integer
+    - nombreDossiersValides: Integer
+    - nombreDossiersRejetes: Integer
+    - tempsTraitementMoyen: Long
+    - tauxReussite: Float
+    - nombreErreurs: Integer
+    - scorePerformance: Float
+    + calculer(): Boolean
+    + comparer(autreAgent: Agent): ComparaisonPerformance
+    + genererRapport(): Document
+  }
+}
+
+package "Délégations et Absences" #FFF3E0 {
+  class Delegation {
+    - id: String
+    - delegant: Agent
+    - delegataire: Agent
+    - typePouvoir: TypePouvoir
+    - portee: PorteeDelegation
+    - dateDebut: Date
+    - dateFin: Date
+    - estActive: Boolean
+    - motif: String
+    - autorisateur: Agent
+    - conditions: List<ConditionDelegation>
+    - limiteMontant: BigDecimal
+    - dossiersDelgues: List<DemandeOuvertureCompte>
+    + activer(): Boolean
+    + desactiver(): Boolean
+    + verifierConditions(): Boolean
+    + transfererDossier(demande: DemandeOuvertureCompte): Boolean
+    + prolonger(nouvelleDateFin: Date): Boolean
+  }
+
+  class Absence {
+    - id: String
+    - agent: Agent
+    - typeAbsence: TypeAbsence
+    - dateDebut: Date
+    - dateFin: Date
+    - motif: String
+    - estPlanifiee: Boolean
+    - remplacant: Agent
+    - delegationsActivees: List<Delegation>
+    - dossiersTransferes: List<DemandeOuvertureCompte>
+    - autorisateur: Agent
+    - documentJustificatif: DocumentRequis
+    + declarer(): Boolean
+    + approuver(): Boolean
+    + rejeter(motif: String): Boolean
+    + organiserRemplacements(): Boolean
+    + transfererDossiers(): Boolean
+  }
+
+  class ConditionDelegation {
+    - id: String
+    - delegation: Delegation
+    - typeCondition: TypeCondition
+    - valeur: String
+    - operateur: OperateurCondition
+    - estActive: Boolean
+    + evaluer(contexte: Map<String, Object>): Boolean
+    + modifier(nouvelleValeur: String): Boolean
+  }
+}
+
+package "Unités de Gestion" #FFECB3 {
+  class UniteGestion {
+    - id: String
+    - code: String
+    - nom: String
+    - typeUnite: TypeUnite
+    - agence: Agence
+    - reseau: Reseau
+    - ville: String
+    - adresse: String
+    - responsable: Agent
+    - agentsAffectes: List<Agent>
+    - gfc: List<Agent>
+    - da: List<Agent>
+    - conformite: List<Agent>
+    - dg: List<Agent>
+    - demandesUnite: List<DemandeOuvertureCompte>
+    - statistiquesUnite: StatistiquesUnite
+    - estActive: Boolean
+    - capaciteTraitement: Integer
+    - seuilAlerte: Integer
+    + affecter(agent: Agent): Boolean
+    + desaffecter(agent: Agent): Boolean
+    + obtenirDemandes(): List<DemandeOuvertureCompte>
+    + calculerStatistiques(): StatistiquesUnite
+    + redistribuerCharge(): Boolean
+    + genererRapportActivite(): Document
+  }
+
+  class Agence {
+    - id: String
+    - code: String
+    - nom: String
+    - typeAgence: TypeAgence
+    - adresse: String
+    - ville: String
+    - region: String
+    - directeur: Agent
+    - unitesGestion: List<UniteGestion>
+    - estActive: Boolean
+    - horaireOuverture: String
+    - telephone: String
+    - email: String
+    + creerUniteGestion(typeUnite: TypeUnite): UniteGestion
+    + affecterDirecteur(agent: Agent): Boolean
+    + calculerStatistiquesGlobales(): StatistiquesAgence
+  }
+
+  class Reseau {
+    - id: String
+    - nom: String
+    - typeReseau: TypeReseau
+    - responsableReseau: Agent
+    - agences: List<Agence>
+    - zone: String
+    - estActif: Boolean
+    + ajouterAgence(agence: Agence): Boolean
+    + calculerStatistiquesReseau(): StatistiquesReseau
+    + genererRapportRegional(): Document
+  }
+
+  class StatistiquesUnite {
+    - id: String
+    - unite: UniteGestion
+    - periodeDebut: Date
+    - periodeFin: Date
+    - nombreDossiersRecus: Integer
+    - nombreDossiersTraites: Integer
+    - nombreDossiersEnAttente: Integer
+    - tempsTraitementMoyen: Long
+    - tauxReussite: Float
+    - chargeTravaill: Float
+    - efficacite: Float
+    + calculer(): Boolean
+    + comparer(autreUnite: UniteGestion): ComparaisonUnites
+    + identifierGoulotEtranglement(): List<String>
+  }
+}
+
+package "Droits et Habilitations" #FFF8DC {
+  class DroitAcces {
+    - id: String
+    - agent: Agent
+    - module: ModuleSysteme
+    - operation: TypeOperation
+    - niveauAcces: NiveauAcces
+    - estActif: Boolean
+    - dateAttribution: Date
+    - dateExpiration: Date
+    - autorisateur: Agent
+    + verifierAcces(operation: TypeOperation, ressource: String): Boolean
+    + renouveler(): Boolean
+    + revoquer(): Boolean
+  }
+
+  class NiveauHabilitation {
+    - id: String
+    - nom: String
+    - description: String
+    - montantMaximum: BigDecimal
+    - operationsAutorisees: List<TypeOperation>
+    - modulesAccessibles: List<ModuleSysteme>
+    - estActif: Boolean
+    + verifierHabilitation(montant: BigDecimal, operation: TypeOperation): Boolean
+    + mettreAJour(): Boolean
+  }
+}
+
+package "Énumérations Agents" #FFFACD {
+  enum Fonction {
+    GFC
+    DA
+    CONFORMITE
+    DG
+    RESPONSABLE_UNITE
+    AGENT_COMMERCIAL
+    SUPERVISEUR
+    ANALYSTE
+  }
+
+  enum Grade {
+    JUNIOR
+    SENIOR
+    PRINCIPAL
+    EXPERT
+    MANAGER
+    DIRECTEUR
+  }
+
+  enum Classe {
+    CLASSE_A
+    CLASSE_B
+    CLASSE_C
+    CLASSE_D
+    HORS_CLASSE
+  }
+
+  enum TypePouvoir {
+    VALIDATION_DOCUMENTS
+    APPROBATION_COMPTES
+    CONTROLE_CONFORMITE
+    SIGNATURE_ELECTRONIQUE
+    ACCES_DONNEES_SENSIBLES
+    DELEGATION_COMPLETE
+  }
+
+  enum PorteeDelegation {
+    DOSSIER_SPECIFIQUE
+    TYPE_CLIENT
+    MONTANT_LIMITE
+    DUREE_LIMITEE
+    COMPLETE
+  }
+
+  enum TypeAbsence {
+    CONGE_ANNUEL
+    CONGE_MALADIE
+    FORMATION
+    MISSION
+    CONGE_SANS_SOLDE
+    CONGE_MATERNITE
+    AUTRE
+  }
+
+  enum TypeUnite {
+    FRONT_OFFICE
+    MIDDLE_OFFICE
+    BACK_OFFICE
+    CONFORMITE
+    CONTROLE
+    SUPPORT
+  }
+
+  enum TypeAgence {
+    PRINCIPALE
+    SECONDAIRE
+    SUCCURSALE
+    BUREAU_REPRESENTATION
+    AGENCE_DIGITALE
+  }
+
+  enum TypeReseau {
+    URBAIN
+    RURAL
+    ENTREPRISES
+    PARTICULIERS
+    PREMIUM
+  }
+
+  enum ModuleSysteme {
+    OUVERTURE_COMPTE
+    GESTION_CLIENT
+    CONTROLES_REGLEMENTAIRES
+    SIGNATURE_ELECTRONIQUE
+    REPORTING
+    ADMINISTRATION
+  }
+
+  enum TypeOperation {
+    CONSULTATION
+    CREATION
+    MODIFICATION
+    VALIDATION
+    SUPPRESSION
+    EXPORT
+    SIGNATURE
+  }
+
+  enum NiveauAcces {
+    LECTURE
+    ECRITURE
+    VALIDATION
+    ADMINISTRATION
+    SUPERVISION
+  }
+
+  enum CategorieCompetence {
+    TECHNIQUE
+    REGLEMENTAIRE
+    COMMERCIALE
+    MANAGEMENT
+    SECURITE
+  }
+
+  enum TypeCondition {
+    MONTANT_MAXIMUM
+    TYPE_CLIENT
+    DUREE_VALIDITE
+    JOUR_SEMAINE
+    HEURE_TRAVAIL
+  }
+
+  enum OperateurCondition {
+    EGAL
+    SUPERIEUR
+    INFERIEUR
+    CONTIENT
+    DIFFERENT
+  }
+}
+
+' Relations principales
+Agent ||--|| ProfileCompetences : "possède"
+Agent ||--|| StatistiquesAgent : "génère"
+Agent ||--o{ Delegation : "delegant"
+Agent ||--o{ Delegation : "delegataire"
+Agent ||--o{ Absence : "declare"
+Agent ||--|| UniteGestion : "affecté à"
+Agent ||--o{ DroitAcces : "possède"
+
+ProfileCompetences ||--o{ Competence : "contient"
+Delegation ||--o{ ConditionDelegation : "soumise à"
+UniteGestion ||--|| Agence : "appartient à"
+UniteGestion ||--|| StatistiquesUnite : "génère"
+Agence ||--|| Reseau : "appartient à"
+
+Agent ||--|| Fonction
+Agent ||--|| Grade
+Agent ||--|| Classe
+Delegation ||--|| TypePouvoir
+Delegation ||--|| PorteeDelegation
+Absence ||--|| TypeAbsence
+UniteGestion ||--|| TypeUnite
+Agence ||--|| TypeAgence
+Reseau ||--|| TypeReseau
+DroitAcces ||--|| ModuleSysteme
+DroitAcces ||--|| TypeOperation
+DroitAcces ||--|| NiveauAcces
+Competence ||--|| CategorieCompetence
+ConditionDelegation ||--|| TypeCondition
+ConditionDelegation ||--|| OperateurCondition
+
+@enduml

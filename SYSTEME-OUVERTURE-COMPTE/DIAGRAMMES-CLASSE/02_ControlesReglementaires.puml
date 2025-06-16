@@ -1,0 +1,272 @@
+@startuml ControlesReglementaires
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Contrôles Réglementaires
+
+package "Contrôles de Base" #FFDDDD {
+  abstract class ControleReglementaire {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - typeControle: TypeControle
+    - agentExecuteur: Agent
+    - dateExecution: Date
+    - resultatControle: ResultatControle
+    - detailsResultat: String
+    - alertes: List<AlerteControle>
+    - documentGenere: Document
+    - estObligatoire: Boolean
+    - estPasse: Boolean
+    - necessiteAction: Boolean
+    + executer(): Boolean
+    + analyserResultat(): ResultatControle
+    + genererAlerte(): AlerteControle
+    + genererDocument(): Document
+  }
+
+  class AlerteControle {
+    - id: String
+    - controle: ControleReglementaire
+    - typeAlerte: TypeAlerte
+    - severite: SeveriteAlerte
+    - message: String
+    - dateGeneration: Date
+    - estTraitee: Boolean
+    - agentTraitant: Agent
+    - dateTraitement: Date
+    - actionRecommandee: String
+    + generer(): Boolean
+    + traiter(agent: Agent): Boolean
+    + escalader(): Boolean
+    + archiver(): Boolean
+  }
+}
+
+package "Contrôles Spécialisés" #FFF0E0 {
+  class ControleBlacklist extends ControleReglementaire {
+    - listesConsultees: List<String>
+    - correspondances: List<CorrespondanceBlacklist>
+    - scoreConfiance: Float
+    - necessiteVerificationManuelle: Boolean
+    + consulterListes(): Boolean
+    + analyserCorrespondances(): List<CorrespondanceBlacklist>
+    + calculerScore(): Float
+    + verifierManuellement(): Boolean
+  }
+
+  class ControlePPE extends ControleReglementaire {
+    - listePPEConsultee: String
+    - indicePPE: Boolean
+    - typeExposition: TypeExposition
+    - niveauRisque: NiveauRisque
+    - avisConformite: String
+    - autorisationDG: Boolean
+    + verifierStatutPPE(): Boolean
+    + evaluerRisque(): NiveauRisque
+    + demanderAvisConformite(): Boolean
+    + solliciterAutorisationDG(): Boolean
+  }
+
+  class ControleFATCA extends ControleReglementaire {
+    - indicesAmericanite: List<String>
+    - ficheGeneree: FicheFATCA
+    - classificationFATCA: ClassificationFATCA
+    - obligationsReporting: List<String>
+    + detecterIndices(): List<String>
+    + genererFiche(): FicheFATCA
+    + classifier(): ClassificationFATCA
+    + determinerObligations(): List<String>
+  }
+
+  class ControleKYC extends ControleReglementaire {
+    - profileRisqueClient: ProfileRisque
+    - scoreRisque: Integer
+    - documentsAnalyses: List<DocumentRequis>
+    - questionsComplementaires: List<Question>
+    - recommandationTraitement: RecommandationKYC
+    + evaluerProfileRisque(): ProfileRisque
+    + calculerScore(): Integer
+    + genererQuestionnaire(): List<Question>
+    + formulerRecommandation(): RecommandationKYC
+  }
+
+  class ControleConformiteReglementaire extends ControleReglementaire {
+    - reglementationsApplicables: List<Reglementation>
+    - verificationsEffectuees: List<VerificationReglementaire>
+    - ecarts: List<EcartConformite>
+    - planAction: PlanActionConformite
+    + identifierReglementations(): List<Reglementation>
+    + effectuerVerifications(): List<VerificationReglementaire>
+    + detecterEcarts(): List<EcartConformite>
+    + elaborerPlanAction(): PlanActionConformite
+  }
+}
+
+package "Données de Contrôle" #F0F8FF {
+  class CorrespondanceBlacklist {
+    - id: String
+    - liste: String
+    - correspondance: String
+    - scoreCorrespondance: Float
+    - typeCorrespondance: TypeCorrespondance
+    - necessiteVerification: Boolean
+    - estConfirmee: Boolean
+    - commentaire: String
+  }
+
+  class FicheFATCA {
+    - id: String
+    - client: ClientPotentiel
+    - indicesDetectes: List<String>
+    - classification: ClassificationFATCA
+    - obligationsReporting: List<String>
+    - dateGeneration: Date
+    - agentValidateur: Agent
+    - estValidee: Boolean
+  }
+
+  class Question {
+    - id: String
+    - libelle: String
+    - typeQuestion: TypeQuestion
+    - reponseAttendue: String
+    - estObligatoire: Boolean
+    - ordre: Integer
+    - categorie: CategorieQuestion
+  }
+
+  class EcartConformite {
+    - id: String
+    - reglementation: String
+    - description: String
+    - severite: SeveriteEcart
+    - impact: String
+    - actionCorrective: String
+    - delaiCorrection: Integer
+    - estCorrige: Boolean
+  }
+}
+
+package "Énumérations Contrôles" #FFFACD {
+  enum TypeControle {
+    BLACKLIST
+    PPE
+    FATCA
+    KYC
+    CONFORMITE_REGLEMENTAIRE
+    VERIFICATION_IDENTITE
+    CONTROLE_SANCTIONS
+    LUTTE_ANTI_BLANCHIMENT
+  }
+
+  enum ResultatControle {
+    CONFORME
+    NON_CONFORME
+    ALERTE_MINEURE
+    ALERTE_MAJEURE
+    REQUIRES_MANUEL
+    EN_ATTENTE
+    ERREUR_TECHNIQUE
+  }
+
+  enum TypeAlerte {
+    BLACKLIST_MATCH
+    PPE_DETECTE
+    AMERICAIN_DETECTE
+    DOCUMENT_MANQUANT
+    INCOHERENCE_DONNEES
+    RISQUE_ELEVE
+    OBLIGATION_REGLEMENTAIRE
+  }
+
+  enum SeveriteAlerte {
+    INFO
+    WARNING
+    CRITIQUE
+    BLOQUANTE
+  }
+
+  enum TypeExposition {
+    DIRECT
+    INDIRECT
+    FAMILIAL
+    PROFESSIONNEL
+    AUCUN
+  }
+
+  enum NiveauRisque {
+    FAIBLE
+    MOYEN
+    ELEVE
+    TRES_ELEVE
+  }
+
+  enum ClassificationFATCA {
+    US_PERSON
+    NON_US_PERSON
+    US_REPORTABLE
+    NON_REPORTABLE
+    INDETERMINE
+  }
+
+  enum TypeCorrespondance {
+    EXACTE
+    PARTIELLE
+    PHONETIQUE
+    SIMILAIRE
+  }
+
+  enum ProfileRisque {
+    STANDARD
+    SURVEILLE
+    RENFORCE
+    PROHIBE
+  }
+
+  enum RecommandationKYC {
+    ACCEPTER
+    ACCEPTER_SOUS_CONDITIONS
+    REJETER
+    DEMANDER_COMPLEMENTS
+    ESCALADER_DG
+  }
+
+  enum SeveriteEcart {
+    MINEURE
+    MAJEURE
+    CRITIQUE
+    BLOQUANTE
+  }
+}
+
+' Relations
+ControleReglementaire ||--o{ AlerteControle : "génère"
+ControleBlacklist ||--o{ CorrespondanceBlacklist : "contient"
+ControleFATCA ||--|| FicheFATCA : "génère"
+ControleKYC ||--o{ Question : "utilise"
+ControleConformiteReglementaire ||--o{ EcartConformite : "détecte"
+
+ControleReglementaire ||--|| TypeControle
+ControleReglementaire ||--|| ResultatControle
+AlerteControle ||--|| TypeAlerte
+AlerteControle ||--|| SeveriteAlerte
+ControlePPE ||--|| TypeExposition
+ControlePPE ||--|| NiveauRisque
+ControleFATCA ||--|| ClassificationFATCA
+CorrespondanceBlacklist ||--|| TypeCorrespondance
+ControleKYC ||--|| ProfileRisque
+ControleKYC ||--|| RecommandationKYC
+EcartConformite ||--|| SeveriteEcart
+
+@enduml

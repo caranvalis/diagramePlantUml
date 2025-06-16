@@ -1,0 +1,318 @@
+@startuml NotificationManagementClassDiagram
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+left to right direction
+
+title KYC Notification Management System - Class Diagram
+
+class NotificationManager {
+  - id: String
+  - name: String
+  - description: String
+  - isActive: Boolean
+  - defaultConfiguration: NotificationConfiguration
+  - channels: List<NotificationChannel>
+  - templates: List<NotificationTemplate>
+  - history: List<NotificationHistory>
+  - statistics: NotificationStatistics
+  + sendNotification(notification: Notification): Boolean
+  + configureChannel(channel: NotificationChannel): Boolean
+  + createTemplate(template: NotificationTemplate): Boolean
+  + manageAcknowledgment(ackId: String): Boolean
+  + resendNotification(notificationId: String): Boolean
+  + generateStatisticsReport(): Document
+  + verifyNotificationDelivery(): Boolean
+}
+
+class Notification {
+  - id: String
+  - recipient: Recipient
+  - sender: String
+  - notificationType: NotificationType
+  - priority: NotificationPriority
+  - subject: String
+  - content: String
+  - attachments: List<Document>
+  - creationDate: Date
+  - sendDate: Date
+  - deliveryDate: Date
+  - status: NotificationStatus
+  - sendChannel: NotificationChannel
+  - templateUsed: NotificationTemplate
+  - acknowledgment: Acknowledgment
+  - sendAttempts: Integer
+  - nextAttempt: Date
+  - isUrgent: Boolean
+  - isConfidential: Boolean
+  + create(): Boolean
+  + send(): Boolean
+  + markAsSent(): Boolean
+  + markAsDelivered(): Boolean
+  + markAsFailed(): Boolean
+  + scheduleResend(): Boolean
+  + generateAcknowledgment(): Acknowledgment
+}
+
+class Acknowledgment {
+  - id: String
+  - notification: Notification
+  - acknowledgmentType: AcknowledgmentType
+  - receptionDate: Date
+  - receptionTime: Time
+  - ipAddress: String
+  - userAgent: String
+  - confirmationCode: String
+  - status: AcknowledgmentStatus
+  - comment: String
+  - receptionProof: String
+  - receptionDevice: String
+  - receptionLocation: String
+  + generate(): Boolean
+  + validate(): Boolean
+  + confirm(): Boolean
+  + generateCertificate(): Document
+  + verifyAuthenticity(): Boolean
+}
+
+class NotificationType {
+  - id: String
+  - code: String
+  - label: String
+  - description: String
+  - category: NotificationCategory
+  - defaultPriority: NotificationPriority
+  - defaultChannel: NotificationChannel
+  - defaultTemplate: NotificationTemplate
+  - requiresAcknowledgment: Boolean
+  - maxDeliveryDelay: Integer
+  - maxAttempts: Integer
+  - resendInterval: Integer
+  - isArchivable: Boolean
+  - retentionDuration: Integer
+  + defineParameters(): Boolean
+  + validateConfiguration(): Boolean
+  + applyRules(): Boolean
+}
+
+class NotificationChannel {
+  - id: String
+  - name: String
+  - type: ChannelType
+  - description: String
+  - configuration: ChannelConfiguration
+  - isActive: Boolean
+  - maxCapacity: Integer
+  - deliveryDelay: Integer
+  - successRate: Float
+  - costPerMessage: BigDecimal
+  - provider: String
+  - connectionParameters: String
+  + configure(): Boolean
+  + test(): Boolean
+  + send(notification: Notification): Boolean
+  + checkAvailability(): Boolean
+  + calculateCost(): BigDecimal
+  + getStatistics(): ChannelStatistics
+}
+
+class NotificationTemplate {
+  - id: String
+  - name: String
+  - notificationType: NotificationType
+  - channel: NotificationChannel
+  - subjectTemplate: String
+  - contentTemplate: String
+  - formatting: String
+  - variables: List<TemplateVariable>
+  - language: String
+  - version: Integer
+  - creationDate: Date
+  - modificationDate: Date
+  - isActive: Boolean
+  + create(): Boolean
+  + modify(): Boolean
+  + duplicate(): Boolean
+  + customize(variables: Map<String, String>): String
+  + validateSyntax(): Boolean
+  + preview(): String
+}
+
+class Recipient {
+  - id: String
+  - type: RecipientType
+  - lastName: String
+  - firstNames: String
+  - email: String
+  - phoneNumber: String
+  - postalAddress: String
+  - preferences: NotificationPreferences
+  - preferredLanguage: String
+  - timeZone: String
+  - isActive: Boolean
+  - isOptOut: Boolean
+  + validateContact(): Boolean
+  + updatePreferences(): Boolean
+  + manageOptOut(): Boolean
+  + getPreferredChannel(): NotificationChannel
+}
+
+class NotificationPreferences {
+  - id: String
+  - recipient: Recipient
+  - preferredChannel: NotificationChannel
+  - receptionHours: TimeSlot
+  - maxFrequency: Integer
+  - allowedTypes: List<NotificationType>
+  - blockedTypes: List<NotificationType>
+  - preferredFormat: String
+  - autoAcknowledgment: Boolean
+  + configure(): Boolean
+  + validate(): Boolean
+  + apply(): Boolean
+}
+
+class NotificationHistory {
+  - id: String
+  - notification: Notification
+  - action: NotificationAction
+  - actionDate: Date
+  - user: String
+  - details: String
+  - oldValue: String
+  - newValue: String
+  + record(): Boolean
+  + consult(): List<NotificationHistory>
+  + export(): Document
+}
+
+class NotificationStatistics {
+  - id: String
+  - period: StatisticsPeriod
+  - sentCount: Integer
+  - deliveredCount: Integer
+  - failedCount: Integer
+  - deliveryRate: Float
+  - acknowledgmentRate: Float
+  - averageDeliveryTime: Float
+  - mostUsedChannels: List<NotificationChannel>
+  - mostUsedTypes: List<NotificationType>
+  + calculate(): Boolean
+  + generateReport(): Document
+  + compare(otherPeriod: StatisticsPeriod): Document
+}
+
+' ===== ENUMERATIONS FOR NOTIFICATION SYSTEM =====
+
+enum ChannelType {
+    EMAIL
+    SMS
+    PUSH_NOTIFICATION
+    POSTAL_MAIL
+    FAX
+    PHONE_CALL
+    INTERNAL_NOTIFICATION
+    WEBHOOK
+    REST_API
+}
+
+enum NotificationStatus {
+    DRAFT
+    SCHEDULED
+    SENDING
+    SENT
+    DELIVERED
+    READ
+    FAILED
+    CANCELLED
+    EXPIRED
+}
+
+enum NotificationPriority {
+    LOW
+    NORMAL
+    HIGH
+    CRITICAL
+    URGENT
+}
+
+enum AcknowledgmentType {
+    AUTOMATIC
+    MANUAL
+    EMAIL_READ
+    LINK_CLICK
+    SMS_REPLY
+    PHONE_CONFIRMATION
+    ELECTRONIC_SIGNATURE
+}
+
+enum AcknowledgmentStatus {
+    PENDING
+    RECEIVED
+    CONFIRMED
+    REFUSED
+    EXPIRED
+    INVALID
+}
+
+enum NotificationCategory {
+    INFORMATION
+    ALERT
+    REMINDER
+    CONFIRMATION
+    URGENT
+    MARKETING
+    TECHNICAL
+    REGULATORY
+}
+
+enum RecipientType {
+    INDIVIDUAL_CLIENT
+    CORPORATE_CLIENT
+    MANAGER
+    SUPERVISOR
+    ADMINISTRATOR
+    EXTERNAL
+    GROUP
+}
+
+enum NotificationAction {
+    CREATION
+    SENDING
+    DELIVERY
+    READING
+    ACKNOWLEDGMENT
+    FAILURE
+    RESEND
+    CANCELLATION
+    ARCHIVING
+}
+
+' ===== MAIN RELATIONSHIPS =====
+
+' Primary relationships for notifications
+NotificationManager "1" -- "0..*" Notification : manages
+NotificationManager "1" -- "0..*" NotificationChannel : channels
+NotificationManager "1" -- "0..*" NotificationTemplate : templates
+Notification "1" -- "0..1" Acknowledgment : acknowledgment
+Notification "1" -- "1" NotificationType : type
+Notification "1" -- "1" NotificationChannel : sendChannel
+Notification "1" -- "1" NotificationTemplate : templateUsed
+Notification "1" -- "1" Recipient : recipient
+Notification "1" -- "0..*" NotificationHistory : history
+NotificationType "1" -- "0..*" Notification : instances
+NotificationChannel "1" -- "0..*" Notification : sentNotifications
+NotificationTemplate "1" -- "0..*" Notification : generatedNotifications
+Recipient "1" -- "0..*" Notification : receivedNotifications
+Recipient "1" -- "0..1" NotificationPreferences : preferences
+
+@enduml

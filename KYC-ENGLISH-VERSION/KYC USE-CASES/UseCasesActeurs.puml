@@ -1,0 +1,172 @@
+@startuml UseCasesActeurs
+skinparam backgroundColor #F8FBFF
+skinparam actor {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam usecase {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+
+title Diagramme des Use Cases - Vue par Acteurs
+
+' === ACTEURS DÉTAILLÉS ===
+left to right direction
+
+package "Acteurs Humains" {
+    actor "Client Particulier" as ClientP
+    actor "Client Entreprise" as ClientE
+    actor "Représentant Légal" as RepLegal
+    actor "Gestionnaire KYC" as Gestionnaire
+    actor "Superviseur KYC" as Superviseur
+    actor "Responsable Conformité" as Conformite
+    actor "Auditeur Interne" as Auditeur
+    actor "Directeur Agence" as Directeur
+}
+
+package "Acteurs Systèmes" {
+    actor "Système CBS" as CBS
+    actor "Base Blacklist" as Blacklist
+    actor "Service PPE" as PPE
+    actor "Autorité Certification" as AC
+    actor "Service Notification" as Notif
+    actor "Système Archive" as Archive
+}
+
+' === USE CASES PRINCIPAUX ===
+
+' CLIENT PARTICULIER
+usecase "S'inscrire en ligne" as UC_ClientP_1
+usecase "Fournir documents" as UC_ClientP_2
+usecase "Signer électroniquement" as UC_ClientP_3
+usecase "Consulter statut dossier" as UC_ClientP_4
+
+' CLIENT ENTREPRISE
+usecase "Déclarer actionnariat" as UC_ClientE_1
+usecase "Fournir documents juridiques" as UC_ClientE_2
+usecase "Désigner mandataires" as UC_ClientE_3
+
+' GESTIONNAIRE KYC
+usecase "Créer dossier client" as UC_Gest_1
+usecase "Valider documents" as UC_Gest_2
+usecase "Lancer contrôles KYC" as UC_Gest_3
+usecase "Analyser résultats" as UC_Gest_4
+usecase "Préparer validation" as UC_Gest_5
+usecase "Créer compte CBS" as UC_Gest_6
+usecase "Gérer notifications" as UC_Gest_7
+
+' SUPERVISEUR
+usecase "Valider dossier final" as UC_Sup_1
+usecase "Rejeter dossier" as UC_Sup_2
+usecase "Escalader cas complexe" as UC_Sup_3
+usecase "Autoriser blocage" as UC_Sup_4
+usecase "Superviser équipe" as UC_Sup_5
+
+' CONFORMITÉ
+usecase "Définir règles KYC" as UC_Conf_1
+usecase "Contrôler PPE" as UC_Conf_2
+usecase "Vérifier FATCA" as UC_Conf_3
+usecase "Auditer processus" as UC_Conf_4
+
+' AUDITEUR
+usecase "Consulter journaux" as UC_Audit_1
+usecase "Générer rapports" as UC_Audit_2
+usecase "Contrôler conformité" as UC_Audit_3
+
+' DIRECTEUR
+usecase "Valider cas exceptionnels" as UC_Dir_1
+usecase "Approuver fermetures" as UC_Dir_2
+
+' === RELATIONS ACTEURS - USE CASES ===
+
+' Client Particulier
+ClientP --> UC_ClientP_1
+ClientP --> UC_ClientP_2
+ClientP --> UC_ClientP_3
+ClientP --> UC_ClientP_4
+
+' Client Entreprise (hérite de Client Particulier + spécifique)
+ClientE --> UC_ClientP_1
+ClientE --> UC_ClientP_2
+ClientE --> UC_ClientP_3
+ClientE --> UC_ClientP_4
+ClientE --> UC_ClientE_1
+ClientE --> UC_ClientE_2
+ClientE --> UC_ClientE_3
+
+' Représentant Légal
+RepLegal --> UC_ClientP_3
+RepLegal --> UC_ClientE_3
+
+' Gestionnaire KYC
+Gestionnaire --> UC_Gest_1
+Gestionnaire --> UC_Gest_2
+Gestionnaire --> UC_Gest_3
+Gestionnaire --> UC_Gest_4
+Gestionnaire --> UC_Gest_5
+Gestionnaire --> UC_Gest_6
+Gestionnaire --> UC_Gest_7
+
+' Superviseur
+Superviseur --> UC_Sup_1
+Superviseur --> UC_Sup_2
+Superviseur --> UC_Sup_3
+Superviseur --> UC_Sup_4
+Superviseur --> UC_Sup_5
+Superviseur --> UC_Gest_7
+
+' Conformité
+Conformite --> UC_Conf_1
+Conformite --> UC_Conf_2
+Conformite --> UC_Conf_3
+Conformite --> UC_Conf_4
+
+' Auditeur
+Auditeur --> UC_Audit_1
+Auditeur --> UC_Audit_2
+Auditeur --> UC_Audit_3
+
+' Directeur
+Directeur --> UC_Dir_1
+Directeur --> UC_Dir_2
+
+' === RELATIONS AVEC SYSTÈMES ===
+UC_Gest_6 --> CBS
+UC_Gest_3 --> Blacklist
+UC_Conf_2 --> PPE
+UC_ClientP_3 --> AC
+UC_Gest_7 --> Notif
+UC_Audit_2 --> Archive
+
+' === RELATIONS INCLUDE/EXTEND ===
+UC_ClientP_1 ..> UC_ClientP_2 : include
+UC_Gest_2 ..> UC_Gest_3 : include
+UC_Gest_4 ..> UC_Gest_5 : include
+UC_Sup_1 ..> UC_Gest_6 : include
+
+UC_Sup_3 ..> UC_Sup_1 : extend
+UC_Dir_1 ..> UC_Sup_1 : extend
+UC_ClientE_1 ..> UC_ClientE_2 : extend
+
+note right of ClientP
+  Point d'entrée principal
+  du processus KYC
+end note
+
+note right of Gestionnaire
+  Acteur central qui orchestre
+  la majorité du processus
+end note
+
+note right of Superviseur
+  Validation finale et
+  gestion des exceptions
+end note
+
+note right of CBS
+  Système bancaire central
+  pour création des comptes
+end note
+
+@enduml

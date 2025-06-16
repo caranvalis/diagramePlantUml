@@ -1,0 +1,92 @@
+@startgantt CY_VIE_DOCUMENTS_KYC
+!theme aws-orange
+title Cycle de Vie Documents KYC
+
+Project starts 2025-01-01
+
+' === PHASE 1: COLLECTE ===
+[Réception documents] starts 2025-01-01 and lasts 1 days
+[Réception documents] is colored in Blue
+
+[Classification auto] starts 2025-01-02 and lasts 1 days
+[Classification auto] is colored in Green
+
+[Indexation metadata] starts 2025-01-03 and lasts 1 days
+[Indexation metadata] is colored in Blue
+
+' === PHASE 2: VALIDATION ===
+[Contrôle qualité] starts 2025-01-04 and lasts 2 days
+[Contrôle qualité] is colored in Yellow
+
+[Validation technique] starts 2025-01-06 and lasts 2 days
+[Validation technique] is colored in Yellow
+
+[Contrôle conformité] starts 2025-01-08 and lasts 2 days
+[Contrôle conformité] is colored in Orange
+
+' === PHASE 3: TRAITEMENT ===
+[Extraction données] starts 2025-01-10 and lasts 2 days
+[Extraction données] is colored in Green
+
+[Validation métier] starts 2025-01-12 and lasts 3 days
+[Validation métier] is colored in Green
+
+[Enrichissement] starts 2025-01-15 and lasts 1 days
+[Enrichissement] is colored in Blue
+
+' === PHASE 4: STOCKAGE ===
+[Stockage sécurisé] starts 2025-01-16 and lasts 1 days
+[Stockage sécurisé] is colored in Purple
+
+[Chiffrement] starts 2025-01-16 and lasts 1 days
+[Chiffrement] is colored in Red
+
+[Backup] starts 2025-01-17 and lasts 1 days
+[Backup] is colored in Purple
+
+' === PHASE 5: MAINTENANCE ===
+[Révision périodique] starts 2025-02-01 and lasts 3 days
+[Révision périodique] is colored in Yellow
+
+[Mise à jour statut] starts 2025-02-04 and lasts 1 days
+[Mise à jour statut] is colored in Green
+
+[Contrôle intégrité] starts 2025-03-01 and lasts 2 days
+[Contrôle intégrité] is colored in Orange
+
+' === PHASE 6: ARCHIVAGE ===
+[Préparation archivage] starts 2025-06-01 and lasts 2 days
+[Préparation archivage] is colored in Gray
+
+[Migration archive] starts 2025-06-03 and lasts 3 days
+[Migration archive] is colored in Gray
+
+[Validation archivage] starts 2025-06-06 and lasts 1 days
+[Validation archivage] is colored in Green
+
+' === JALONS CRITIQUES ===
+[Document Validé] happens 2025-01-10
+[Document Validé] is colored in Green
+
+[Données Extraites] happens 2025-01-15
+[Données Extraites] is colored in Blue
+
+[Stockage Sécurisé] happens 2025-01-17
+[Stockage Sécurisé] is colored in Red
+
+[Archive Complète] happens 2025-06-06
+[Archive Complète] is colored in Gray
+
+' === DÉPENDANCES ===
+[Classification auto] starts after [Réception documents]'s end
+[Indexation metadata] starts after [Classification auto]'s end
+[Contrôle qualité] starts after [Indexation metadata]'s end
+[Validation technique] starts after [Contrôle qualité]'s end
+[Contrôle conformité] starts after [Validation technique]'s end
+[Extraction données] starts after [Contrôle conformité]'s end
+[Validation métier] starts after [Extraction données]'s end
+[Enrichissement] starts after [Validation métier]'s end
+[Stockage sécurisé] starts after [Enrichissement]'s end
+[Backup] starts after [Stockage sécurisé]'s end
+
+@endgantt

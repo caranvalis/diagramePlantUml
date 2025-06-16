@@ -1,0 +1,511 @@
+@startuml ClientEtDonnees
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Client et Données
+
+package "Client et Identité" #F3E5F5 {
+  class ClientPotentiel {
+    - id: String
+    - numeroReference: String
+    - typePersonne: TypePersonne
+    - nom: String
+    - prenoms: String
+    - raisonSociale: String
+    - nomCommercial: String
+    - dateNaissance: Date
+    - lieuNaissance: String
+    - nationalite: String
+    - nationaliteSecondaire: String
+    - sexe: Sexe
+    - situationMatrimoniale: SituationMatrimoniale
+    - regimeMatrimonial: RegimeMatrimonial
+    - nombreEnfants: Integer
+    - profession: String
+    - secteurActivite: String
+    - employeur: String
+    - revenus: RevenuClient
+    - patrimoine: PatrimoineClient
+    - adressePrincipale: Adresse
+    - adresseCorrespondance: Adresse
+    - contacts: List<Contact>
+    - documentsIdentite: List<DocumentIdentite>
+    - representantsLegaux: List<RepresentantLegal>
+    - beneficiairesEffectifs: List<BeneficiaireEffectif>
+    - estPEP: Boolean
+    - estAmericain: Boolean
+    - estBlackliste: Boolean
+    - profileRisque: ProfileRisqueClient
+    + validerIdentite(): Boolean
+    + mettreAJourInformations(): Boolean
+    + ajouterContact(contact: Contact): Boolean
+    + ajouterDocument(document: DocumentIdentite): Boolean
+    + evaluerProfileRisque(): ProfileRisqueClient
+    + verifierEligibilite(): Boolean
+  }
+
+  class DocumentIdentite {
+    - id: String
+    - client: ClientPotentiel
+    - typeDocument: TypeDocumentIdentite
+    - numeroDocument: String
+    - dateEmission: Date
+    - dateExpiration: Date
+    - autoriteMettrice: String
+    - lieuMission: String
+    - estValide: Boolean
+    - estVerifie: Boolean
+    - fichierScan: Fichier
+    - estPrincipal: Boolean
+    + verifier(): Boolean
+    + extraireDonnees(): Map<String, String>
+    + verifierAuthentite(): Boolean
+    + archiver(): Boolean
+  }
+
+  class Contact {
+    - id: String
+    - client: ClientPotentiel
+    - typeContact: TypeContact
+    - valeur: String
+    - estPrincipal: Boolean
+    - estVerifie: Boolean
+    - dateVerification: Date
+    - commentaire: String
+    + verifier(): Boolean
+    + mettreAJour(nouvelleValeur: String): Boolean
+    + supprimer(): Boolean
+  }
+
+  class Adresse {
+    - id: String
+    - client: ClientPotentiel
+    - typeAdresse: TypeAdresse
+    - ligne1: String
+    - ligne2: String
+    - ville: String
+    - codePostal: String
+    - region: String
+    - pays: String
+    - estPrincipale: Boolean
+    - estVerifiee: Boolean
+    - dateVerification: Date
+    - coordonneesGPS: String
+    + verifier(): Boolean
+    + normaliser(): Boolean
+    + validerCodePostal(): Boolean
+    + calculerDistance(autreAdresse: Adresse): Float
+  }
+}
+
+package "Revenus et Patrimoine" #F8BBD9 {
+  class RevenuClient {
+    - id: String
+    - client: ClientPotentiel
+    - typeRevenu: TypeRevenu
+    - montantMensuel: BigDecimal
+    - montantAnnuel: BigDecimal
+    - devise: String
+    - sourceRevenu: String
+    - estVerifie: Boolean
+    - documentsJustificatifs: List<DocumentRequis>
+    - dateDeclaration: Date
+    + calculerMontantAnnuel(): BigDecimal
+    + verifierCoherence(): Boolean
+    + mettreAJour(): Boolean
+    + ajouterJustificatif(document: DocumentRequis): Boolean
+  }
+
+  class PatrimoineClient {
+    - id: String
+    - client: ClientPotentiel
+    - biens: List<BienPatrimonial>
+    - valeurTotale: BigDecimal
+    - devise: String
+    - dateEvaluation: Date
+    - estDeclare: Boolean
+    - estVerifie: Boolean
+    + calculerValeurTotale(): BigDecimal
+    + ajouterBien(bien: BienPatrimonial): Boolean
+    + evaluer(): Boolean
+    + mettreAJour(): Boolean
+  }
+
+  class BienPatrimonial {
+    - id: String
+    - patrimoine: PatrimoineClient
+    - typeBien: TypeBien
+    - description: String
+    - valeurEstimee: BigDecimal
+    - dateAcquisition: Date
+    - adresse: Adresse
+    - documentProprietaire: DocumentRequis
+    - estHypoteque: Boolean
+    - montantHypotheque: BigDecimal
+    + evaluer(): BigDecimal
+    + verifierProprietaire(): Boolean
+    + mettreAJour(): Boolean
+  }
+}
+
+package "Représentation Légale" #E1BEE7 {
+  class RepresentantLegal {
+    - id: String
+    - client: ClientPotentiel
+    - typeRepresentation: TypeRepresentation
+    - nom: String
+    - prenoms: String
+    - qualite: String
+    - dateNaissance: Date
+    - lieuNaissance: String
+    - nationalite: String
+    - documentsIdentite: List<DocumentIdentite>
+    - adresse: Adresse
+    - contacts: List<Contact>
+    - pouvoirsSigner: Boolean
+    - pouvoirs: List<Pouvoir>
+    - documentPouvoir: DocumentRequis
+    - estActif: Boolean
+    + verifierPouvoirs(): Boolean
+    + ajouterPouvoir(pouvoir: Pouvoir): Boolean
+    + revoquerPouvoirs(): Boolean
+    + mettreAJourInformations(): Boolean
+  }
+
+  class BeneficiaireEffectif {
+    - id: String
+    - client: ClientPotentiel
+    - nom: String
+    - prenoms: String
+    - dateNaissance: Date
+    - nationalite: String
+    - pourcentageDetention: Float
+    - typeDetention: TypeDetention
+    - natureControle: String
+    - documentsIdentite: List<DocumentIdentite>
+    - adresse: Adresse
+    - estPEP: Boolean
+    - declarationFournie: Boolean
+    + verifierSeuil(): Boolean
+    + mettreAJourPourcentage(nouveauPourcentage: Float): Boolean
+    + verifierIdentite(): Boolean
+  }
+
+  class Pouvoir {
+    - id: String
+    - representant: RepresentantLegal
+    - typePouvoir: TypePouvoirRepr
+    - description: String
+    - portee: String
+    - dateDebut: Date
+    - dateFin: Date
+    - estActif: Boolean
+    - limitations: List<String>
+    + activer(): Boolean
+    + suspendre(): Boolean
+    + verifierValidite(): Boolean
+  }
+}
+
+package "Évaluation des Risques" #FCE4EC {
+  class ProfileRisqueClient {
+    - id: String
+    - client: ClientPotentiel
+    - scoreRisque: Integer
+    - niveauRisque: NiveauRisqueClient
+    - factorsRisque: List<FacteurRisque>
+    - mesuresAttenuation: List<MesureAttenuation>
+    - dateEvaluation: Date
+    - agentEvaluateur: Agent
+    - estValidee: Boolean
+    - prochainReview: Date
+    + evaluer(): Integer
+    + calculerScore(): Integer
+    + identifierFacteursRisque(): List<FacteurRisque>
+    + recommanderMesures(): List<MesureAttenuation>
+    + planifierReview(): Date
+    + valider(): Boolean
+  }
+
+  class FacteurRisque {
+    - id: String
+    - profile: ProfileRisqueClient
+    - typeFacteur: TypeFacteurRisque
+    - description: String
+    - poids: Float
+    - valeur: String
+    - impact: ImpactRisque
+    - estMitigeable: Boolean
+    + evaluer(): Float
+    + calculerImpact(): ImpactRisque
+    + proposerMitigation(): MesureAttenuation
+  }
+
+  class MesureAttenuation {
+    - id: String
+    - facteurRisque: FacteurRisque
+    - typeMesure: TypeMesureAttenuation
+    - description: String
+    - efficacite: Float
+    - coutImplementation: BigDecimal
+    - delaiImplementation: Integer
+    - estImplementee: Boolean
+    - dateImplementation: Date
+    + implementer(): Boolean
+    + evaluerEfficacite(): Float
+    + mettreAJour(): Boolean
+  }
+}
+
+package "Comptes et Produits" #F48FB1 {
+  class RIB {
+    - id: String
+    - demande: DemandeOuvertureCompte
+    - banque: String
+    - agence: String
+    - numeroCompte: String
+    - cleRIB: String
+    - iban: String
+    - bic: String
+    - titulaire: String
+    - dateGeneration: Date
+    - estValide: Boolean
+    + generer(): Boolean
+    + validerIBAN(): Boolean
+    + calculerCleRIB(): String
+    + imprimer(): Fichier
+  }
+
+  class ProduitBancaire {
+    - id: String
+    - code: String
+    - nom: String
+    - description: String
+    - typeProduit: TypeProduit
+    - conditions: List<ConditionProduit>
+    - documentsRequis: List<TypeDocument>
+    - tariffsApplicables: List<Tarif>
+    - estActif: Boolean
+    - estPromotion: Boolean
+    - dateDebut: Date
+    - dateFin: Date
+    + verifierEligibilite(client: ClientPotentiel): Boolean
+    + calculerTarification(client: ClientPotentiel): BigDecimal
+    + obtenirConditions(): List<ConditionProduit>
+  }
+
+  class ConditionProduit {
+    - id: String
+    - produit: ProduitBancaire
+    - typeCondition: TypeConditionProduit
+    - valeurMin: BigDecimal
+    - valeurMax: BigDecimal
+    - description: String
+    - estObligatoire: Boolean
+    + verifier(valeur: Object): Boolean
+    + obtenirMessage(): String
+  }
+}
+
+package "Énumérations Client" #FFFACD {
+  enum TypePersonne {
+    PHYSIQUE
+    MORALE
+    MICRO_ENTREPRISE
+    ASSOCIATION
+    COLLECTIVITE
+  }
+
+  enum Sexe {
+    MASCULIN
+    FEMININ
+    NON_SPECIFIE
+  }
+
+  enum SituationMatrimoniale {
+    CELIBATAIRE
+    MARIE
+    DIVORCE
+    VEUF
+    PACSE
+    UNION_LIBRE
+  }
+
+  enum RegimeMatrimonial {
+    COMMUNAUTE_LEGALE
+    SEPARATION_BIENS
+    PARTICIPATION_ACQUETS
+    COMMUNAUTE_UNIVERSELLE
+  }
+
+  enum TypeDocumentIdentite {
+    CARTE_IDENTITE
+    PASSEPORT
+    PERMIS_CONDUIRE
+    CARTE_SEJOUR
+    ACTE_NAISSANCE
+    EXTRAIT_KBIS
+    STATUTS
+  }
+
+  enum TypeContact {
+    TELEPHONE_FIXE
+    TELEPHONE_MOBILE
+    EMAIL
+    FAX
+    ADRESSE_POSTALE
+  }
+
+  enum TypeAdresse {
+    DOMICILE
+    CORRESPONDANCE
+    TRAVAIL
+    SIEGE_SOCIAL
+    ETABLISSEMENT
+  }
+
+  enum TypeRevenu {
+    SALAIRE
+    PENSION
+    DIVIDENDES
+    LOYERS
+    BENEFICES
+    HONORAIRES
+    ALLOCATIONS
+    AUTRES
+  }
+
+  enum TypeBien {
+    IMMOBILIER_RESIDENTIEL
+    IMMOBILIER_COMMERCIAL
+    VEHICULE
+    COMPTE_BANCAIRE
+    INVESTISSEMENT
+    ENTREPRISE
+    AUTRES
+  }
+
+  enum TypeRepresentation {
+    TUTEUR
+    CURATEUR
+    MANDATAIRE
+    REPRESENTANT_LEGAL
+    PROCURATION
+    ADMINISTRATEUR
+  }
+
+  enum TypeDetention {
+    DIRECTE
+    INDIRECTE
+    CONTROLE_FAIT
+    CONTROLE_DROIT
+  }
+
+  enum TypePouvoirRepr {
+    SIGNATURE
+    GESTION_COURANTE
+    ACTES_DISPOSITION
+    REPRESENTATION_COMPLETE
+    LIMITE
+  }
+
+  enum NiveauRisqueClient {
+    FAIBLE
+    MOYEN
+    ELEVE
+    TRES_ELEVE
+    PROHIBE
+  }
+
+  enum TypeFacteurRisque {
+    GEOGRAPHIQUE
+    SECTORIEL
+    PROFESSIONNEL
+    TRANSACTIONNEL
+    COMPORTEMENTAL
+    REGLEMENTAIRE
+  }
+
+  enum ImpactRisque {
+    MINIMAL
+    MODERE
+    SIGNIFICATIF
+    MAJEUR
+    CRITIQUE
+  }
+
+  enum TypeMesureAttenuation {
+    DUE_DILIGENCE_RENFORCEE
+    SURVEILLANCE_CONTINUE
+    APPROBATION_SENIOR
+    LIMITATION_OPERATIONS
+    DOCUMENTATION_SUPPLEMENTAIRE
+    REVIEW_PERIODIQUE
+  }
+
+  enum TypeProduit {
+    COMPTE_COURANT
+    COMPTE_EPARGNE
+    COMPTE_TERME
+    COMPTE_PROFESSIONNEL
+    COMPTE_ASSOCIATION
+    LIGNE_CREDIT
+  }
+
+  enum TypeConditionProduit {
+    DEPOT_MINIMUM
+    AGE_MINIMUM
+    AGE_MAXIMUM
+    REVENUS_MINIMUM
+    SECTEUR_ACTIVITE
+    NATIONALITE
+  }
+}
+
+' Relations principales
+ClientPotentiel ||--o{ DocumentIdentite : "possède"
+ClientPotentiel ||--o{ Contact : "possède"
+ClientPotentiel ||--|| Adresse : "adressePrincipale"
+ClientPotentiel ||--|| Adresse : "adresseCorrespondance"
+ClientPotentiel ||--|| RevenuClient : "revenus"
+ClientPotentiel ||--|| PatrimoineClient : "patrimoine"
+ClientPotentiel ||--o{ RepresentantLegal : "représenté par"
+ClientPotentiel ||--o{ BeneficiaireEffectif : "contrôlé par"
+ClientPotentiel ||--|| ProfileRisqueClient : "évalué par"
+
+PatrimoineClient ||--o{ BienPatrimonial : "contient"
+RepresentantLegal ||--o{ Pouvoir : "possède"
+ProfileRisqueClient ||--o{ FacteurRisque : "identifie"
+FacteurRisque ||--o{ MesureAttenuation : "atténué par"
+
+ClientPotentiel ||--|| TypePersonne
+ClientPotentiel ||--|| Sexe
+ClientPotentiel ||--|| SituationMatrimoniale
+ClientPotentiel ||--|| RegimeMatrimonial
+DocumentIdentite ||--|| TypeDocumentIdentite
+Contact ||--|| TypeContact
+Adresse ||--|| TypeAdresse
+RevenuClient ||--|| TypeRevenu
+BienPatrimonial ||--|| TypeBien
+RepresentantLegal ||--|| TypeRepresentation
+BeneficiaireEffectif ||--|| TypeDetention
+Pouvoir ||--|| TypePouvoirRepr
+ProfileRisqueClient ||--|| NiveauRisqueClient
+FacteurRisque ||--|| TypeFacteurRisque
+FacteurRisque ||--|| ImpactRisque
+MesureAttenuation ||--|| TypeMesureAttenuation
+ProduitBancaire ||--|| TypeProduit
+ConditionProduit ||--|| TypeConditionProduit
+
+@enduml

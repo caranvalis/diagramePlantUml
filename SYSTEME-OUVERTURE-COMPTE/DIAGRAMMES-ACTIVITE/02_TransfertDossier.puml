@@ -1,0 +1,92 @@
+@startuml TransfertDossier
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Transfert de Dossier Entre Unités
+
+start
+
+:Agent identifie besoin
+de transfert;
+
+:Sélectionne unité
+de destination;
+
+if (Délégation requise?) then (oui)
+    :Vérifier niveaux
+    de délégation;
+    
+    if (Agent autorisé?) then (non)
+        :Demander validation
+        hiérarchique;
+        
+        :Attendre approbation
+        supérieur;
+        
+        if (Transfert approuvé?) then (non)
+            :Notifier refus
+            avec justification;
+            stop
+        else (oui)
+        endif
+    else (oui)
+    endif
+else (non)
+endif
+
+:Préparer dossier
+pour transfert;
+
+:Vérifier intégrité
+des documents;
+
+:Créer historique
+de transfert;
+
+partition "Notification" {
+    :Notifier unité
+    de destination;
+    
+    :Notifier client
+    du transfert;
+    
+    :Mettre à jour
+    responsabilité;
+}
+
+:Transférer dossier
+physique si requis;
+
+:Unité destination
+confirme réception;
+
+if (Réception confirmée?) then (non)
+    :Relancer unité
+    de destination;
+    
+    :Escalader si
+    pas de réponse;
+else (oui)
+    :Clôturer transfert
+    dans système;
+    
+    :Archiver historique
+    de transfert;
+endif
+
+:Notifier toutes
+parties prenantes;
+
+stop
+
+@enduml

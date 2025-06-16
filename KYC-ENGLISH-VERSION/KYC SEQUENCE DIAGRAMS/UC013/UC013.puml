@@ -1,0 +1,319 @@
+@startuml UC013
+!theme cerulean
+
+title UC013 - Gestion Actionnariat Entreprise
+skinparam actorStyle awesome
+skinparam sequenceBoxBorderColor #1E88E5
+skinparam participantBackgroundColor #E3F2FD
+skinparam lifeline {
+    BackgroundColor #BBDEFB
+}
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nActionnariat" as ActionnairiatService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nEntreprise" as EntrepriseService #4169E1
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+end box
+
+== Accès section actionnariat ==
+
+Manager -> WebUI : Accéder section\nactionnariat entreprise
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /entreprise/{id}/actionnariat
+activate Gateway
+
+Gateway -> Orchestrator : accederActionnariat()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGestionActionnariat()
+activate FluxManager
+
+FluxManager -> ValidationService : vérifierDroitsAccès()
+activate ValidationService
+
+ValidationService -> DB : SELECT permissions_gestionnaire
+activate DB
+DB --> ValidationService : Permissions vérifiées
+deactivate DB
+
+alt Accès refusé
+    ValidationService --> FluxManager : Droits insuffisants
+    deactivate ValidationService
+    
+    FluxManager -> AuditService : logTentativeAccesRejectione()
+    activate AuditService
+    AuditService -> DB : INSERT audit_refus
+    AuditService --> FluxManager : OK
+    deactivate AuditService
+    
+    FluxManager --> Orchestrator : Accès refusé
+    Orchestrator --> Gateway : Error autorisation
+    Gateway --> WebUI : Accès refusé
+    WebUI --> Manager : **Error**: Accès refusé\nDroits insuffisants
+    
+    note over Manager : Accès non autorisé\nContacter administrateur
+    
+else Accès autorisé
+    ValidationService --> FluxManager : Accès accordé
+    deactivate ValidationService
+    
+    FluxManager -> AuditService : logDébutFlux(GESTION_ACTIONNARIAT)
+    activate AuditService
+    AuditService -> DB : INSERT audit_flux
+    AuditService --> FluxManager : OK
+    deactivate AuditService
+    
+    ' Récupération actionnariat existant
+    FluxManager -> ActionnairiatService : getActionnairiatActuel()
+    activate ActionnairiatService
+    
+    ActionnairiatService -> DB : SELECT actionnaires_entreprise
+    activate DB
+    DB --> ActionnairiatService : Liste actionnaires
+    deactivate DB
+    
+    ActionnairiatService -> DocumentService : getDocumentsActionnariat()
+    activate DocumentService
+    DocumentService -> DB : SELECT documents_actionnariat
+    activate DB
+    DB --> DocumentService : Documents associés
+    deactivate DB
+    DocumentService --> ActionnairiatService : Documents liés
+    deactivate DocumentService
+    
+    ActionnairiatService --> FluxManager : Actionnariat actuel
+    deactivate ActionnairiatService
+    
+    FluxManager --> Orchestrator : Données chargées
+    Orchestrator --> Gateway : Actionnariat disponible
+    Gateway --> WebUI : Formulaire actionnariat
+    WebUI --> Manager : **Formulaire actionnariat**\nActionnaires existants + ajouts
+    
+    note over Manager : Formulaire affiché avec:\n- Actionnaires existants\n- Formulaire ajout\n- Upload documents
+end
+
+== Ajout actionnaires ==
+
+alt Manager souhaite ajouter des actionnaires
+    Manager -> WebUI : Ajouter actionnaires\n(nom, nationalité, parts, type)
+    Manager -> WebUI : Téléverser pièces\njustificatives
+    Manager -> WebUI : Soumettre formulaire
+    
+    WebUI -> Gateway : POST /entreprise/{id}/actionnariat/add
+    
+    Gateway -> Orchestrator : ajouterActionnaires()
+    
+    ' Validation des données
+    Orchestrator -> ValidationService : validerDonneesActionnaires()
+    activate ValidationService
+    
+    ValidationService -> ValidationService : Control champs\nobligatoires
+    ValidationService -> ValidationService : Validate format\nparts/pourcentages
+    ValidationService -> ValidationService : Verify cohérence\nnationnalité/type
+    
+    alt Champs vides ou invalides
+        ValidationService --> Orchestrator : Données incomplètes
+        deactivate ValidationService
+        
+        Orchestrator --> Gateway : Error validation
+        Gateway --> WebUI : Saisie bloquée
+        WebUI --> Manager : **Error**: Champs obligatoires\nmanquants ou invalides
+        
+        note over Manager : Corriger saisie\navant soumission
+        
+    else Données valides
+        ValidationService --> Orchestrator : Validation OK
+        deactivate ValidationService
+        
+        ' Validation des documents
+        Orchestrator -> DocumentService : validerDocumentsActionnariat()
+        activate DocumentService
+        
+        DocumentService -> DocumentService : Verify lisibilité\ndocuments
+        DocumentService -> DocumentService : Control formats\nacceptés
+        DocumentService -> DocumentService : Validate intégrité\nfichiers
+        
+        alt Documents illisibles ou corrompus
+            DocumentService --> Orchestrator : Documents rejetés
+            deactivate DocumentService
+            
+            Orchestrator -> AuditService : logRejetDocuments()
+            activate AuditService
+            AuditService -> DB : INSERT audit_erreurs
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Documents invalides
+            Gateway --> WebUI : Rejet documents
+            WebUI --> Manager : **Error**: Documents illisibles\nou corrompus - Reuploader
+            
+        else Documents valides
+            DocumentService --> Orchestrator : Documents conformes
+            deactivate DocumentService
+            
+            == Enregistrement actionnariat ==
+            
+            Orchestrator -> ActionnairiatService : enregistrerActionnaires()
+            activate ActionnairiatService
+            
+            ActionnairiatService -> DB : INSERT INTO actionnaires
+            activate DB
+            
+            alt Failure enregistrement
+                DB --> ActionnairiatService : Error base données
+                deactivate DB
+                
+                ActionnairiatService -> AuditService : logEchecEnregistrement()
+                activate AuditService
+                AuditService -> DB : INSERT audit_erreurs
+                activate DB
+                DB --> AuditService : Error loggée
+                deactivate DB
+                AuditService --> ActionnairiatService : OK
+                deactivate AuditService
+                
+                ActionnairiatService --> Orchestrator : Failure soumission
+                deactivate ActionnairiatService
+                
+                Orchestrator --> Gateway : Error système
+                Gateway --> WebUI : Failure enregistrement
+                WebUI --> Manager : **Error**: Failure soumission\nOption reprise disponible
+                
+            else Enregistrement réussi
+                DB --> ActionnairiatService : Actionnaires créés
+                deactivate DB
+                
+                ' Association documents
+                ActionnairiatService -> DocumentService : associerDocumentsActionnaires()
+                activate DocumentService
+                
+                DocumentService -> Storage : Save documents
+                activate Storage
+                Storage --> DocumentService : URLs documents
+                deactivate Storage
+                
+                DocumentService -> DB : INSERT documents_actionnariat
+                activate DB
+                DB --> DocumentService : Documents associés
+                deactivate DB
+                
+                DocumentService --> ActionnairiatService : Documents liés
+                deactivate DocumentService
+                
+                ' Mise à jour fiche entreprise
+                ActionnairiatService -> EntrepriseService : mettreAJourFicheEntreprise()
+                activate EntrepriseService
+                
+                EntrepriseService -> DB : UPDATE entreprise_actionnariat
+                activate DB
+                DB --> EntrepriseService : Fiche mise à jour
+                deactivate DB
+                
+                EntrepriseService -> CacheService : invalidateEntrepriseCache()
+                activate CacheService
+                CacheService --> EntrepriseService : Cache invalidé
+                deactivate CacheService
+                
+                EntrepriseService --> ActionnairiatService : Fiche actualisée
+                deactivate EntrepriseService
+                
+                ActionnairiatService --> Orchestrator : Actionnariat enregistré
+                deactivate ActionnairiatService
+                
+                ' Génération résumé
+                Orchestrator -> ActionnairiatService : genererResumeActionnariat()
+                activate ActionnairiatService
+                
+                ActionnairiatService -> ActionnairiatService : Compiler données\nactionnariat
+                ActionnairiatService -> ActionnairiatService : Generate rapport\nsynthèse
+                
+                ActionnairiatService --> Orchestrator : Résumé généré
+                deactivate ActionnairiatService
+                
+                ' Audit et notification
+                Orchestrator -> AuditService : logActionnairiatMisAJour()
+                activate AuditService
+                AuditService -> DB : INSERT audit_actions
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator -> NotificationService : notifierMiseAJourActionnariat()
+                activate NotificationService
+                NotificationService --> Orchestrator : Notification envoyée
+                deactivate NotificationService
+                
+                Orchestrator --> Gateway : Actionnariat mis à jour
+                Gateway --> WebUI : Success + résumé disponible
+                WebUI --> Manager : **Success**: Actionnariat mis à jour\nRésumé disponible
+                
+                note over Manager : Actionnariat enregistré\nRésumé généré\nFiche entreprise actualisée
+                
+                == Téléchargement résumé ==
+                
+                opt Manager souhaite télécharger
+                    Manager -> WebUI : Télécharger résumé\nactionnariat
+                    WebUI -> Gateway : GET /entreprise/{id}/actionnariat/resume
+                    Gateway -> ActionnairiatService : getResumeActionnariat()
+                    activate ActionnairiatService
+                    ActionnairiatService --> Gateway : Fichier résumé
+                    deactivate ActionnairiatService
+                    Gateway --> WebUI : PDF résumé
+                    WebUI --> Manager : **Fichier résumé prêt**\nTéléchargement lancé
+                end
+            end
+        end
+    end
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGestionActionnariat()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Actionnariat tracé avec\ndocuments associés et\nrésumé généré
+
+@enduml

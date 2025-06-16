@@ -1,0 +1,620 @@
+@startuml WorkflowOuvertureCompte
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+left to right direction
+
+title Diagramme de Classe - Workflow d'Ouverture de Compte
+
+class DemandeOuvertureCompte {
+  - id: String
+  - numeroReference: String
+  - client: ClientPotentiel
+  - typeClient: TypeClient
+  - canalInitiation: CanalInitiation
+  - agentInitiateur: Agent
+  - agentTraitant: Agent
+  - uniteGestion: UniteGestion
+  - statutDemande: StatutDemande
+  - priorite: PrioriteDemande
+  - dateCreation: Date
+  - dateValidation: Date
+  - dateDerniereModification: Date
+  - commentaireGlobal: String
+  - estPPE: Boolean
+  - estBlackliste: Boolean
+  - estAmericain: Boolean
+  - necessiteFATCA: Boolean
+  - etapeActuelle: EtapeValidation
+  - historiqueEtapes: List<EtapeValidation>
+  - documentsRequis: List<DocumentRequis>
+  - tableauConformite: TableauConformite
+  - controles: List<ControleReglementaire>
+  - ficheClient: FicheClient
+  - convention: ConventionOuverture
+  - numeroCompteGenere: String
+  - ribGenere: RIB
+  + creer(): Boolean
+  + initialiser(): Boolean
+  + soumettre(): Boolean
+  + valider(): Boolean
+  + rejeter(motif: String): Boolean
+  + transferer(nouveauAgent: Agent): Boolean
+  + genererFicheClient(): FicheClient
+  + genererConvention(): ConventionOuverture
+  + effectuerControles(): Boolean
+  + progresser(): Boolean
+  + archiver(): Boolean
+}
+
+class EtapeValidation {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - typeEtape: TypeEtape
+  - numeroOrdre: Integer
+  - agentResponsable: Agent
+  - dateDebut: Date
+  - dateFin: Date
+  - dureeTraitement: Long
+  - statutEtape: StatutEtape
+  - commentaire: String
+  - actionEffectuee: ActionEtape
+  - documentsTraites: List<DocumentRequis>
+  - controlesPasses: List<ControleReglementaire>
+  - etapeSuivante: EtapeValidation
+  - etapePrecedente: EtapeValidation
+  - estActive: Boolean
+  - estTerminee: Boolean
+  - necessiteRetour: Boolean
+  - motifRetour: String
+  + demarrer(): Boolean
+  + traiter(): Boolean
+  + valider(): Boolean
+  + rejeter(motif: String): Boolean
+  + deleguer(agent: Agent): Boolean
+  + calculerDuree(): Long
+  + notifierAgent(): Boolean
+}
+
+class TableauConformite {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - lignesConformite: List<LigneConformite>
+  - etapesValidation: List<EtapeValidation>
+  - pourcentageConformite: Float
+  - estComplet: Boolean
+  - estConforme: Boolean
+  - dateCreation: Date
+  - dateDerniereModification: Date
+  + creer(): Boolean
+  + ajouterLigne(document: DocumentRequis): LigneConformite
+  + mettreAJourConformite(ligne: LigneConformite, statut: StatutConformite): Boolean
+  + calculerPourcentage(): Float
+  + verifierCompletude(): Boolean
+  + genererRapport(): Document
+}
+
+class LigneConformite {
+  - id: String
+  - tableau: TableauConformite
+  - documentRequis: DocumentRequis
+  - conformiteGFC: StatutConformite
+  - commentaireGFC: String
+  - dateValidationGFC: Date
+  - conformiteDA: StatutConformite
+  - commentaireDA: String
+  - dateValidationDA: Date
+  - conformiteConformite: StatutConformite
+  - commentaireConformite: String
+  - dateValidationConformite: Date
+  - conformiteDG: StatutConformite
+  - commentaireDG: String
+  - dateValidationDG: Date
+  - estObligatoire: Boolean
+  - estComplete: Boolean
+  + validerParGFC(statut: StatutConformite, commentaire: String): Boolean
+  + validerParDA(statut: StatutConformite, commentaire: String): Boolean
+  + validerParConformite(statut: StatutConformite, commentaire: String): Boolean
+  + validerParDG(statut: StatutConformite, commentaire: String): Boolean
+  + obtenirStatutGlobal(): StatutConformite
+}
+
+class Agent {
+  - id: String
+  - matricule: String
+  - nom: String
+  - prenoms: String
+  - fonction: Fonction
+  - grade: Grade
+  - classe: Classe
+  - uniteAffectation: UniteGestion
+  - superieurHierarchique: Agent
+  - numeroCompte: String
+  - estEnFonction: Boolean
+  - dateAffectation: Date
+  - droitsAcces: List<DroitAcces>
+  - delegations: List<Delegation>
+  - absences: List<Absence>
+  - backup: Agent
+  - demandesEnCours: List<DemandeOuvertureCompte>
+  - statistiques: StatistiquesAgent
+  + authentifier(): Boolean
+  + recupererInformationsSIRH(): Boolean
+  + deleguerPouvoir(delegataire: Agent, typePouvoir: TypePouvoir): Delegation
+  + transfererDossier(demande: DemandeOuvertureCompte, nouveauAgent: Agent): Boolean
+  + declarerAbsence(dateDebut: Date, dateFin: Date): Absence
+  + obtenirDossiersEnAttente(): List<DemandeOuvertureCompte>
+  + genererStatistiques(): StatistiquesAgent
+}
+
+class UniteGestion {
+  - id: String
+  - code: String
+  - nom: String
+  - typeUnite: TypeUnite
+  - agence: Agence
+  - reseau: Reseau
+  - ville: String
+  - responsable: Agent
+  - agentsAffectes: List<Agent>
+  - gfc: List<Agent>
+  - da: List<Agent>
+  - demandesUnite: List<DemandeOuvertureCompte>
+  - estActive: Boolean
+  + affecter(agent: Agent): Boolean
+  + obtenirDemandes(): List<DemandeOuvertureCompte>
+  + calculerStatistiques(): StatistiquesUnite
+}
+
+class ControleReglementaire {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - typeControle: TypeControle
+  - agentExecuteur: Agent
+  - dateExecution: Date
+  - resultatControle: ResultatControle
+  - detailsResultat: String
+  - alertes: List<AlerteControle>
+  - documentGenere: Document
+  - estObligatoire: Boolean
+  - estPasse: Boolean
+  - necessiteAction: Boolean
+  + executer(): Boolean
+  + analyserResultat(): ResultatControle
+  + genererAlerte(): AlerteControle
+  + genererDocument(): Document
+}
+
+class ControleBlacklist extends ControleReglementaire {
+  - listesConsultees: List<String>
+  - correspondances: List<CorrespondanceBlacklist>
+  - scoreConfiance: Float
+  - necessiteVerificationManuelle: Boolean
+  + consulterListes(): Boolean
+  + analyserCorrespondances(): List<CorrespondanceBlacklist>
+  + calculerScore(): Float
+}
+
+class ControlePPE extends ControleReglementaire {
+  - listePPEConsultee: String
+  - indicePPE: Boolean
+  - typeExposition: TypeExposition
+  - niveauRisque: NiveauRisque
+  - avisConformite: String
+  - autorisationDG: Boolean
+  + verifierStatutPPE(): Boolean
+  + evaluerRisque(): NiveauRisque
+  + demanderAvisConformite(): Boolean
+  + solliciterAutorisationDG(): Boolean
+}
+
+class ControleFATCA extends ControleReglementaire {
+  - indicesAmericanite: List<String>
+  - ficheGeneree: FicheFATCA
+  - classificationFATCA: ClassificationFATCA
+  - obligationsReporting: List<String>
+  + detecterIndices(): List<String>
+  + genererFiche(): FicheFATCA
+  + classifier(): ClassificationFATCA
+}
+
+class DocumentRequis {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - typeDocument: TypeDocument
+  - nom: String
+  - description: String
+  - fichier: Fichier
+  - estObligatoire: Boolean
+  - estFourni: Boolean
+  - estNumerise: Boolean
+  - estSigne: Boolean
+  - dateUpload: Date
+  - agentUpload: Agent
+  - checksum: String
+  - taille: Long
+  - format: String
+  - statutValidation: StatutValidation
+  - commentaires: List<CommentaireDocument>
+  + uploader(fichier: Fichier): Boolean
+  + numeriser(): Boolean
+  + valider(): Boolean
+  + rejeter(motif: String): Boolean
+  + archiver(): Boolean
+}
+
+class FicheClient {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - informationsClient: Map<String, String>
+  - dateGeneration: Date
+  - agentGenerateur: Agent
+  - statutFiche: StatutFiche
+  - estSignee: Boolean
+  - signatureClient: SignatureElectronique
+  - fichierPDF: Fichier
+  + generer(): Boolean
+  + imprimer(): Fichier
+  + faireControler(): Boolean
+  + faireValider(): Boolean
+  + archiver(): Boolean
+}
+
+class ConventionOuverture {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - modeleConvention: ModeleConvention
+  - champsPreRemplis: Map<String, String>
+  - dateGeneration: Date
+  - agentGenerateur: Agent
+  - estSignee: Boolean
+  - signatureClient: SignatureElectronique
+  - signatureBanque: SignatureElectronique
+  - fichierPDF: Fichier
+  + generer(): Boolean
+  + preRemplir(): Boolean
+  + signerClient(): Boolean
+  + signerBanque(): Boolean
+  + archiver(): Boolean
+}
+
+class ClientPotentiel {
+  - id: String
+  - numeroReference: String
+  - typePersonne: TypePersonne
+  - nom: String
+  - prenoms: String
+  - raisonSociale: String
+  - dateNaissance: Date
+  - lieuNaissance: String
+  - nationalite: String
+  - numeroPieceIdentite: String
+  - typePieceIdentite: TypePieceIdentite
+  - adresse: Adresse
+  - telephone: String
+  - email: String
+  - profession: String
+  - secteurActivite: String
+  - situationMatrimoniale: String
+  - revenus: BigDecimal
+  - patrimoine: BigDecimal
+  - estPPE: Boolean
+  - estResident: Boolean
+  - estAmericain: Boolean
+  - photoIdentite: Fichier
+  - signature: Fichier
+  + creer(): Boolean
+  + modifier(): Boolean
+  + valider(): Boolean
+  + genererNumeroReference(): String
+}
+
+class Delegation {
+  - id: String
+  - delegant: Agent
+  - delegataire: Agent
+  - typePouvoir: TypePouvoir
+  - portee: PorteeDelegation
+  - dateDebut: Date
+  - dateFin: Date
+  - motifDelegation: String
+  - estActive: Boolean
+  - estRevocable: Boolean
+  - conditionsExercice: List<String>
+  - dossiersTransferes: List<DemandeOuvertureCompte>
+  + activer(): Boolean
+  + revoquer(): Boolean
+  + prolonger(nouvelleDateFin: Date): Boolean
+  + transfererDossiers(): Boolean
+}
+
+class Absence {
+  - id: String
+  - agent: Agent
+  - backup: Agent
+  - typeAbsence: TypeAbsence
+  - dateDebut: Date
+  - dateFin: Date
+  - motif: String
+  - estApprouvee: Boolean
+  - dossiersTransferes: List<DemandeOuvertureCompte>
+  - delegationsTransferees: List<Delegation>
+  + declarer(): Boolean
+  + approuver(): Boolean
+  + transfererDossiers(): Boolean
+  + restaurerDossiers(): Boolean
+}
+
+class IntegrationAmplitude {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - urlAPI: String
+  - parametresConnexion: Map<String, String>
+  - payloadCreation: String
+  - reponseAPI: String
+  - numeroCompteGenere: String
+  - statutIntegration: StatutIntegration
+  - dateIntegration: Date
+  - tentatives: Integer
+  - erreurs: List<ErreurIntegration>
+  + preparerPayload(): String
+  + creerCompte(): Boolean
+  + recupererNumeroCompte(): String
+  + gererErreurs(): Boolean
+  + relancer(): Boolean
+}
+
+class IntegrationSIRH {
+  - id: String
+  - agent: Agent
+  - urlAPI: String
+  - parametresConnexion: Map<String, String>
+  - donneesRecuperees: Map<String, String>
+  - statutSynchronisation: StatutSynchronisation
+  - dateDerniereSynchro: Date
+  + recupererInformationsAgent(): Map<String, String>
+  + verifierStatutAgent(): Boolean
+  + detecterChangements(): List<String>
+  + synchroniser(): Boolean
+}
+
+class IntegrationACS {
+  - id: String
+  - demande: DemandeOuvertureCompte
+  - documentsArchiver: List<DocumentRequis>
+  - urlAPI: String
+  - parametresArchivage: Map<String, String>
+  - indexation: Map<String, String>
+  - statutArchivage: StatutArchivage
+  - dateArchivage: Date
+  + preparerArchivage(): Boolean
+  + indexerDocuments(): Boolean
+  + archiver(): Boolean
+  + verifierIntegrite(): Boolean
+}
+
+class TableauBord {
+  - id: String
+  - agent: Agent
+  - typeTableauBord: TypeTableauBord
+  - indicateurs: List<Indicateur>
+  - filtres: Map<String, String>
+  - dateGeneration: Date
+  - estTempsReel: Boolean
+  + generer(): Boolean
+  + actualiser(): Boolean
+  + appliquerFiltres(): Boolean
+  + exporter(): Fichier
+}
+
+class Indicateur {
+  - id: String
+  - nom: String
+  - description: String
+  - valeur: Object
+  - typeIndicateur: TypeIndicateur
+  - uniteMessure: String
+  - seuil: Object
+  - tendance: Tendance
+  - dateCalcul: Date
+  + calculer(): Object
+  + comparer(autrePeriode: Periode): Float
+  + genererGraphique(): Fichier
+}
+
+class Notification {
+  - id: String
+  - destinataire: Agent
+  - typeNotification: TypeNotification
+  - priorite: PrioriteNotification
+  - sujet: String
+  - contenu: String
+  - canalEnvoi: CanalNotification
+  - dateCreation: Date
+  - dateEnvoi: Date
+  - dateLecture: Date
+  - statutNotification: StatutNotification
+  - demandeLiee: DemandeOuvertureCompte
+  - actionRequise: ActionRequise
+  + creer(): Boolean
+  + envoyer(): Boolean
+  + marquerCommeLue(): Boolean
+  + traiterAction(): Boolean
+}
+
+' ===== ENUMS =====
+
+enum TypeClient {
+    PARTICULIER
+    ENTREPRISE
+    ASSOCIATION
+    FONDATION
+}
+
+enum CanalInitiation {
+    AGENCE
+    EN_LIGNE
+    MOBILE
+    TELEPHONE
+    COURRIER
+}
+
+enum StatutDemande {
+    BROUILLON
+    SOUMISE
+    EN_COURS_GFC
+    EN_COURS_DA
+    EN_COURS_CONFORMITE
+    EN_COURS_DG
+    VALIDEE
+    REJETEE
+    ARCHIVEE
+    SUSPENDUE
+}
+
+enum TypeEtape {
+    SAISIE_GFC
+    TRAITEMENT_GFC
+    TRAITEMENT_DA
+    TRAITEMENT_CONFORMITE
+    TRAITEMENT_DG
+    CREATION_COMPTE
+    ARCHIVAGE
+}
+
+enum StatutEtape {
+    EN_ATTENTE
+    EN_COURS
+    VALIDEE
+    REJETEE
+    SUSPENDUE
+    TRANSFEREE
+}
+
+enum StatutConformite {
+    NON_VERIFIE
+    CONFORME
+    NON_CONFORME
+    EN_COURS_VERIFICATION
+    NECESSITE_COMPLEMENT
+}
+
+enum TypeControle {
+    BLACKLIST
+    PPE
+    FATCA
+    SANCTIONS
+    EMBARGO
+    COHERENCE_DONNEES
+}
+
+enum ResultatControle {
+    CONFORME
+    NON_CONFORME
+    ALERTE
+    NECESSITE_VERIFICATION
+    ERREUR_TECHNIQUE
+}
+
+enum TypePouvoir {
+    GESTION_PPE
+    VALIDATION_COMPTE
+    TRANSFERT_DOSSIER
+    DELEGATION_SIGNATURE
+    ADMINISTRATION
+}
+
+enum StatutIntegration {
+    EN_ATTENTE
+    EN_COURS
+    REUSSIE
+    ECHOUEE
+    PARTIELLE
+}
+
+enum TypeNotification {
+    NOUVELLE_DEMANDE
+    DEMANDE_EN_ATTENTE
+    VALIDATION_REQUISE
+    REJET
+    ALERTE_DELAI
+    INTEGRATION_REUSSIE
+}
+
+' ===== RELATIONS =====
+
+' Relations principales
+DemandeOuvertureCompte "1" -- "1" ClientPotentiel : client
+DemandeOuvertureCompte "1" -- "1" Agent : agentInitiateur
+DemandeOuvertureCompte "1" -- "1" Agent : agentTraitant
+DemandeOuvertureCompte "1" -- "1" UniteGestion : uniteGestion
+DemandeOuvertureCompte "1" -- "1" TableauConformite : tableauConformite
+DemandeOuvertureCompte "1" -- "0..*" EtapeValidation : historiqueEtapes
+DemandeOuvertureCompte "1" -- "0..*" DocumentRequis : documentsRequis
+DemandeOuvertureCompte "1" -- "0..*" ControleReglementaire : controles
+DemandeOuvertureCompte "1" -- "0..1" FicheClient : ficheClient
+DemandeOuvertureCompte "1" -- "0..1" ConventionOuverture : convention
+
+' Relations pour le tableau de conformité
+TableauConformite "1" -- "0..*" LigneConformite : lignesConformite
+LigneConformite "1" -- "1" DocumentRequis : documentRequis
+
+' Relations pour les étapes
+EtapeValidation "1" -- "1" Agent : agentResponsable
+EtapeValidation "1" -- "0..1" EtapeValidation : etapeSuivante
+EtapeValidation "1" -- "0..1" EtapeValidation : etapePrecedente
+
+' Relations pour les agents
+Agent "1" -- "1" UniteGestion : uniteAffectation
+Agent "1" -- "0..1" Agent : superieurHierarchique
+Agent "1" -- "0..1" Agent : backup
+Agent "1" -- "0..*" Delegation : delegations
+Agent "1" -- "0..*" Absence : absences
+
+' Relations pour les contrôles
+ControleBlacklist --|> ControleReglementaire
+ControlePPE --|> ControleReglementaire
+ControleFATCA --|> ControleReglementaire
+
+' Relations pour les intégrations
+DemandeOuvertureCompte "1" -- "0..1" IntegrationAmplitude : integrationAmplitude
+Agent "1" -- "0..1" IntegrationSIRH : integrationSIRH
+DemandeOuvertureCompte "1" -- "0..1" IntegrationACS : integrationACS
+
+' Relations pour les délégations et absences
+Delegation "1" -- "1" Agent : delegant
+Delegation "1" -- "1" Agent : delegataire
+Absence "1" -- "1" Agent : agent
+Absence "1" -- "1" Agent : backup
+
+' Relations pour les notifications
+Notification "1" -- "1" Agent : destinataire
+Notification "1" -- "0..1" DemandeOuvertureCompte : demandeLiee
+
+' Relations avec les enums
+DemandeOuvertureCompte "1" -- "1" TypeClient : typeClient
+DemandeOuvertureCompte "1" -- "1" CanalInitiation : canalInitiation
+DemandeOuvertureCompte "1" -- "1" StatutDemande : statutDemande
+EtapeValidation "1" -- "1" TypeEtape : typeEtape
+EtapeValidation "1" -- "1" StatutEtape : statutEtape
+LigneConformite "1" -- "1" StatutConformite : conformiteGFC
+LigneConformite "1" -- "1" StatutConformite : conformiteDA
+LigneConformite "1" -- "1" StatutConformite : conformiteConformite
+LigneConformite "1" -- "1" StatutConformite : conformiteDG
+ControleReglementaire "1" -- "1" TypeControle : typeControle
+ControleReglementaire "1" -- "1" ResultatControle : resultatControle
+Delegation "1" -- "1" TypePouvoir : typePouvoir
+IntegrationAmplitude "1" -- "1" StatutIntegration : statutIntegration
+Notification "1" -- "1" TypeNotification : typeNotification
+
+@enduml

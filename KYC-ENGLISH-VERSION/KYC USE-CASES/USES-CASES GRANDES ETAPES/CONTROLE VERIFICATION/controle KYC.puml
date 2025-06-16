@@ -1,0 +1,45 @@
+@startuml UseCaseControleKYC
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Gestionnaire" as Gestionnaire #green
+actor "Analyste conformité" as Analyste #blue
+
+package "INTRA" {
+    usecase "Contrôle documentaire identité" as ControleDoc
+    usecase "Contrôle biométrique" as ControleBio
+    usecase "Contrôle blacklist" as Blacklist
+    usecase "Contrôle PPE" as PPE
+    usecase "Contrôle FATCA" as FATCA
+    usecase "Valider conformité KYC" as ValidationKYC
+    usecase "Notifier anomalies" as NotifAnomalie
+}
+
+Gestionnaire --> ControleDoc #green;text:green
+Gestionnaire --> ControleBio #green;text:green
+Gestionnaire --> Blacklist #green;text:green
+Gestionnaire --> PPE #green;text:green
+Gestionnaire --> FATCA #green;text:green
+Gestionnaire --> ValidationKYC #green;text:green
+
+Analyste --> ControleDoc #blue;text:blue
+Analyste --> ControleBio #blue;text:blue
+Analyste --> Blacklist #blue;text:blue
+Analyste --> PPE #blue;text:blue
+Analyste --> FATCA #blue;text:blue
+Analyste --> ValidationKYC #blue;text:blue
+
+' Includes et extends en pointillés
+ControleDoc ..> NotifAnomalie : <<include>>
+ControleBio ..> NotifAnomalie : <<include>>
+Blacklist ..> NotifAnomalie : <<include>>
+PPE ..> NotifAnomalie : <<include>>
+FATCA ..> NotifAnomalie : <<include>>
+
+@enduml

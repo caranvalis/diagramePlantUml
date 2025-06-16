@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMI xmi.version="2.1" xmlns:uml="http://www.omg.org/spec/UML/20090901">
+  <uml:Model xmi:id="model_1" name="KYC">
+    <packagedElement xmi:type="uml:Class" xmi:id="Client" name="Client">
+      <ownedAttribute name="id" type="String"/>
+      <ownedAttribute name="nom" type="String"/>
+      <ownedAttribute name="prenom" type="String"/>
+      <ownedAttribute name="dateNaissance" type="Date"/>
+      <ownedAttribute name="type" type="String"/>
+      <ownedAttribute name="statut" type="String"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="Compte" name="Compte">
+      <ownedAttribute name="numero" type="String"/>
+      <ownedAttribute name="rib" type="String"/>
+      <ownedAttribute name="statut" type="String"/>
+      <ownedAttribute name="dateOuverture" type="Date"/>
+      <ownedAttribute name="dateCloture" type="Date"/>
+      <ownedAttribute name="type" type="String"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="Document" name="Document">
+      <ownedAttribute name="id" type="String"/>
+      <ownedAttribute name="type" type="String"/>
+      <ownedAttribute name="dateDepot" type="Date"/>
+      <ownedAttribute name="statut" type="String"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="User" name="User">
+      <ownedAttribute name="id" type="String"/>
+      <ownedAttribute name="login" type="String"/>
+      <ownedAttribute name="motDePasse" type="String"/>
+      <ownedAttribute name="email" type="String"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="Role" name="Role">
+      <ownedAttribute name="id" type="String"/>
+      <ownedAttribute name="nom" type="String"/>
+      <ownedAttribute name="description" type="String"/>
+    </packagedElement>
+    <!-- Exemple d'association entre Client et Compte -->
+    <packagedElement xmi:type="uml:Association" xmi:id="Client_Compte" memberEnd="Client_Compte_client Client_Compte_compte">
+      <ownedEnd xmi:id="Client_Compte_client" type="Client" aggregation="none" lower="1" upper="1"/>
+      <ownedEnd xmi:id="Client_Compte_compte" type="Compte" aggregation="none" lower="0" upper="*"/>
+    </packagedElement>
+    <!-- Exemple d'association entre User et Role -->
+    <packagedElement xmi:type="uml:Association" xmi:id="User_Role" memberEnd="User_Role_user User_Role_role">
+      <ownedEnd xmi:id="User_Role_user" type="User" aggregation="none" lower="1" upper="1"/>
+      <ownedEnd xmi:id="User_Role_role" type="Role" aggregation="none" lower="1" upper="*"/>
+    </packagedElement>
+  </uml:Model>
+</XMI>

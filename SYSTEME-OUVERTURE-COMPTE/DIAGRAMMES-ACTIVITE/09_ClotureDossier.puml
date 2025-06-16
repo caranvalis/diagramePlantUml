@@ -1,0 +1,176 @@
+@startuml ClotureDossier
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Clôture et Archivage de Dossier
+
+start
+
+:Dossier atteint
+état terminal;
+
+:Identifier type
+de clôture;
+
+if (Clôture type?) then (Compte ouvert)
+    partition "Clôture Positive" {
+        :Confirmer ouverture
+        effective du compte;
+        
+        :Générer numéro
+        de compte définitif;
+        
+        :Activer services
+        bancaires de base;
+        
+        :Créer profil client
+        dans système bancaire;
+        
+        :Notifier client
+        de l'ouverture;
+        
+        :Transmettre informations
+        de connexion;
+    }
+    
+elseif (Compte refusé) then
+    partition "Clôture Négative" {
+        :Compiler justifications
+        du refus;
+        
+        :Vérifier conformité
+        des motifs de refus;
+        
+        :Préparer notification
+        officielle client;
+        
+        :Respecter délais
+        légaux de notification;
+        
+        :Archiver preuves
+        du refus justifié;
+    }
+    
+else (Abandon client)
+    partition "Clôture par Abandon" {
+        :Documenter date
+        et cause d'abandon;
+        
+        :Vérifier tentatives
+        de relance effectuées;
+        
+        :Clôturer automatiquement
+        après délai réglementaire;
+        
+        :Conserver traces
+        de la tentative;
+    }
+endif
+
+partition "Préparation Archivage" {
+    :Compiler dossier
+    complet avec historique;
+    
+    :Vérifier intégrité
+    de tous documents;
+    
+    :Appliquer règles
+    de rétention légale;
+    
+    :Anonymiser données
+    si requis;
+    
+    :Créer index de
+    recherche future;
+}
+
+partition "Contrôles Finaux" {
+    :Vérifier respect
+    procédures réglementaires;
+    
+    :Contrôler traçabilité
+    complète du dossier;
+    
+    :Valider conformité
+    aux standards qualité;
+    
+    if (Contrôles OK?) then (non)
+        :Corriger anomalies
+        détectées;
+        
+        :Refaire contrôles
+        de conformité;
+    else (oui)
+    endif
+}
+
+partition "Archivage Sécurisé" {
+    :Stocker dans système
+    d'archivage sécurisé;
+    
+    :Appliquer chiffrement
+    selon classification;
+    
+    :Créer métadonnées
+    de recherche;
+    
+    :Programmer destruction
+    selon politique rétention;
+}
+
+partition "Mise à Jour Systèmes" {
+    :Mettre à jour statut
+    dans système workflow;
+    
+    :Alimenter base
+    de données statistiques;
+    
+    :Mettre à jour tableau
+    de bord opérationnel;
+    
+    :Générer événement
+    pour reporting;
+}
+
+partition "Communications Finales" {
+    if (Clôture positive?) then (oui)
+        :Notifier services
+        bancaires de l'ouverture;
+        
+        :Informer équipes
+        commerciales;
+        
+        :Planifier suivi
+        relation client;
+        
+    else (non)
+        :Informer équipes
+        de la clôture négative;
+        
+        :Analyser causes
+        pour amélioration;
+    endif
+}
+
+:Libérer ressources
+système temporaires;
+
+:Clôturer officiellement
+le dossier;
+
+:Générer certificat
+de clôture;
+
+stop
+
+@enduml

@@ -1,0 +1,66 @@
+@startuml UC066
+skinparam actorStyle awesome
+
+actor "Manager / Auditeur" as Utilisateur
+participant "Interface documentaire" as UI
+participant "System de gestion documentaire" as System
+database "Base documentaire" as BDD
+database "Journal d’audit" as Journal
+
+== Sélection du document ==
+Utilisateur -> UI : Sélectionner un document client
+activate Utilisateur
+activate UI
+UI -> System : Demande de l’historique complet du document
+activate System
+
+== Récupération des informations ==
+System -> BDD : Obtenir toutes les versions du document
+activate BDD
+BDD --> System : Liste versions + métadonnées
+deactivate BDD
+
+System -> Journal : Obtenir le journal des actions (création, MAJ, archivage)
+activate Journal
+Journal --> System : Historique des actions (dates, utilisateurs)
+deactivate Journal
+
+System --> UI : Transmettre l’historique complet
+deactivate System
+UI --> Utilisateur : Affiche versions, métadonnées et commentaires
+deactivate UI
+deactivate Utilisateur
+
+== Export de l’historique ==
+alt Export demandé
+  Utilisateur -> UI : Exporter l’historique
+  activate Utilisateur
+  activate UI
+  UI -> System : Requête d’export PDF / Excel
+    activate System
+  System -> Journal : Generate fichier export
+    activate Journal
+  Journal --> System : Fichier généré
+    deactivate Journal
+  System --> UI : Fichier prêt au téléchargement
+    deactivate System
+  UI --> Utilisateur : Lien de téléchargement
+end
+
+== Contrôle des droits ==
+alt Droits insuffisants
+  UI -> System : Vérification des droits
+    activate System
+  System --> UI : Rejection d’accès ou vue partielle
+    deactivate System
+  UI --> Utilisateur : Message d’erreur ou vue restreinte
+else Droits suffisants
+  UI -> System : Accès complet accordé
+  activate System
+  System --> UI : Affichage complet de l’historique
+  deactivate System
+  UI --> Utilisateur : Affiche l’historique complet
+  deactivate UI
+  deactivate Utilisateur
+end
+@enduml

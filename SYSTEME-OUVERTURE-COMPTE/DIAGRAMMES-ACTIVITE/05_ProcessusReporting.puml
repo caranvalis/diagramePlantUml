@@ -1,0 +1,113 @@
+@startuml ProcessusReporting
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Processus de Reporting et Indicateurs
+
+start
+
+:Système déclenche
+génération reporting;
+
+partition "Collecte Données" {
+    :Extraire données
+    dossiers en cours;
+    
+    :Calculer délais
+    de traitement;
+    
+    :Analyser taux
+    de rejet;
+    
+    :Compiler volumes
+    par unité/agent;
+    
+    :Évaluer respect
+    des SLA;
+}
+
+partition "Calcul Indicateurs" {
+    :Calculer KPI
+    de performance;
+    
+    :Mesurer taux
+    de satisfaction;
+    
+    :Analyser tendances
+    mensuelles/trimestrielles;
+    
+    :Identifier goulots
+    d'étranglement;
+    
+    :Évaluer conformité
+    réglementaire;
+}
+
+partition "Génération Rapports" {
+    :Créer rapport
+    opérationnel quotidien;
+    
+    :Générer tableau
+    de bord management;
+    
+    :Produire rapport
+    conformité mensuel;
+    
+    :Créer alertes
+    pour seuils dépassés;
+}
+
+if (Anomalies détectées?) then (oui)
+    :Générer alertes
+    automatiques;
+    
+    :Notifier responsables
+    concernés;
+    
+    :Proposer actions
+    correctives;
+else (non)
+endif
+
+partition "Distribution" {
+    :Diffuser rapport
+    aux managers;
+    
+    :Mettre à jour
+    tableau de bord;
+    
+    :Archiver rapports
+    historiques;
+    
+    :Notifier équipes
+    si action requise;
+}
+
+if (Actions correctives nécessaires?) then (oui)
+    :Créer plan
+    d'action;
+    
+    :Assigner responsabilités
+    et délais;
+    
+    :Programmer suivi
+    des actions;
+else (non)
+endif
+
+:Programmer prochaine
+génération reporting;
+
+stop
+
+@enduml

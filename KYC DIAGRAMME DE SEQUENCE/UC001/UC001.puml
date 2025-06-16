@@ -1,0 +1,189 @@
+@startuml UC001_PreEnregistrementKYC
+skinparam backgroundColor #F8FBFF
+skinparam actorStyle awesome
+skinparam sequenceParticipant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title UC001 - Pre-enregistrement Client KYC
+
+actor "Client" as CLIENT
+participant "Interface Web KYC" as UI
+participant "API Gateway" as GATEWAY
+participant "Service Pre-enregistrement" as PREENR_SVC
+participant "Service Configuration" as CONFIG_SVC
+participant "Service Orchestration KYC" as ORCHESTRATOR
+participant "Service Audit" as AUDIT_SVC
+participant "Service Notification" as NOTIF_SVC
+database "Base KYC" as KYC_DB
+database "Cache Redis" as CACHE
+
+== Initialisation Pre-enregistrement ==
+
+CLIENT -> UI : Acceder formulaire pre-enregistrement
+activate CLIENT
+activate UI
+
+UI -> GATEWAY : GET /api/pre-enregistrement/formulaire
+activate GATEWAY
+
+GATEWAY -> PREENR_SVC : getFormulairePreEnregistrement()
+activate PREENR_SVC
+
+PREENR_SVC -> CONFIG_SVC : getParametresPreEnregistrement()
+activate CONFIG_SVC
+CONFIG_SVC --> PREENR_SVC : parametres (champs requis, formats)
+deactivate CONFIG_SVC
+
+PREENR_SVC -> CACHE : genererTokenSession()
+activate CACHE
+CACHE --> PREENR_SVC : token_session
+deactivate CACHE
+
+PREENR_SVC --> GATEWAY : formulaire + token
+deactivate PREENR_SVC
+GATEWAY --> UI : formulaire structure
+deactivate GATEWAY
+
+UI --> CLIENT : Afficher formulaire avec champs requis
+note right of CLIENT
+  Formulaire dynamique base sur
+  configuration metier :
+  - Type de compte desire
+  - Informations personnelles
+  - Documents requis
+end note
+
+== Saisie Informations ==
+
+CLIENT -> UI : Saisir informations personnelles
+CLIENT -> UI : Selectionner type de compte
+CLIENT -> UI : Upload documents (CNI, justificatifs)
+
+UI -> GATEWAY : POST /api/pre-enregistrement/validation
+activate GATEWAY
+note right of GATEWAY
+  Payload:
+  - Donnees personnelles
+  - Type compte
+  - Fichiers documents
+  - Token session
+end note
+
+GATEWAY -> PREENR_SVC : validerDonneesPreEnregistrement(donnees)
+activate PREENR_SVC
+
+== Validation et Controles ==
+
+PREENR_SVC -> PREENR_SVC : validerFormatDonnees()
+PREENR_SVC -> PREENR_SVC : validerFormatFichiers()
+PREENR_SVC -> PREENR_SVC : detecterDoublonsPotentiels()
+
+alt Donnees valides
+    PREENR_SVC -> ORCHESTRATOR : demarrerProcessusKYC(donnees)
+    activate ORCHESTRATOR
+    
+    ORCHESTRATOR -> ORCHESTRATOR : creerDossierKYC()
+    ORCHESTRATOR -> ORCHESTRATOR : genererNIU()
+    
+    ORCHESTRATOR -> KYC_DB : INSERT dossier_kyc
+    activate KYC_DB
+    KYC_DB --> ORCHESTRATOR : id_dossier, NIU
+    deactivate KYC_DB
+    
+    ORCHESTRATOR -> ORCHESTRATOR : definirStatut(PRE_ENREGISTREMENT)
+    ORCHESTRATOR -> AUDIT_SVC : journaliser(CREATION_DOSSIER)
+    activate AUDIT_SVC
+    AUDIT_SVC -> KYC_DB : INSERT audit_trail
+    activate KYC_DB
+    deactivate KYC_DB
+    deactivate AUDIT_SVC
+    
+    ORCHESTRATOR --> PREENR_SVC : dossier_cree(NIU, id_dossier)
+    deactivate ORCHESTRATOR
+    
+    PREENR_SVC -> CACHE : sauvegarderSession(NIU, donnees)
+    activate CACHE
+    deactivate CACHE
+    
+    PREENR_SVC -> NOTIF_SVC : preparerConfirmationPreEnregistrement(NIU)
+    activate NOTIF_SVC
+    NOTIF_SVC -> NOTIF_SVC : genererQRCode(NIU)
+    NOTIF_SVC -> NOTIF_SVC : genererRecapitulatif()
+    NOTIF_SVC --> PREENR_SVC : confirmation_prete
+    deactivate NOTIF_SVC
+    
+    PREENR_SVC --> GATEWAY : succes(NIU, statut, prochaine_etape)
+    deactivate PREENR_SVC
+    GATEWAY --> UI : confirmation_pre_enregistrement
+    deactivate GATEWAY
+    
+    UI --> CLIENT : Afficher confirmation avec NIU et QR code
+    note right of CLIENT
+      Confirmation contient :
+      - NIU genere
+      - QR Code pour reprise
+      - Statut : PRE_ENREGISTREMENT
+      - Prochaine etape : Collecte Documents
+      - Instructions pour continuer
+    end note
+    
+    == Notification Asynchrone ==
+    
+    NOTIF_SVC -> CLIENT : Email confirmation (NIU + lien reprise)
+    activate NOTIF_SVC
+    note right of NOTIF_SVC
+      Email contient :
+      - NIU pour reprise
+      - Lien vers collecte documents
+      - Instructions detaillees
+      - Delai de validite
+    end note
+    deactivate NOTIF_SVC
+
+else Donnees invalides
+    PREENR_SVC -> PREENR_SVC : genererMessagesErreur()
+    PREENR_SVC --> GATEWAY : erreurs_validation
+    deactivate PREENR_SVC
+    GATEWAY --> UI : erreurs_detaillees
+    deactivate GATEWAY
+    
+    UI --> CLIENT : Afficher erreurs avec corrections requises
+    note right of CLIENT
+      Messages d'erreur contextuel :
+      - Champs manquants
+      - Formats incorrects
+      - Documents non conformes
+      - Actions correctives
+    end note
+
+else Doublon detecte
+    PREENR_SVC -> AUDIT_SVC : journaliser(TENTATIVE_DOUBLON)
+    activate AUDIT_SVC
+    deactivate AUDIT_SVC
+    
+    PREENR_SVC --> GATEWAY : erreur_doublon_detecte
+    deactivate PREENR_SVC
+    GATEWAY --> UI : message_doublon
+    deactivate GATEWAY
+    
+    UI --> CLIENT : Client potentiellement existant - Contacter agence
+    note right of CLIENT
+      En cas de doublon :
+      - Message explicatif
+      - Coordonnees agence
+      - Procedure de verification
+    end note
+end
+
+deactivate CLIENT
+deactivate UI
+
+note over CLIENT, KYC_DB
+  Etat final : Dossier KYC cree avec statut PRE_ENREGISTREMENT
+  Prochaine etape : UC002 - Collecte Documents
+  NIU genere pour continuite du processus
+end note
+
+@enduml

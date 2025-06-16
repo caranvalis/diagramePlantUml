@@ -52,8 +52,14 @@ class ClientParticulier extends Client {
   - lieuLivraisonCNI: String
   - trancheRevenus: String
   - nomEmployeur: String
+  - situationMatrimoniale: SituationMatrimoniale
+  - regimeMatrimonial: RegimeMatrimonial
+  - conjoint: Conjoint
   + preEnregistrer(): String
   + genererFicheKYC(): Document
+  + declarerMariage(): Boolean
+  + modifierRegimeMatrimonial(): Boolean
+  + ajouterConjoint(): Boolean
 }
 
 class ClientEntreprise extends Client {
@@ -127,337 +133,727 @@ class Document {
   - checksum: String
   - dateUpload: Date
   - dateExpiration: Date
-  - version: Integer
+  - versionActuelle: VersionDocument
   - statut: StatutDocument
   - estObligatoire: Boolean
+  - estVersionnable: Boolean
+  - versionMajeure: Integer
+  - versionMineure: Integer
+  - versionPatch: Integer
+  - historique: List<VersionDocument>
+  - gestionnaireDroits: GestionnaireDroitsDocument
   + valider(): Boolean
   + verifierExpiration(): Boolean
   + verifierAuthenticite(): Boolean
   + archiver(): Boolean
+  + creerNouvelleVersion(): VersionDocument
+  + restaurerVersion(version: String): Boolean
+  + comparerVersions(version1: String, version2: String): Document
+  + fusionnerVersions(versions: List<String>): Boolean
+  + obtenirHistoriqueVersions(): List<VersionDocument>
+  + verifierIntegriteVersions(): Boolean
 }
 
-class Archives {
+class VersionDocument {
+  - id: String
+  - documentParent: Document
+  - numeroVersion: String
+  - versionMajeure: Integer
+  - versionMineure: Integer
+  - versionPatch: Integer
+  - nom: String
+  - chemin: String
+  - taille: Long
+  - checksum: String
+  - checksumPrecedent: String
+  - dateCreation: Date
+  - dateModification: Date
+  - auteur: Utilisateur
+  - commentaireVersion: String
+  - typeModification: TypeModificationDocument
+  - tagsVersion: List<String>
+  - statut: StatutVersionDocument
+  - estVersionFinale: Boolean
+  - estVersionProd: Boolean
+  - branche: BrancheDocument
+  - versionParente: VersionDocument
+  - versionsEnfants: List<VersionDocument>
+  - differencesPrecedente: String
+  - metadonnees: MetadonneesVersion
+  - signature: SignatureVersion
+  - approbations: List<ApprobationVersion>
+  + creer(): Boolean
+  + modifier(): Boolean
+  + publier(): Boolean
+  + approuver(): Boolean
+  + rejeter(): Boolean
+  + comparer(autreVersion: VersionDocument): Document
+  + calculerDifferences(): String
+  + genererChecksum(): String
+  + verifierIntegrite(): Boolean
+  + creerBranche(): BrancheDocument
+  + fusionner(versionSource: VersionDocument): Boolean
+}
+
+class BrancheDocument {
   - id: String
   - document: Document
-  - planClassification: PlanClassification
-  - codeRangement: String
-  - emplacement: String
-  - dateArchivage: Date
-  - dureeConservation: Integer
-  + archiver(): Boolean
-  + rechercher(): List<Document>
-  + restaurer(): Boolean
-}
-
-class PlanClassification {
-  - id: String
-  - pays: Pays
-  - typeClient: TypeClient
-  - arborescence: String
-  - codeClassification: String
-  - regleDenommage: String
-  + genererCode(): String
-  + organiserDocuments(): Boolean
-}
-
-abstract class Controle {
-  - id: String
   - nom: String
   - description: String
-  - priorite: Integer
-  - estActif: Boolean
-  + executer(): ResultatControle
-  + valider(): Boolean
+  - brancheParente: BrancheDocument
+  - branchesEnfants: List<BrancheDocument>
+  - versionBase: VersionDocument
+  - versionTete: VersionDocument
+  - versions: List<VersionDocument>
+  - dateCreation: Date
+  - auteur: Utilisateur
+  - statut: StatutBranche
+  - estProtegee: Boolean
+  - reglesApprobation: ReglesApprobation
+  + creer(): Boolean
+  + fusionner(brancheCible: BrancheDocument): Boolean
+  + supprimer(): Boolean
+  + proteger(): Boolean
+  + definirReglesApprobation(): Boolean
+  + verifierConflits(): List<ConflitVersion>
 }
 
-class TypeControle {
+class MetadonneesVersion {
   - id: String
-  - nom: String
-  - description: String
-  + Creer()
-  + modifier()
-  + suspendre()
+  - versionDocument: VersionDocument
+  - proprietes: Map<String, String>
+  - mots-cles: List<String>
+  - categories: List<String>
+  - niveauConfidentialite: NiveauConfidentialite
+  - droitsAcces: DroitsAcces
+  - dateCreationMetadonnees: Date
+  - auteurMetadonnees: Utilisateur
+  - versionMetadonnees: Integer
+  + ajouter(cle: String, valeur: String): Boolean
+  + modifier(cle: String, valeur: String): Boolean
+  + supprimer(cle: String): Boolean
+  + rechercher(criteres: Map<String, String>): Boolean
 }
 
-class ControleIdentite extends Controle {
-  + validerDocuments(): Boolean
-  + detecterDoublons(): Boolean
-  + verifierDatesExpiration(): Boolean
-}
-
-class ControleConformite extends Controle {
-  + verifierBlacklist(): Boolean
-  + identifierPPE(): Boolean
-  + controlerCompletude(): Boolean
-  + verifierFATCA(): Boolean
-}
-
-class Parcours {
+class MetadonneesDocument {
   - id: String
-  - nom: String
-  - description: String
-  - typeClient: TypeClient
-  - typeCompte: TypeCompte
-  - version: Integer
+  - document: Document
+  - metadonneesTechniques: MetadonneesTechniques
+  - metadonneesMetier: MetadonneesMetier
+  - metadonneesReglementaires: MetadonneesReglementaires
+  - metadonneesArchivage: MetadonneesArchivage
+  - metadonneesPersonnalisees: Map<String, Object>
+  - schemaMetadonnees: SchemaMetadonnees
   - dateCreation: Date
   - dateMiseAJour: Date
-  - estActif: Boolean
-  - createur: Utilisateur
-  - dureeEstimee: Integer
+  - gestionnaire: Utilisateur
+  - estValide: Boolean
+  - versionMetadonnees: Integer
   + creer(): Boolean
   + modifier(): Boolean
-  + activer(): Boolean
-  + desactiver(): Boolean
-  + dupliquer(): Parcours
-  + calculerDuree(): Integer
+  + valider(): Boolean
+  + exporter(): Document
+  + importer(source: Document): Boolean
+  + synchroniser(): Boolean
+  + rechercher(criteres: CriteresRecherche): List<Document>
 }
 
-class Etape {
+class MetadonneesTechniques {
   - id: String
-  - nom: String
-  - description: String
-  - ordre: Integer
-  - parcours: Parcours
-  - typeEtape: TypeEtape
-  - acteurResponsable: TypeActeur
-  - dureeEstimee: Integer
-  - estObligatoire: Boolean
-  - estParallele: Boolean
-  - conditionActivation: String
-  - actionSuivante: String
+  - metadonneesDocument: MetadonneesDocument
+  - formatDocument: FormatDocument
+  - encodage: String
+  - resolution: String
+  - dimensionsPixels: Dimension
+  - nombrePages: Integer
+  - tailleOctets: Long
+  - checksumMD5: String
+  - checksumSHA256: String
+  - typeContenu: TypeContenu
+  - applicationCreation: String
+  - versionApplication: String
+  - systemeExploitation: String
+  - compressionUtilisee: String
+  - chiffrementApplique: String
+  - proprietesTechniques: Map<String, String>
+  + calculerChecksum(): Boolean
+  + analyserFormat(): Boolean
+  + extraireMetadonnees(): Boolean
+  + optimiser(): Boolean
+  + convertir(formatCible: FormatDocument): Boolean
+}
+
+class MetadonneesMetier {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - categorieMetier: CategorieMetier
+  - processusMetier: ProcessusMetier
+  - entitesConcernees: List<EntiteMetier>
+  - contexteUtilisation: ContexteUtilisation
+  - valeurMetier: ValeurMetier
+  - criticite: CriticiteDocument
+  - impacts: List<ImpactMetier>
+  - parties: List<PartieDocument>
+  - relations: List<RelationDocument>
+  - cycleBusiness: CycleBusiness
+  - frequenceUtilisation: FrequenceUtilisation
+  - utilisateursTypes: List<TypeUtilisateur>
+  - objectifsDocument: List<ObjectifDocument>
+  + classifier(): Boolean
+  + evaluerCriticite(): CriticiteDocument
+  + calculerValeur(): ValeurMetier
+  + analyserImpacts(): List<ImpactMetier>
+  + cartographier(): CarteProcessus
+}
+
+class MetadonneesReglementaires {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - referentielReglementaire: ReferentielReglementaire
+  - obligationsLegales: List<ObligationLegale>
+  - niveauConformite: NiveauConformite
+  - exigencesConservation: ExigencesConservation
+  - droitsPersonneDonnees: DroitsPersonneDonnees
+  - classificationSecurite: ClassificationSecurite
+  - restrictions: List<RestrictionReglementaire>
+  - auditsReglementaires: List<AuditReglementaire>
+  - certifications: List<CertificationDocument>
+  - datesDechance: Map<String, Date>
+  - autoritesCompetentes: List<AutoriteCompetente>
+  + verifierConformite(): Boolean
+  + calculerRisqueReglementaire(): RisqueReglementaire
+  + genererRapportConformite(): Document
+  + plannifierAudits(): List<PlanAudit>
+  + surveillerEcheances(): List<Echeance>
+}
+
+class MetadonneesArchivage {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - politiqueArchivage: PolitiqueArchivage
+  - dureeConservationLegale: Integer
+  - dureeConservationOperationnelle: Integer
+  - declencheurArchivage: DeclencheurArchivage
+  - niveauAccesArchive: NiveauAccesArchive
+  - supportArchivage: SupportArchivage
+  - localisationArchive: LocalisationArchive
+  - indexArchivage: IndexArchivage
+  - planDestruction: PlanDestruction
+  - traitementDonneesSensibles: TraitementDonneesSensibles
+  - migrationFormatsPrevue: MigrationFormats
+  - coutArchivage: CoutArchivage
+  + planifier(): Boolean
   + executer(): Boolean
-  + valider(): Boolean
-  + rejeter(): String
-  + escalader(): Boolean
-  + calculerDelai(): Integer
-  + verifierConditions(): Boolean
+  + restaurer(): Boolean
+  + detruire(): Boolean
+  + migrer(): Boolean
+  + auditer(): RapportAuditArchivage
 }
 
-class Notification {
+class SchemaMetadonnees {
   - id: String
-  - titre: String
-  - contenu: String
-  - typeNotification: TypeNotification
-  - priorite: PrioriteNotification
-  - statut: StatutNotification
+  - nom: String
+  - version: String
+  - description: String
+  - typeDocument: TypeDocument
+  - champObligatoires: List<ChampMetadonnees>
+  - champOptionnels: List<ChampMetadonnees>
+  - reglesValidation: List<RegleValidation>
+  - formatStandard: FormatStandard
+  - mappingStandards: Map<String, String>
   - dateCreation: Date
-  - dateEnvoi: Date
-  - dateLecture: Date
-  - destinataire: String
-  - expediteur: Utilisateur
-  - etape: Etape
-  + creer(): Boolean
-  + envoyer(): Boolean
-  + marquerCommelue(): Boolean
-  + programmer(): Boolean
-  + annuler(): Boolean
+  - auteur: Utilisateur
+  - estActif: Boolean
+  - versionPrecedente: SchemaMetadonnees
+  + definir(): Boolean
+  + valider(metadonnees: MetadonneesDocument): Boolean
+  + migrer(nouvelleVersion: SchemaMetadonnees): Boolean
+  + exporter(): Document
+  + comparer(autreSchema: SchemaMetadonnees): Document
 }
 
-class Message {
+class ChampMetadonnees {
   - id: String
-  - notification: Notification
-  - canal: Canal
-  - contenuFormate: String
-  - adresseDestinataire: String
-  - statutEnvoi: StatutEnvoi
-  - dateEnvoi: Date
-  - dateReception: Date
-  - nombreTentatives: Integer
-  - codeErreur: String
-  + formaterContenu(): String
-  + envoyer(): Boolean
-  + reessayer(): Boolean
-  + confirmerReception(): Boolean
-}
-
-class TypeNotification {
-  - id: String
-  - code: String
+  - schema: SchemaMetadonnees
+  - nom: String
   - libelle: String
   - description: String
-  - template: String
-  - estActif: Boolean
-  - canauxAutorises: List<Canal>
-  + creerTemplate(): String
-  + validerTemplate(): Boolean
-  + appliquerTemplate(): String
+  - typeChamp: TypeChampMetadonnees
+  - tailleMax: Integer
+  - valeurParDefaut: String
+  - valeursAutorisees: List<String>
+  - formatValidation: String
+  - estObligatoire: Boolean
+  - estIndexe: Boolean
+  - estRecherchable: Boolean
+  - groupeFonctionnel: GroupeFonctionnel
+  - ordreAffichage: Integer
+  + definir(): Boolean
+  + valider(valeur: Object): Boolean
+  + indexer(): Boolean
+  + transformer(valeur: Object): Object
 }
 
-class Canal {
+class IndexMetadonnees {
   - id: String
-  - nom: String
-  - typeCanal: TypeCanal
-  - configuration: String
-  - estActif: Boolean
-  - priorite: Integer
-  - limiteEnvoi: Integer
-  - coutParMessage: BigDecimal
-  + configurer(): Boolean
-  + tester(): Boolean
-  + envoyer(message: Message): Boolean
-  + verifierDisponibilite(): Boolean
+  - metadonneesDocument: MetadonneesDocument
+  - champsIndexes: List<ChampIndex>
+  - indexTextuel: IndexTextuel
+  - indexDate: IndexDate
+  - indexNumerique: IndexNumerique
+  - indexGeographique: IndexGeographique
+  - motsClesExtrait: List<String>
+  - entitesNommees: List<EntiteNommee>
+  - conceptsIdentifies: List<Concept>
+  - dateIndexation: Date
+  - algorithmeIndexation: String
+  - scoreRelevance: Float
+  + construire(): Boolean
+  + mettrAJour(): Boolean
+  + rechercher(requete: RequeteRecherche): ResultatRecherche
+  + analyserTexte(): AnalyseTextuelle
+  + extraireEntites(): List<EntiteNommee>
 }
 
-class Referentiel {
+class GestionnaireMetadonnees {
   - id: String
   - nom: String
   - description: String
-  - typeReferentiel: TypeReferentiel
-  - domaineApplication: DomaineApplication
-  - version: Integer
+  - schemasSupportes: List<SchemaMetadonnees>
+  - referentielsUtilises: List<ReferentielMetadonnees>
+  - reglesAutomatisation: List<RegleAutomatisation>
+  - integrationsExterne: List<IntegrationExterne>
+  - statistiques: StatistiquesMetadonnees
+  - configuration: ConfigurationGestionnaire
+  - estActif: Boolean
+  + initialiser(): Boolean
+  + traiter(document: Document): MetadonneesDocument
+  + enrichir(metadonnees: MetadonneesDocument): Boolean
+  + normaliser(): Boolean
+  + synchroniser(): Boolean
+  + genererRapports(): List<RapportMetadonnees>
+  + optimiser(): Boolean
+}
+class Client {
+  - id: String
+  - numeroNIU: String
+  - adresse: String
+  - telephone: String
+  - email: String
+  - nationalite: String
+  - personneAContacter: String
+  - statut: StatutClient
   - dateCreation: Date
   - dateMiseAJour: Date
-  - estActif: Boolean
+  - profilClient: ProfilClient
+  - categorieInterne: String
+  - categorieBanqueCentrale: String
+  - secteurActivite: String
+  - estBloque: Boolean
+  - estPPE: Boolean
+  - estFATCA: Boolean
   - pays: Pays
-  - regleMetier: String
   + creer(): Boolean
   + modifier(): Boolean
-  + valider(): Boolean
-  + publier(): Boolean
-  + archiver(): Boolean
-  + appliquerRegle(): Boolean
+  + bloquer(): Boolean
+  + debloquer(): Boolean
+  + validerIdentite(): Boolean
 }
 
-class TypeReferentiel {
-  - id: String
-  - code: String
-  - libelle: String
-  - description: String
-  - categorie: String
-  - estObligatoire: Boolean
-  - periodiciteRevision: Integer
-  + definirRegle(): Boolean
-  + validerCoherence(): Boolean
-}
-
-class DomaineApplication {
-  - id: String
-  - nom: String
-  - description: String
-  - perimetre: String
-  - responsable: String
-  - dateDebut: Date
-  - dateFin: Date
-  - estActif: Boolean
-  + appliquer(): Boolean
-  + validerPerimetre(): Boolean
-  + etendre(): Boolean
-}
-
-class Utilisateur {
-  - id: String
-  - login: String
-  - motDePasseHash: String
+class ClientParticulier extends Client {
   - nom: String
   - prenoms: String
-  - email: String
-  - telephone: String
-  - role: Role
-  - agence: String
-  - estActif: Boolean
-  - derniereConnexion: Date
-  + authentifier(): Boolean
-  + changerMotDePasse(): Boolean
-  + autoriser(action: String): Boolean
+  - dateNaissance: Date
+  - lieuNaissance: String
+  - nomPere: String
+  - nomMere: String
+  - numeroCNI: String
+  - dateLivraisonCNI: Date
+  - lieuLivraisonCNI: String
+  - trancheRevenus: String
+  - nomEmployeur: String
+  - situationMatrimoniale: SituationMatrimoniale
+  - regimeMatrimonial: RegimeMatrimonial
+  - conjoint: Conjoint
+  + preEnregistrer(): String
+  + genererFicheKYC(): Document
+  + declarerMariage(): Boolean
+  + modifierRegimeMatrimonial(): Boolean
+  + ajouterConjoint(): Boolean
 }
 
-class Role {
+class ClientEntreprise extends Client {
+  - raisonSociale: String
+  - dateCreation: Date
+  - numeroRCCM: String
+  - capitalSocial: BigDecimal
+  - chiffreAffaire: BigDecimal
+  - effectif: Integer
+  - gerant: ClientParticulier
+  - estEnOppositionParDefaut: Boolean
+  + gererActionnariat(): Boolean
+  + validerGerant(): Boolean
+}
+
+class Mandataire {
+  - id: String
+  - clientParticulier: ClientParticulier
+  - typeMandataire: TypeMandataire
+  - numeroMandataire: String
+  - dateDebut: Date
+  - dateFin: Date
+  - pouvoirs: String
+  - statut: StatutMandataire
+  - documentMandataire: Document
+  + creer(): Boolean
+  + modifier(): Boolean
+  + revoquer(): Boolean
+  + validerPouvoirs(): Boolean
+  + verifierValidite(): Boolean
+}
+
+class Pays {
+  - code: String
+  - nom: String
+  - langue: String
+  - formatDate: String
+  - reglementations: List<Reglementation>
+  - listeSanctions: String
+  + appliquerReglementation(): Boolean
+  + verifierSanctions(): Boolean
+}
+
+class Compte {
+  - numeroCompte: String
+  - suffixeCompte: String
+  - codeAgence: String
+  - codeDevise: String
+  - chapitreComptable: String
+  - cleControleCompte: String
+  - intituleCompte: String
+  - codeService: String
+  - sensCompte: SensCompte
+  - typeCompte: TypeCompte
+  - statut: StatutCompte
+  - dateCreation: Date
+  - dateCloturation: Date
+  - rib: RIB
+  + creerDansCBS(): Boolean
+  + cloturerDansCBS(): Boolean
+  + bloquer(): Boolean
+  + debloquer(): Boolean
+}
+
+class Document {
+  - id: String
+  - nom: String
+  - typeDocument: TypeDocument
+  - chemin: String
+  - taille: Long
+  - checksum: String
+  - dateUpload: Date
+  - dateExpiration: Date
+  - versionActuelle: VersionDocument
+  - statut: StatutDocument
+  - estObligatoire: Boolean
+  - estVersionnable: Boolean
+  - versionMajeure: Integer
+  - versionMineure: Integer
+  - versionPatch: Integer
+  - historique: List<VersionDocument>
+  - gestionnaireDroits: GestionnaireDroitsDocument
+  + valider(): Boolean
+  + verifierExpiration(): Boolean
+  + verifierAuthenticite(): Boolean
+  + archiver(): Boolean
+  + creerNouvelleVersion(): VersionDocument
+  + restaurerVersion(version: String): Boolean
+  + comparerVersions(version1: String, version2: String): Document
+  + fusionnerVersions(versions: List<String>): Boolean
+  + obtenirHistoriqueVersions(): List<VersionDocument>
+  + verifierIntegriteVersions(): Boolean
+}
+
+class VersionDocument {
+  - id: String
+  - documentParent: Document
+  - numeroVersion: String
+  - versionMajeure: Integer
+  - versionMineure: Integer
+  - versionPatch: Integer
+  - nom: String
+  - chemin: String
+  - taille: Long
+  - checksum: String
+  - checksumPrecedent: String
+  - dateCreation: Date
+  - dateModification: Date
+  - auteur: Utilisateur
+  - commentaireVersion: String
+  - typeModification: TypeModificationDocument
+  - tagsVersion: List<String>
+  - statut: StatutVersionDocument
+  - estVersionFinale: Boolean
+  - estVersionProd: Boolean
+  - branche: BrancheDocument
+  - versionParente: VersionDocument
+  - versionsEnfants: List<VersionDocument>
+  - differencesPrecedente: String
+  - metadonnees: MetadonneesVersion
+  - signature: SignatureVersion
+  - approbations: List<ApprobationVersion>
+  + creer(): Boolean
+  + modifier(): Boolean
+  + publier(): Boolean
+  + approuver(): Boolean
+  + rejeter(): Boolean
+  + comparer(autreVersion: VersionDocument): Document
+  + calculerDifferences(): String
+  + genererChecksum(): String
+  + verifierIntegrite(): Boolean
+  + creerBranche(): BrancheDocument
+  + fusionner(versionSource: VersionDocument): Boolean
+}
+
+class BrancheDocument {
+  - id: String
+  - document: Document
+  - nom: String
+  - description: String
+  - brancheParente: BrancheDocument
+  - branchesEnfants: List<BrancheDocument>
+  - versionBase: VersionDocument
+  - versionTete: VersionDocument
+  - versions: List<VersionDocument>
+  - dateCreation: Date
+  - auteur: Utilisateur
+  - statut: StatutBranche
+  - estProtegee: Boolean
+  - reglesApprobation: ReglesApprobation
+  + creer(): Boolean
+  + fusionner(brancheCible: BrancheDocument): Boolean
+  + supprimer(): Boolean
+  + proteger(): Boolean
+  + definirReglesApprobation(): Boolean
+  + verifierConflits(): List<ConflitVersion>
+}
+
+class MetadonneesVersion {
+  - id: String
+  - versionDocument: VersionDocument
+  - proprietes: Map<String, String>
+  - mots-cles: List<String>
+  - categories: List<String>
+  - niveauConfidentialite: NiveauConfidentialite
+  - droitsAcces: DroitsAcces
+  - dateCreationMetadonnees: Date
+  - auteurMetadonnees: Utilisateur
+  - versionMetadonnees: Integer
+  + ajouter(cle: String, valeur: String): Boolean
+  + modifier(cle: String, valeur: String): Boolean
+  + supprimer(cle: String): Boolean
+  + rechercher(criteres: Map<String, String>): Boolean
+}
+
+class MetadonneesDocument {
+  - id: String
+  - document: Document
+  - metadonneesTechniques: MetadonneesTechniques
+  - metadonneesMetier: MetadonneesMetier
+  - metadonneesReglementaires: MetadonneesReglementaires
+  - metadonneesArchivage: MetadonneesArchivage
+  - metadonneesPersonnalisees: Map<String, Object>
+  - schemaMetadonnees: SchemaMetadonnees
+  - dateCreation: Date
+  - dateMiseAJour: Date
+  - gestionnaire: Utilisateur
+  - estValide: Boolean
+  - versionMetadonnees: Integer
+  + creer(): Boolean
+  + modifier(): Boolean
+  + valider(): Boolean
+  + exporter(): Document
+  + importer(source: Document): Boolean
+  + synchroniser(): Boolean
+  + rechercher(criteres: CriteresRecherche): List<Document>
+}
+
+class MetadonneesTechniques {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - formatDocument: FormatDocument
+  - encodage: String
+  - resolution: String
+  - dimensionsPixels: Dimension
+  - nombrePages: Integer
+  - tailleOctets: Long
+  - checksumMD5: String
+  - checksumSHA256: String
+  - typeContenu: TypeContenu
+  - applicationCreation: String
+  - versionApplication: String
+  - systemeExploitation: String
+  - compressionUtilisee: String
+  - chiffrementApplique: String
+  - proprietesTechniques: Map<String, String>
+  + calculerChecksum(): Boolean
+  + analyserFormat(): Boolean
+  + extraireMetadonnees(): Boolean
+  + optimiser(): Boolean
+  + convertir(formatCible: FormatDocument): Boolean
+}
+
+class MetadonneesMetier {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - categorieMetier: CategorieMetier
+  - processusMetier: ProcessusMetier
+  - entitesConcernees: List<EntiteMetier>
+  - contexteUtilisation: ContexteUtilisation
+  - valeurMetier: ValeurMetier
+  - criticite: CriticiteDocument
+  - impacts: List<ImpactMetier>
+  - parties: List<PartieDocument>
+  - relations: List<RelationDocument>
+  - cycleBusiness: CycleBusiness
+  - frequenceUtilisation: FrequenceUtilisation
+  - utilisateursTypes: List<TypeUtilisateur>
+  - objectifsDocument: List<ObjectifDocument>
+  + classifier(): Boolean
+  + evaluerCriticite(): CriticiteDocument
+  + calculerValeur(): ValeurMetier
+  + analyserImpacts(): List<ImpactMetier>
+  + cartographier(): CarteProcessus
+}
+
+class MetadonneesReglementaires {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - referentielReglementaire: ReferentielReglementaire
+  - obligationsLegales: List<ObligationLegale>
+  - niveauConformite: NiveauConformite
+  - exigencesConservation: ExigencesConservation
+  - droitsPersonneDonnees: DroitsPersonneDonnees
+  - classificationSecurite: ClassificationSecurite
+  - restrictions: List<RestrictionReglementaire>
+  - auditsReglementaires: List<AuditReglementaire>
+  - certifications: List<CertificationDocument>
+  - datesDechance: Map<String, Date>
+  - autoritesCompetentes: List<AutoriteCompetente>
+  + verifierConformite(): Boolean
+  + calculerRisqueReglementaire(): RisqueReglementaire
+  + genererRapportConformite(): Document
+  + plannifierAudits(): List<PlanAudit>
+  + surveillerEcheances(): List<Echeance>
+}
+
+class MetadonneesArchivage {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - politiqueArchivage: PolitiqueArchivage
+  - dureeConservationLegale: Integer
+  - dureeConservationOperationnelle: Integer
+  - declencheurArchivage: DeclencheurArchivage
+  - niveauAccesArchive: NiveauAccesArchive
+  - supportArchivage: SupportArchivage
+  - localisationArchive: LocalisationArchive
+  - indexArchivage: IndexArchivage
+  - planDestruction: PlanDestruction
+  - traitementDonneesSensibles: TraitementDonneesSensibles
+  - migrationFormatsPrevue: MigrationFormats
+  - coutArchivage: CoutArchivage
+  + planifier(): Boolean
+  + executer(): Boolean
+  + restaurer(): Boolean
+  + detruire(): Boolean
+  + migrer(): Boolean
+  + auditer(): RapportAuditArchivage
+}
+
+class SchemaMetadonnees {
+  - id: String
+  - nom: String
+  - version: String
+  - description: String
+  - typeDocument: TypeDocument
+  - champObligatoires: List<ChampMetadonnees>
+  - champOptionnels: List<ChampMetadonnees>
+  - reglesValidation: List<RegleValidation>
+  - formatStandard: FormatStandard
+  - mappingStandards: Map<String, String>
+  - dateCreation: Date
+  - auteur: Utilisateur
+  - estActif: Boolean
+  - versionPrecedente: SchemaMetadonnees
+  + definir(): Boolean
+  + valider(metadonnees: MetadonneesDocument): Boolean
+  + migrer(nouvelleVersion: SchemaMetadonnees): Boolean
+  + exporter(): Document
+  + comparer(autreSchema: SchemaMetadonnees): Document
+}
+
+class ChampMetadonnees {
+  - id: String
+  - schema: SchemaMetadonnees
+  - nom: String
+  - libelle: String
+  - description: String
+  - typeChamp: TypeChampMetadonnees
+  - tailleMax: Integer
+  - valeurParDefaut: String
+  - valeursAutorisees: List<String>
+  - formatValidation: String
+  - estObligatoire: Boolean
+  - estIndexe: Boolean
+  - estRecherchable: Boolean
+  - groupeFonctionnel: GroupeFonctionnel
+  - ordreAffichage: Integer
+  + definir(): Boolean
+  + valider(valeur: Object): Boolean
+  + indexer(): Boolean
+  + transformer(valeur: Object): Object
+}
+
+class IndexMetadonnees {
+  - id: String
+  - metadonneesDocument: MetadonneesDocument
+  - champsIndexes: List<ChampIndex>
+  - indexTextuel: IndexTextuel
+  - indexDate: IndexDate
+  - indexNumerique: IndexNumerique
+  - indexGeographique: IndexGeographique
+  - motsClesExtrait: List<String>
+  - entitesNommees: List<EntiteNommee>
+  - conceptsIdentifies: List<Concept>
+  - dateIndexation: Date
+  - algorithmeIndexation: String
+  - scoreRelevance: Float
+  + construire(): Boolean
+  + mettrAJour(): Boolean
+  + rechercher(requete: RequeteRecherche): ResultatRecherche
+  + analyserTexte(): AnalyseTextuelle
+  + extraireEntites(): List<EntiteNommee>
+}
+
+class GestionnaireMetadonnees {
   - id: String
   - nom: String
   - description: String
-  - habilitations: List<Habilitation>
-  + ajouterHabilitation(): Boolean
-  + retirerHabilitation(): Boolean
+  - schemasSupportes: List<SchemaMetadonnees>
+  - referentielsUtilises: List<ReferentielMetadonnees>
+  - reglesAutomatisation: List<RegleAutomatisation>
+  - integrationsExterne: List<IntegrationExterne>
+  - statistiques: StatistiquesMetadonnees
+  - configuration: ConfigurationGestionnaire
+  - estActif: Boolean
+  + initialiser(): Boolean
+  + traiter(document: Document): MetadonneesDocument
+  + enrichir(metadonnees: MetadonneesDocument): Boolean
+  + normaliser(): Boolean
+  + synchroniser(): Boolean
+  + genererRapports(): List<RapportMetadonnees>
+  + optimiser(): Boolean
 }
-
-class Habilitation {
-    - id: String
-    - nom: String
-    - module: String
-    - action: String
-    - ressource: String
-}
-
-class JournalAudit {
-  - id: String
-  - utilisateur: Utilisateur
-  - action: String
-  - ressource: String
-  - ancienneValeur: String
-  - nouvelleValeur: String
-  - adresseIP: String
-  - dateAction: Date
-  - estImmuable: Boolean
-  + enregistrer(): Boolean
-  + consulter(): List<JournalAudit>
-}
-
-class TypeCompte {
-    - id: String
-    - code: String
-    - libelle: String
-    - description: String
-    - devise: String
-    - plafond: BigDecimal
-    - decouvertAutorise: Boolean
-    - fraisGestion: BigDecimal
-    - dateCreation: Date
-    - estActif: Boolean
-    + creer(): Boolean
-    + modifier(): Boolean
-    + activer(): Boolean
-    + desactiver(): Boolean
-}
-
-class Profil {
-    - id: String
-    - nom: String
-    - description: String
-    - droits: List<Habilitation>
-    - dateCreation: Date
-    - estActif: Boolean
-    + ajouterDroit(Habilitation): Boolean
-    + retirerDroit(Habilitation): Boolean
-    + activer(): Boolean
-    + desactiver(): Boolean
-}
-
-class Actionnaire {
-    - id: String
-    - nom: String
-    - prenom: String
-    - typePersonne: String
-    - nationalite: String
-    - numeroPieceIdentite: String
-    - partCapital: Double
-    - pourcentageDetention: Double
-    - dateEntree: Date
-    - adresse: String
-    - telephone: String
-    - estDirigeant: Boolean
-    - fonctionDansEntreprise: String
-    + ajouterActionnaire(): void
-    + modifierPartCapital(): void
-    + supprimerActionnaire(): void
-    + mettreAJourInformations(): void
-    + verifierConformiteActionnaire(): Boolean
-}
-
-class StatutClient {
-    - id: String
-    - code: String
-    - libelle: String
-    - description: String
-    - codeCouleur: String
-    - ordre: Integer
-    - estActif: Boolean
-    + creerStatut(): Boolean
-    + modifierStatut(): Boolean
-    + activerStatut(): Boolean
-    + desactiverStatut(): Boolean
-    + obtenirCouleur(): String
-}
-
 ' ===== RELATIONS AVEC CARDINALITÉS =====
 
 ' Relations Client
@@ -575,6 +971,627 @@ class GestionBlocageDeblocage {
     + journaliserAction(): Boolean
 }
 
+' ===== ÉNUMÉRATIONS POUR LE SYSTÈME DE NOTIFICATION =====
+
+enum TypeCanal {
+    EMAIL
+    SMS
+    PUSH_NOTIFICATION
+    COURRIER_POSTAL
+    FAX
+    APPEL_TELEPHONIQUE
+    NOTIFICATION_INTERNE
+    WEBHOOK
+    API_REST
+}
+
+enum StatutNotification {
+    BROUILLON
+    PROGRAMMEE
+    EN_COURS_ENVOI
+    ENVOYEE
+    LIVREE
+    LUE
+    ECHOUEE
+    ANNULEE
+    EXPIREE
+}
+
+enum PrioriteNotification {
+    BASSE
+    NORMALE
+    HAUTE
+    CRITIQUE
+    URGENTE
+}
+
+enum TypeAccuseReception {
+    AUTOMATIQUE
+    MANUEL
+    LECTURE_EMAIL
+    CLIC_LIEN
+    REPONSE_SMS
+    CONFIRMATION_TELEPHONIQUE
+    SIGNATURE_ELECTRONIQUE
+}
+
+enum StatutAccuseReception {
+    EN_ATTENTE
+    RECU
+    CONFIRME
+    REFUSE
+    EXPIRE
+    INVALIDE
+}
+
+enum CategorieNotification {
+    INFORMATION
+    ALERTE
+    RAPPEL
+    CONFIRMATION
+    URGENT
+    MARKETING
+    TECHNIQUE
+    REGLEMENTAIRE
+}
+
+enum TypeDestinataire {
+    CLIENT_PARTICULIER
+    CLIENT_ENTREPRISE
+    GESTIONNAIRE
+    SUPERVISEUR
+    ADMINISTRATEUR
+    EXTERNE
+    GROUPE
+}
+
+enum ActionNotification {
+    CREATION
+    ENVOI
+    LIVRAISON
+    LECTURE
+    ACCUSE_RECEPTION
+    ECHEC
+    RELANCE
+    ANNULATION
+    ARCHIVAGE
+}
+
+enum TypeUnion {
+    MARIAGE_CIVIL
+    MARIAGE_RELIGIEUX
+    MARIAGE_COUTUMIER
+    MARIAGE_MIXTE
+    UNION_LIBRE
+    PACS
+    CONCUBINAGE
+    POLYGAMIE
+    MONOGAMIE
+}
+
+enum TypeBienMatrimonial {
+    BIEN_IMMOBILIER
+    BIEN_MOBILIER
+    COMPTE_BANCAIRE
+    VALEURS_MOBILIERES
+    FOND_COMMERCE
+    BIEN_PROFESSIONNEL
+    BIEN_INTELLECTUEL
+    BIEN_AGRICOLE
+    VEHICULE
+    BIJOUX_OBJETS_ART
+    ASSURANCE_VIE
+    RETRAITE
+}
+
+enum ModeAcquisitionBien {
+    ACHAT_AVANT_MARIAGE
+    ACHAT_APRES_MARIAGE
+    HERITAGE
+    DONATION
+    SUCCESSION
+    ECHANGE
+    CREATION_PERSONNELLE
+    PLUS_VALUE
+    FRUIT_CIVIL
+    ACQUISITION_COMMUNE
+}
+
+enum ProprietaireBien {
+    EPOUX_SEUL
+    EPOUSE_SEULE
+    INDIVIS_PARTS_EGALES
+    INDIVIS_PARTS_INEGALES
+    USUFRUIT_EPOUX
+    USUFRUIT_EPOUSE
+    NUE_PROPRIETE_EPOUX
+    NUE_PROPRIETE_EPOUSE
+    PROPRIETE_COMMUNE
+}
+
+enum TypeOperationMatrimoniale {
+    GESTION_COURANTE
+    OPERATION_BANCAIRE
+    VENTE_BIEN_IMMOBILIER
+    ACHAT_BIEN_IMMOBILIER
+    PLACEMENT_FINANCIER
+    EMPRUNT
+    DONATION
+    SUCCESSION
+    LIQUIDATION_REGIME
+    MODIFICATION_CONTRAT
+}
+
+enum PorteeProcuration {
+    GENERALE
+    SPECIALE
+    LIMITEE_MONTANT
+    LIMITEE_DUREE
+    LIMITEE_OPERATIONS
+    LIMITEE_COMPTES
+    URGENCE_SEULEMENT
+    GESTION_COURANTE_SEULEMENT
+}
+
+enum NiveauHabilitationConjoint {
+    AUCUNE_HABILITATION
+    CONSULTATION_SEULEMENT
+    OPERATIONS_COURANTES
+    OPERATIONS_LIMITEES
+    MANDATAIRE_GENERAL
+    CO_TITULAIRE
+    REPRESENTANT_LEGAL
+    PROCURATION_SPECIALE
+}
+
+enum EvaluationBien {
+    VALEUR_MARCHE
+    VALEUR_COMPTABLE
+    VALEUR_ASSURANCE
+    VALEUR_FISCALE
+    VALEUR_LIQUIDATION
+    VALEUR_EXPERTISE
+    VALEUR_SUCCESSION
+    VALEUR_DONATION
+}
+
+enum TypeModificationDocument {
+    CREATION_INITIALE
+    MODIFICATION_MINEURE
+    MODIFICATION_MAJEURE
+    CORRECTION_ERREUR
+    MISE_A_JOUR_REGLEMENTAIRE
+    REVISION_COMPLETE
+    SUPPRESSION_CONTENU
+    AJOUT_CONTENU
+    RESTRUCTURATION
+    TRADUCTION
+    OPTIMISATION
+    SECURISATION
+}
+
+enum StatutVersionDocument {
+    BROUILLON
+    EN_COURS_REDACTION
+    EN_REVISION
+    EN_ATTENTE_APPROBATION
+    APPROUVEE
+    REJETEE
+    PUBLIEE
+    ARCHIVEE
+    OBSOLETE
+    SUSPENDUE
+}
+
+enum StatutBranche {
+    ACTIVE
+    SUSPENDUE
+    FUSIONNEE
+    ABANDONNEE
+    PROTEGEE
+    EN_CONFLIT
+    EN_COURS_FUSION
+}
+
+enum TypeConflitVersion {
+    CONFLIT_CONTENU
+    CONFLIT_METADONNEES
+    CONFLIT_DROITS
+    CONFLIT_STRUCTURE
+    CONFLIT_DENOMINATION
+    CONFLIT_BRANCHE
+}
+
+enum ResolutionConflit {
+    ACCEPTER_VERSION_1
+    ACCEPTER_VERSION_2
+    FUSION_MANUELLE
+    FUSION_AUTOMATIQUE
+    CREER_NOUVELLE_VERSION
+    ANNULER_MODIFICATION
+}
+
+enum TypeSignature {
+    SIGNATURE_SIMPLE
+    SIGNATURE_AVANCEE
+    SIGNATURE_QUALIFIEE
+    SIGNATURE_ELECTRONIQUE
+    SIGNATURE_NUMERIQUE
+    SIGNATURE_BIOMETRIQUE
+    SIGNATURE_OTP
+}
+
+enum RoleApprobation {
+    REDACTEUR
+    REVISEUR
+    VALIDATEUR
+    APPROBATEUR_TECHNIQUE
+    APPROBATEUR_METIER
+    APPROBATEUR_FINAL
+    ADMINISTRATEUR
+}
+
+enum StatutApprobation {
+    EN_ATTENTE
+    APPROUVE
+    REJETE
+    DELEGUE
+    EXPIRE
+    ANNULE
+}
+
+enum DroitsAcces {
+    LECTURE
+    ECRITURE
+    MODIFICATION
+    SUPPRESSION
+    CREATION_VERSION
+    APPROBATION
+    ADMINISTRATION
+    TOUS_DROITS
+}
+
+enum TypePrincipal {
+    UTILISATEUR
+    GROUPE
+    ROLE
+    SERVICE
+    APPLICATION
+    SYSTEME
+}
+
+enum NiveauConfidentialite {
+    PUBLIC
+    INTERNE
+    CONFIDENTIEL
+    SECRET
+    TRES_SECRET
+    PERSONNEL
+}
+
+enum ActionAcces {
+    LECTURE
+    TELECHARGEMENT
+    MODIFICATION
+    CREATION_VERSION
+    SUPPRESSION
+    APPROBATION
+    PARTAGE
+    IMPRESSION
+}
+
+enum ResultatAcces {
+    SUCCES
+    ECHEC_AUTHENTIFICATION
+    ECHEC_AUTORISATION
+    ECHEC_TECHNIQUE
+    RESSOURCE_INEXISTANTE
+    ACCES_REFUSE
+    QUOTA_DEPASSE
+}
+
+enum StatutOrganigramme {
+    BROUILLON
+    EN_COURS_ELABORATION
+    EN_VALIDATION
+    VALIDE
+    PUBLIE
+    ARCHIVE
+    SUSPENDU
+    OBSOLETE
+}
+
+enum TypeOrganigramme {
+    FONCTIONNEL
+    HIERARCHIQUE
+    MATRICIEL
+    DIVISIONNEL
+    GEOGRAPHIQUE
+    PAR_PROJET
+    HYBRIDE
+}
+
+enum TypeEntiteOrganisationnelle {
+    DIRECTION_GENERALE
+    DIRECTION
+    DEPARTEMENT
+    SERVICE
+    UNITE
+    EQUIPE
+    POSTE_INDIVIDUEL
+    COMITE
+    COMMISSION
+}
+
+enum TypePouvoir {
+    OPERATIONNEL
+    DECISIONNAIRE
+    CONSULTATIF
+    APPROBATION
+    CONTROLE
+    VALIDATION
+    SIGNATURE
+    DELEGATION
+    SUPERVISION
+    COORDINATION
+}
+
+enum TypeDomaine {
+    COMMERCIAL
+    OPERATIONNEL
+    FINANCIER
+    RISQUE
+    CONFORMITE
+    AUDIT
+    RESSOURCES_HUMAINES
+    INFORMATIQUE
+    JURIDIQUE
+    MARKETING
+    CREDIT
+    TRESORERIE
+    BACK_OFFICE
+    FRONT_OFFICE
+    MIDDLE_OFFICE
+}
+
+enum TypeAction {
+    CONSULTATION
+    CREATION
+    MODIFICATION
+    SUPPRESSION
+    VALIDATION
+    APPROBATION
+    REJET
+    DELEGATION
+    REVOCATION
+    EXECUTION
+    SUPERVISION
+    CONTROLE
+}
+
+enum NiveauRisque {
+    TRES_FAIBLE
+    FAIBLE
+    MOYEN
+    ELEVE
+    TRES_ELEVE
+    CRITIQUE
+}
+
+enum ImpactAction {
+    NEGLIGEABLE
+    FAIBLE
+    MOYEN
+    ELEVE
+    CRITIQUE
+    CATASTROPHIQUE
+}
+
+enum NiveauSecurite {
+    PUBLIC
+    INTERNE
+    CONFIDENTIEL
+    SECRET
+    TRES_SECRET
+}
+
+enum NiveauUrgence {
+    NORMAL
+    PRIORITAIRE
+    URGENT
+    CRITIQUE
+    IMMEDIAT
+}
+
+enum TypeSeuil {
+    MONTANT_UNITAIRE
+    MONTANT_CUMULE_JOUR
+    MONTANT_CUMULE_SEMAINE
+    MONTANT_CUMULE_MOIS
+    NOMBRE_OPERATIONS
+    FREQUENCE
+    POURCENTAGE
+}
+
+enum Periodicite {
+    QUOTIDIEN
+    HEBDOMADAIRE
+    MENSUEL
+    TRIMESTRIEL
+    SEMESTRIEL
+    ANNUEL
+    PONCTUEL
+}
+
+enum FormatDocument {
+    PDF
+    WORD
+    EXCEL
+    POWERPOINT
+    IMAGE_JPEG
+    IMAGE_PNG
+    IMAGE_TIFF
+    VIDEO_MP4
+    AUDIO_MP3
+    XML
+    JSON
+    CSV
+    HTML
+    TEXT
+    ZIP
+    SCAN_OCR
+}
+
+enum TypeContenu {
+    TEXTE
+    IMAGE
+    VIDEO
+    AUDIO
+    DONNEES_STRUCTUREES
+    FORMULAIRE
+    RAPPORT
+    CONTRAT
+    FACTURE
+    JUSTIFICATIF
+    SIGNATURE
+    CERTIFICAT
+    MULTIMEDIA
+}
+
+enum CategorieMetier {
+    JURIDIQUE
+    FINANCIER
+    COMMERCIAL
+    OPERATIONNEL
+    CONFORMITE
+    AUDIT
+    RESSOURCES_HUMAINES
+    MARKETING
+    TECHNIQUE
+    STRATEGIQUE
+    COMMUNICATION
+    FORMATION
+}
+
+enum ProcessusMetier {
+    OUVERTURE_COMPTE
+    GESTION_CREDIT
+    CONFORMITE_KYC
+    GESTION_RISQUE
+    AUDIT_INTERNE
+    REPORTING_REGLEMENTAIRE
+    RELATION_CLIENT
+    GESTION_PLAINTE
+    TRESORERIE
+    COMPTABILITE
+    RESSOURCES_HUMAINES
+    GOUVERNANCE
+}
+
+enum CriticiteDocument {
+    TRES_FAIBLE
+    FAIBLE
+    MOYENNE
+    ELEVEE
+    CRITIQUE
+    VITALE
+}
+
+enum ValeurMetier {
+    AUCUNE
+    FAIBLE
+    MOYENNE
+    ELEVEE
+    STRATEGIQUE
+    CRITIQUE
+}
+
+enum NiveauConformite {
+    NON_APPLICABLE
+    CONFORME
+    PARTIELLEMENT_CONFORME
+    NON_CONFORME
+    EN_COURS_VERIFICATION
+    EXEMPTION_ACCORDEE
+}
+
+enum ClassificationSecurite {
+    PUBLIC
+    USAGE_INTERNE
+    CONFIDENTIEL
+    SECRET_COMMERCIAL
+    SECRET_PROFESSIONNEL
+    DONNEES_PERSONNELLES
+    DONNEES_SENSIBLES
+}
+
+enum SupportArchivage {
+    ELECTRONIQUE
+    PAPIER
+    MICROFILM
+    CLOUD
+    TAPE_MAGNETIQUE
+    DISQUE_OPTIQUE
+    HYBRIDE
+}
+
+enum DeclencheurArchivage {
+    DATE_CREATION
+    DATE_CLOTURE
+    EVENEMENT_METIER
+    CHANGEMENT_STATUT
+    DEMANDE_UTILISATEUR
+    AUTOMATIQUE_PERIODIQUE
+    FIN_CONSERVATION_ACTIVE
+}
+
+enum TypeChampMetadonnees {
+    TEXTE_LIBRE
+    TEXTE_STRUCTURE
+    NOMBRE_ENTIER
+    NOMBRE_DECIMAL
+    DATE
+    HEURE
+    BOOLEEN
+    LISTE_VALEURS
+    REFERENCE
+    GEOLOCALISATION
+    FICHIER_ATTACHE
+}
+
+enum FormatStandard {
+    DUBLIN_CORE
+    MODS
+    METS
+    EAD
+    MARC21
+    OAIS
+    PREMIS
+    CUSTOM
+}
+' ===== RELATIONS POUR LE SYSTÈME DE NOTIFICATION =====
+
+' Relations principales pour les notifications
+GestionnaireNotification "1" -- "0..*" Notification : gere
+GestionnaireNotification "1" -- "0..*" CanalNotification : canaux
+GestionnaireNotification "1" -- "0..*" ModeleNotification : modeles
+Notification "1" -- "0..1" AccuseReception : accuseReception
+Notification "1" -- "1" TypeNotification : type
+Notification "1" -- "1" CanalNotification : canalEnvoi
+Notification "1" -- "1" ModeleNotification : modeleUtilise
+Notification "1" -- "1" Destinataire : destinataire
+Notification "1" -- "0..*" HistoriqueNotification : historique
+TypeNotification "1" -- "0..*" Notification : instances
+CanalNotification "1" -- "0..*" Notification : notificationsEnvoyees
+ModeleNotification "1" -- "0..*" Notification : notificationsGenerees
+Destinataire "1" -- "0..*" Notification : notificationsRecues
+Destinataire "1" -- "0..1" PreferencesNotification : preferences
+
+' Relations avec les entités existantes
+Client "1" -- "0..*" Notification : notificationsClient
+Utilisateur "1" -- "0..*" Notification : notificationsUtilisateur
+Document "0..*" -- "0..*" Notification : piecesJointes
+
 ' Relations avec les étapes
 Client "1" -- "0..1" PreEnregistrement : origine
 Client "1" -- "0..1" ValidationFinale : validation
@@ -582,5 +1599,220 @@ Client "1" -- "0..*" SignatureElectronique : signatures
 Compte "1" -- "0..1" CreationCompteCBS : creation
 Client "1" -- "0..*" GestionBlocageDeblocage : actions
 Compte "1" -- "0..*" GestionBlocageDeblocage : actions
+
+' ===== RELATIONS POUR LE SYSTÈME MATRIMONIAL =====
+
+' Relations principales pour le système matrimonial
+ClientParticulier "1" -- "0..1" Conjoint : conjoint
+ClientParticulier "1" -- "1" SituationMatrimoniale : situationMatrimoniale
+ClientParticulier "1" -- "0..1" RegimeMatrimonial : regimeMatrimonial
+Conjoint "1" -- "1" RegimeMatrimonial : regimeMatrimonial
+Conjoint "1" -- "0..1" ContratMariage : contratMariage
+Conjoint "1" -- "0..*" ProcurationMatrimoniale : procurations
+ContratMariage "1" -- "0..*" BienMatrimonial : biens
+ContratMariage "1" -- "1" RegimeMatrimonial : regime
+BienMatrimonial "1" -- "1" TypeBienMatrimonial : type
+BienMatrimonial "1" -- "1" ModeAcquisitionBien : modeAcquisition
+BienMatrimonial "1" -- "1" ProprietaireBien : proprietaire
+BienMatrimonial "1" -- "1" EvaluationBien : evaluation
+Conjoint "1" -- "1" TypeUnion : typeUnion
+Conjoint "1" -- "1" NiveauHabilitationConjoint : niveauHabilitation
+ProcurationMatrimoniale "1" -- "1" TypeOperationMatrimoniale : typeOperation
+ProcurationMatrimoniale "1" -- "1" PorteeProcuration : portee
+
+' Relations avec les documents
+Conjoint "1" -- "0..1" Document : contratMariage
+Conjoint "1" -- "0..1" Document : procurationConjoint
+ContratMariage "1" -- "1" Document : documentOriginal
+BienMatrimonial "1" -- "0..*" Document : justificatifs
+ProcurationMatrimoniale "1" -- "1" Document : documentOriginal
+
+' ===== RELATIONS POUR LE SYSTÈME DE VERSIONING DOCUMENTS =====
+
+' Relations principales pour le versioning
+Document "1" -- "0..1" VersionDocument : versionActuelle
+Document "1" -- "0..*" VersionDocument : historique
+Document "1" -- "1" GestionnaireDroitsDocument : gestionnaireDroits
+VersionDocument "1" -- "0..1" VersionDocument : versionParente
+VersionDocument "1" -- "0..*" VersionDocument : versionsEnfants
+VersionDocument "1" -- "1" BrancheDocument : branche
+VersionDocument "1" -- "1" MetadonneesVersion : metadonnees
+VersionDocument "1" -- "0..*" SignatureVersion : signature
+VersionDocument "1" -- "0..*" ApprobationVersion : approbations
+VersionDocument "1" -- "1" Utilisateur : auteur
+
+' Relations pour les branches et conflits
+BrancheDocument "1" -- "0..1" BrancheDocument : brancheParente
+BrancheDocument "1" -- "0..*" BrancheDocument : branchesEnfants
+BrancheDocument "1" -- "1" VersionDocument : versionBase
+BrancheDocument "1" -- "1" VersionDocument : versionTete
+BrancheDocument "1" -- "0..*" VersionDocument : versions
+BrancheDocument "1" -- "1" Utilisateur : auteur
+BrancheDocument "1" -- "0..*" ConflitVersion : conflits
+
+' Relations pour les droits et accès
+GestionnaireDroitsDocument "1" -- "1" Utilisateur : proprietaire
+GestionnaireDroitsDocument "1" -- "0..*" EntreeACL : acl
+GestionnaireDroitsDocument "1" -- "0..1" Document : documentParent
+EntreeACL "1" -- "1" DroitsAcces : droits
+EntreeACL "1" -- "1" TypePrincipal : typePrincipal
+
+' Relations pour les signatures et approbations
+SignatureVersion "1" -- "1" Utilisateur : signataire
+SignatureVersion "1" -- "1" TypeSignature : typeSignature
+ApprobationVersion "1" -- "1" Utilisateur : approbateur
+ApprobationVersion "1" -- "1" RoleApprobation : role
+ApprobationVersion "1" -- "1" StatutApprobation : statut
+
+' Relations pour les métadonnées et audit
+MetadonneesVersion "1" -- "1" Utilisateur : auteurMetadonnees
+MetadonneesVersion "1" -- "1" NiveauConfidentialite : niveauConfidentialite
+MetadonneesVersion "1" -- "1" DroitsAcces : droitsAcces
+AccesDocument "1" -- "1" Document : document
+AccesDocument "1" -- "1" Utilisateur : utilisateur
+AccesDocument "1" -- "1" ActionAcces : action
+AccesDocument "1" -- "1" ResultatAcces : resultat
+
+' Relations pour les conflits
+ConflitVersion "1" -- "1" BrancheDocument : branche1
+ConflitVersion "1" -- "1" BrancheDocument : branche2
+ConflitVersion "1" -- "1" TypeConflitVersion : typeConfit
+ConflitVersion "1" -- "0..1" ResolutionConflit : resolution
+ConflitVersion "1" -- "0..1" Utilisateur : auteurResolution
+
+' Relations avec les enums de versioning
+VersionDocument "1" -- "1" TypeModificationDocument : typeModification
+VersionDocument "1" -- "1" StatutVersionDocument : statut
+BrancheDocument "1" -- "1" StatutBranche : statut
+
+' ===== RELATIONS POUR LE SYSTÈME DE GESTION DES POUVOIRS =====
+
+' Relations principales pour l'organigramme
+Organigramme "1" -- "1" EntiteOrganisationnelle : entiteRacine
+Organigramme "1" -- "0..*" NiveauHierarchique : niveauxHierarchiques
+Organigramme "1" -- "1" StatutOrganigramme : statut
+Organigramme "1" -- "1" TypeOrganigramme : typeOrganigramme
+Organigramme "1" -- "1" Utilisateur : gestionnaire
+
+' Relations pour les entités organisationnelles
+EntiteOrganisationnelle "1" -- "0..1" EntiteOrganisationnelle : entiteParente
+EntiteOrganisationnelle "1" -- "0..*" EntiteOrganisationnelle : entitesEnfants
+EntiteOrganisationnelle "1" -- "1" PosteOrganisationnel : responsable
+EntiteOrganisationnelle "1" -- "0..*" PosteOrganisationnel : postes
+EntiteOrganisationnelle "1" -- "0..*" Domaine : domainesGeres
+EntiteOrganisationnelle "1" -- "1" TypeEntiteOrganisationnelle : typeEntite
+
+' Relations pour les postes organisationnels
+PosteOrganisationnel "1" -- "1" EntiteOrganisationnelle : entiteRattachement
+PosteOrganisationnel "1" -- "0..1" PosteOrganisationnel : posteSuperieur
+PosteOrganisationnel "1" -- "0..*" PosteOrganisationnel : postesSubordonnes
+PosteOrganisationnel "1" -- "0..1" Utilisateur : titulaire
+PosteOrganisationnel "1" -- "0..*" Utilisateur : suppleants
+PosteOrganisationnel "1" -- "0..*" Pouvoir : pouvoirs
+PosteOrganisationnel "1" -- "0..*" PouvoirDelegue : pouvoirsDelegues
+
+' Relations pour les pouvoirs
+Pouvoir "1" -- "1" Domaine : domaine
+Pouvoir "1" -- "0..*" Action : actions
+Pouvoir "1" -- "1" TypePouvoir : typePouvoir
+Pouvoir "1" -- "0..1" SeuilsPouvoir : seuils
+PouvoirDelegue "1" -- "1" Pouvoir : pouvoirOrigine
+PouvoirDelegue "1" -- "1" PosteOrganisationnel : delegant
+PouvoirDelegue "1" -- "1" PosteOrganisationnel : delegataire
+
+' Relations pour les domaines et actions
+Domaine "1" -- "0..1" Domaine : domaineParent
+Domaine "1" -- "0..*" Domaine : sousdomaines
+Domaine "1" -- "0..*" Action : actions
+Domaine "1" -- "1" TypeDomaine : typeDomaine
+Domaine "1" -- "1" NiveauSecurite : niveauSecurite
+Domaine "1" -- "1" EntiteOrganisationnelle : proprietaire
+Domaine "1" -- "0..*" PosteOrganisationnel : gestionnaires
+
+' Relations pour les actions
+Action "1" -- "1" Domaine : domaine
+Action "1" -- "1" TypeAction : typeAction
+Action "1" -- "1" NiveauRisque : niveauRisque
+Action "1" -- "1" ImpactAction : impact
+
+' Relations pour le contexte d'exercice
+ContexteExercice "1" -- "1" Utilisateur : utilisateur
+ContexteExercice "1" -- "1" PosteOrganisationnel : poste
+ContexteExercice "1" -- "1" Action : action
+ContexteExercice "1" -- "1" Domaine : domaine
+ContexteExercice "1" -- "1" NiveauUrgence : urgence
+
+' Relations pour les seuils
+SeuilsPouvoir "1" -- "1" Pouvoir : pouvoir
+SeuilsPouvoir "1" -- "1" TypeSeuil : typeSeuil
+SeuilsPouvoir "1" -- "1" Periodicite : periodicite
+
+' Relations pour la matrice des pouvoirs
+MatricePouvoir "1" -- "1" Organigramme : organigramme
+MatricePouvoir "1" -- "0..*" LigneMatricePouvoir : lignes
+MatricePouvoir "1" -- "1" Utilisateur : approbateur
+LigneMatricePouvoir "1" -- "1" MatricePouvoir : matrice
+LigneMatricePouvoir "1" -- "1" PosteOrganisationnel : poste
+LigneMatricePouvoir "1" -- "1" Domaine : domaine
+LigneMatricePouvoir "1" -- "0..*" Action : actions
+LigneMatricePouvoir "1" -- "0..*" Pouvoir : pouvoirs
+LigneMatricePouvoir "1" -- "0..1" SeuilsPouvoir : seuils
+
+' Relations avec les utilisateurs existants
+Utilisateur "1" -- "0..*" PosteOrganisationnel : postesOccupes
+Utilisateur "1" -- "0..*" ContexteExercice : exercicesPouvoirs
+
+' ===== RELATIONS POUR LE SYSTÈME DE MÉTADONNÉES =====
+
+' Relations principales pour les métadonnées de document
+Document "1" -- "0..1" MetadonneesDocument : metadonnees
+MetadonneesDocument "1" -- "1" MetadonneesTechniques : metadonneesTechniques
+MetadonneesDocument "1" -- "1" MetadonneesMetier : metadonneesMetier
+MetadonneesDocument "1" -- "1" MetadonneesReglementaires : metadonneesReglementaires
+MetadonneesDocument "1" -- "1" MetadonneesArchivage : metadonneesArchivage
+MetadonneesDocument "1" -- "1" SchemaMetadonnees : schemaMetadonnees
+MetadonneesDocument "1" -- "1" Utilisateur : gestionnaire
+
+' Relations pour les métadonnées techniques
+MetadonneesTechniques "1" -- "1" FormatDocument : formatDocument
+MetadonneesTechniques "1" -- "1" TypeContenu : typeContenu
+
+' Relations pour les métadonnées métier
+MetadonneesMetier "1" -- "1" CategorieMetier : categorieMetier
+MetadonneesMetier "1" -- "1" ProcessusMetier : processusMetier
+MetadonneesMetier "1" -- "1" CriticiteDocument : criticite
+MetadonneesMetier "1" -- "1" ValeurMetier : valeurMetier
+
+' Relations pour les métadonnées réglementaires
+MetadonneesReglementaires "1" -- "1" NiveauConformite : niveauConformite
+MetadonneesReglementaires "1" -- "1" ClassificationSecurite : classificationSecurite
+
+' Relations pour les métadonnées d'archivage
+MetadonneesArchivage "1" -- "1" SupportArchivage : supportArchivage
+MetadonneesArchivage "1" -- "1" DeclencheurArchivage : declencheurArchivage
+
+' Relations pour le schéma de métadonnées
+SchemaMetadonnees "1" -- "0..*" ChampMetadonnees : champObligatoires
+SchemaMetadonnees "1" -- "0..*" ChampMetadonnees : champOptionnels
+SchemaMetadonnees "1" -- "1" FormatStandard : formatStandard
+SchemaMetadonnees "1" -- "1" TypeDocument : typeDocument
+SchemaMetadonnees "1" -- "1" Utilisateur : auteur
+SchemaMetadonnees "1" -- "0..1" SchemaMetadonnees : versionPrecedente
+
+' Relations pour les champs de métadonnées
+ChampMetadonnees "1" -- "1" SchemaMetadonnees : schema
+ChampMetadonnees "1" -- "1" TypeChampMetadonnees : typeChamp
+
+' Relations pour l'indexation
+MetadonneesDocument "1" -- "0..1" IndexMetadonnees : index
+IndexMetadonnees "1" -- "1" MetadonneesDocument : metadonneesDocument
+
+' Relations pour le gestionnaire de métadonnées
+GestionnaireMetadonnees "1" -- "0..*" SchemaMetadonnees : schemasSupportes
+GestionnaireMetadonnees "1" -- "0..*" MetadonneesDocument : metadonneesGerees
+
+' Relations avec les entités existantes
+TypeDocument "1" -- "0..*" SchemaMetadonnees : schemas
+Archives "1" -- "0..1" MetadonneesArchivage : metadonneesArchivage
 
 @enduml

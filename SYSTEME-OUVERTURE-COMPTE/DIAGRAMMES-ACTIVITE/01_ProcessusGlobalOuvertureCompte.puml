@@ -1,0 +1,178 @@
+@startuml ProcessusGlobalOuvertureCompte
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - Processus Global d'Ouverture de Compte
+
+start
+
+:Client exprime besoin
+d'ouverture de compte;
+
+:Agent authentifié
+crée demande;
+
+:Collecte informations
+client initial;
+
+:Système génère
+numéro de référence;
+
+:Détermine documents
+requis selon type;
+
+partition "Collecte Documents" {
+    :Client fournit
+    documents requis;
+    
+    :Upload et numérisation
+    des documents;
+    
+    repeat
+        :Validation format
+        et intégrité;
+        
+        if (Document valide?) then (non)
+            :Demander correction
+            ou nouveau document;
+        else (oui)
+            :Document accepté;
+        endif
+        
+    repeat while (Tous documents OK?) is (non)
+    ->oui;
+}
+
+partition "Contrôles Réglementaires" {
+    fork
+        :Contrôle Blacklist;
+    fork again
+        :Contrôle PPE;
+    fork again
+        :Contrôle FATCA;
+    fork again
+        :Contrôle KYC;
+    end fork
+    
+    :Analyse résultats
+    contrôles;
+    
+    if (Alertes détectées?) then (oui)
+        :Génération alertes
+        et notifications;
+        
+        :Investigation
+        manuelle requise;
+        
+        if (Validation manuelle OK?) then (non)
+            :Rejet demande;
+            end
+        endif
+    endif
+}
+
+partition "Validation Multi-Niveaux" {
+    :Validation GFC;
+    
+    if (GFC valide?) then (non)
+        :Retour collecte
+        documents;
+        stop
+    endif
+    
+    :Validation DA;
+    
+    if (DA valide?) then (non)
+        :Retour vers GFC
+        avec corrections;
+        stop
+    endif
+    
+    :Validation Conformité;
+    
+    if (Conformité OK?) then (non)
+        if (Escalade DG possible?) then (oui)
+            :Validation DG;
+            
+            if (DG approuve?) then (non)
+                :Rejet définitif;
+                end
+            endif
+        else (non)
+            :Rejet conformité;
+            end
+        endif
+    endif
+}
+
+partition "Génération Compte" {
+    :Génération fiche
+    client complète;
+    
+    :Génération convention
+    d'ouverture;
+    
+    :Signature électronique
+    documents;
+    
+    if (Signatures obtenues?) then (non)
+        :Relance client
+        pour signature;
+        stop
+    endif
+    
+    :Création compte
+    dans système CBS;
+    
+    :Génération RIB
+    et coordonnées;
+    
+    :Activation compte
+    et services;
+}
+
+partition "Finalisation" {
+    :Archivage électronique
+    de tous documents;
+    
+    :Génération reporting
+    réglementaire;
+    
+    :Notification client
+    ouverture effective;
+    
+    :Mise à jour statistiques
+    et tableau de bord;
+}
+
+:Demande clôturée
+avec succès;
+
+stop
+
+note right
+    Le processus peut être interrompu
+    à tout moment si :
+    - Documents manquants
+    - Contrôles non conformes
+    - Validations refusées
+    - Signatures non obtenues
+end note
+
+note left
+    Chaque étape génère une
+    entrée dans l'audit trail
+    pour la traçabilité complète
+end note
+
+@enduml

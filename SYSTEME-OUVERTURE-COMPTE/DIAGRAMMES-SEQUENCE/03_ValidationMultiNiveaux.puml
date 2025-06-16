@@ -1,0 +1,142 @@
+@startuml ValidationMultiNiveaux
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title Diagramme de Séquence - Validation Multi-Niveaux
+
+participant "Système\nWorkflow" as Workflow
+participant "Agent\nGFC" as GFC
+participant "Agent\nDA" as DA
+participant "Agent\nConformité" as Conformite
+participant "Directeur\nGénéral" as DG
+participant "Gestionnaire\nDélégations" as Delegation
+participant "Service\nNotifications" as Notif
+participant "Tableau\nConformité" as Tableau
+
+== Étape 1: Validation GFC ==
+Workflow -> GFC : assignerValidationGFC(demande)
+Notif -> GFC : notifierTachePendante(demande.numeroReference)
+
+GFC -> Tableau : consulterLignesConformite(demande)
+Tableau --> GFC : lignesAValider
+
+loop Pour chaque document
+    GFC -> GFC : validerDocument(document, criteres)
+    GFC -> Tableau : mettreAJourConformite(ligne, statut, commentaire)
+    
+    alt Document conforme
+        Tableau -> Tableau : marquerLigneConforme(ligne)
+    else Document non conforme
+        Tableau -> Tableau : marquerLigneNonConforme(ligne, motif)
+        GFC -> Notif : demanderComplementDocument(client, motif)
+    end
+end
+
+GFC -> Tableau : finaliserValidationGFC()
+Tableau -> Tableau : calculerPourcentageConformite()
+
+alt Tous documents conformes
+    GFC -> Workflow : validerEtapeGFC(statut: "VALIDE")
+    Workflow -> Workflow : progresserVersEtapeSuivante()
+else Documents manquants/non conformes
+    GFC -> Workflow : suspendreEtapeGFC(statut: "EN_ATTENTE_DOCUMENTS")
+end
+
+== Étape 2: Validation DA ==
+Workflow -> DA : assignerValidationDA(demande)
+Notif -> DA : notifierTachePendante(demande.numeroReference)
+
+DA -> DA : verifierCompletudeDossier()
+DA -> DA : validerCoherenceInformations()
+DA -> DA : verifierRespectProcedures()
+
+alt Validation OK
+    DA -> Tableau : validerConformiteDA(toutes_lignes, "CONFORME")
+    DA -> Workflow : validerEtapeDA(statut: "VALIDE")
+else Validation NOK
+    DA -> Tableau : validerConformiteDA(lignes_probleme, "NON_CONFORME", commentaires)
+    DA -> Workflow : rejeterEtapeDA(statut: "REJETE", motif)
+    DA -> GFC : retournerVersGFC(motif, corrections_demandees)
+end
+
+== Étape 3: Validation Conformité ==
+Workflow -> Conformite : assignerValidationConformite(demande)
+Notif -> Conformite : notifierTachePendante(demande.numeroReference)
+
+Conformite -> Conformite : verifierControlesReglementaires()
+Conformite -> Conformite : validerProfilRisque()
+Conformite -> Conformite : verifierExigencesLCBFT()
+
+alt Conformité réglementaire OK
+    Conformite -> Tableau : validerConformiteReglementaire(toutes_lignes, "CONFORME")
+    Conformite -> Workflow : validerEtapeConformite(statut: "VALIDE")
+else Non conformité détectée
+    Conformite -> Tableau : validerConformiteReglementaire(lignes_probleme, "NON_CONFORME")
+    Conformite -> Workflow : escaladerVersDG(statut: "ESCALADE_DG", justification)
+end
+
+== Étape 4: Validation DG (si nécessaire) ==
+alt Escalade vers DG requise
+    Workflow -> Delegation : verifierDelegationDG(demande.montant, demande.risque)
+    
+    alt DG disponible
+        Delegation --> Workflow : dgDisponible
+        Workflow -> DG : assignerValidationDG(demande, motif_escalade)
+        Notif -> DG : notifierValidationUrgente(demande.numeroReference)
+        
+        DG -> DG : examinerDossierComplet()
+        DG -> DG : prendreDecisionFinale()
+        
+        alt DG approuve
+            DG -> Tableau : approuverDefinitivement(toutes_lignes, "APPROUVE_DG")
+            DG -> Workflow : approuverDemande(statut: "APPROUVE_DG", commentaire)
+        else DG rejette
+            DG -> Workflow : rejeterDemande(statut: "REJETE_DG", motif)
+        end
+        
+    else DG absent - délégation
+        Delegation -> Delegation : identifierDelegataire(DG, typeDecision)
+        Delegation --> Workflow : delegataireIdentifie(agentDelegataire)
+        Workflow -> agentDelegataire : assignerValidationDelegue(demande, limitations)
+        Notif -> agentDelegataire : notifierDelegationExceptionnelle(demande.numeroReference)
+    end
+end
+
+== Finalisation ==
+alt Toutes validations OK
+    Workflow -> Workflow : marquerDemandeValidee()
+    Workflow -> Workflow : declencherCreationCompte()
+    Notif -> GFC : notifierValidationComplete(demande.numeroReference)
+    Notif -> DA : notifierValidationComplete(demande.numeroReference)
+    Notif -> Conformite : notifierValidationComplete(demande.numeroReference)
+else Au moins une validation NOK
+    Workflow -> Workflow : marquerDemandeRejetee()
+    Notif -> GFC : notifierRejetDemande(demande.numeroReference, motif)
+end
+
+== Audit et Traçabilité ==
+Workflow -> Workflow : enregistrerPisteAudit(toutes_etapes, tous_agents, toutes_decisions)
+
+note right of Tableau
+  Le tableau de conformité centralise
+  toutes les validations et maintient
+  le score global en temps réel
+end note
+
+note left of Delegation
+  Le système de délégation permet
+  de maintenir la continuité de service
+  même en cas d'absence des décideurs
+end note
+
+@enduml
