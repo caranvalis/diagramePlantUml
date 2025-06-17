@@ -1,0 +1,81 @@
+@startuml TemplateStandardClasse
+' ========================================
+' TEMPLATE STANDARD DIAGRAMME DE CLASSE
+' Style minimaliste sans couleurs
+' ========================================
+
+' Configuration du style minimaliste
+skinparam linetype polyline
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam classFontColor black
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam classMethodFontSize 11
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam nodesep 50
+skinparam ranksep 40
+skinparam packageBackgroundColor white
+skinparam packageBorderColor black
+skinparam packageFontColor black
+
+' Orientation par défaut
+left to right direction
+
+' ========================================
+' EXEMPLE DE CLASSES
+' ========================================
+
+abstract class ClasseAbstraite {
+  - attributPrive: Type
+  # attributProtege: Type
+  + attributPublic: Type
+  + methodePublique(): Type
+  - methodePrivee(): Type
+}
+
+class ClasseConcrete extends ClasseAbstraite {
+  - attributSpecifique: Type
+  + methodeSpecifique(): Type
+}
+
+interface MonInterface {
+  + methodeInterface(): Type
+}
+
+class ClasseImplementation implements MonInterface {
+  + methodeInterface(): Type
+}
+
+enum MonEnumeration {
+  VALEUR1
+  VALEUR2
+  VALEUR3
+}
+
+' ========================================
+' EXEMPLES DE RELATIONS
+' ========================================
+
+' Héritage
+ClasseConcrete --|> ClasseAbstraite
+
+' Implémentation
+ClasseImplementation ..|> MonInterface
+
+' Association
+ClasseAbstraite "1" -- "0..*" ClasseConcrete : association
+
+' Composition
+ClasseAbstraite *-- MonEnumeration : composition
+
+' Agrégation
+ClasseAbstraite o-- ClasseImplementation : agrégation
+
+' Dépendance
+ClasseConcrete ..> MonInterface : dépendance
+
+@enduml

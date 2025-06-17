@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accueil Documentation KYC</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f8fa; color: #222; margin: 0; }
+        .side-menu {
+            position: fixed; top: 0; left: 0; width: 230px; height: 100vh;
+            background: #232b5c; color: #fff; display: flex; flex-direction: column;
+            align-items: stretch; z-index: 100; box-shadow: 2px 0 8px #0002;
+        }
+        .side-menu h2 { font-size: 1.2em; margin: 1.2em 0 0.5em 0; text-align: center; color: #fff; letter-spacing: 1px; }
+        .side-menu a { display: block; color: #fff; text-decoration: none; padding: 0.9em 1.2em; border-bottom: 1px solid #3949ab; transition: background 0.2s; font-weight: 500; }
+        .side-menu a:hover, .side-menu a.active { background: #3949ab; }
+        .main-content { margin-left: 240px; padding: 0; }
+        header { background: #1a237e; color: #fff; padding: 2rem 1rem 1rem 1rem; text-align: center; box-shadow: 0 2px 8px #0001; }
+        h1 { margin: 0 0 0.5em 0; font-size: 2.2em; letter-spacing: 1px; }
+        h2 { color: #1a237e; margin-top: 2em; }
+        section { max-width: 900px; margin: 2em auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0002; padding: 2em 2em 1em 2em; }
+        ul { margin-left: 2em; }
+        footer { text-align: center; color: #888; margin-top: 3em; font-size: 0.95em; }
+        @media (max-width: 900px) { .side-menu { position: static; width: 100%; height: auto; box-shadow: none; flex-direction: row; } .side-menu a { border-bottom: none; border-right: 1px solid #3949ab; padding: 0.7em 0.8em; } .main-content { margin-left: 0; } }
+        @media (max-width: 600px) { section { padding: 1em 0.5em; } }
+    </style>
+</head>
+<body>
+    <nav class="side-menu">
+        <h2>Navigation</h2>
+        <a href="DOCUMENTATION_MASTER.html">Documentation Maître</a>
+        <a href="BESOINS_FONCTIONNELS_NON_FONCTIONNELS_KYC.html">Besoins Fonctionnels & Non Fonctionnels</a>
+        <a href="STATUS_GLOBAL_FINAL.html">Statut Global</a>
+        <a href="KYC-System-Specifications.html">Spécifications Système</a>
+        <a href="KYC DIAGRAMME DE CLASSE/TEMPLATE_DIAGRAMME_CLASSE.html">Template Classe</a>
+        <a href="KYC DIAGRAMME D'ACTIVITÉ/README.html">Activité - README</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/README.html">Système Ouverture Compte</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/RESUME_CAHIER_DES_CHARGES.html">Résumé Cahier des Charges</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/GRANDES_ETAPES_CAHIER_DES_CHARGES.html">Grandes Étapes</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/STANDARDISATION_COULEURS.html">Standardisation Couleurs</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/SYNTHESE_COMPARATIVE_FINALE.html">Synthèse Comparative</a>
+    </nav>
+    <div class="main-content">
+        <header>
+            <h1>Bienvenue sur la Documentation KYC</h1>
+            <p>Point d’entrée unique pour accéder à toute la documentation, aux spécifications et aux ressources du projet KYC.</p>
+        </header>
+        <section>
+            <h2>Accès rapide</h2>
+            <ul>
+                <li><a href="DOCUMENTATION_MASTER.html">Documentation Maître</a> – Vue d’ensemble et liens vers tous les documents</li>
+                <li><a href="BESOINS_FONCTIONNELS_NON_FONCTIONNELS_KYC.html">Besoins Fonctionnels & Non Fonctionnels</a> – Spécification détaillée</li>
+                <li><a href="STATUS_GLOBAL_FINAL.html">Statut Global</a> – Avancement et inventaire du projet</li>
+                <li><a href="KYC-System-Specifications.html">Spécifications Système</a> – Architecture et exigences techniques</li>
+            </ul>
+            <h2>À propos</h2>
+            <p>Ce portail regroupe toute la documentation du projet KYC, les standards, les modèles, les rapports et les guides techniques. Utilisez le menu latéral pour naviguer entre les différentes sections.</p>
+        </section>
+        <footer>
+            Accueil Documentation KYC – Projet KYC &copy; 2025
+        </footer>
+    </div>
+</body>
+</html>

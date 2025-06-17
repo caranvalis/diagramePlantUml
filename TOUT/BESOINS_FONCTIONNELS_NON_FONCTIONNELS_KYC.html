@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Besoins Fonctionnels & Non Fonctionnels KYC</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f7f8fa;
+            color: #222;
+            margin: 0;
+            padding: 0 0 40px 0;
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 230px;
+            height: 100vh;
+            background: #232b5c;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            z-index: 100;
+            box-shadow: 2px 0 8px #0002;
+        }
+
+        .side-menu h2 {
+            font-size: 1.2em;
+            margin: 1.2em 0 0.5em 0;
+            text-align: center;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .side-menu a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 0.9em 1.2em;
+            border-bottom: 1px solid #3949ab;
+            transition: background 0.2s;
+            font-weight: 500;
+        }
+
+        .side-menu a:hover,
+        .side-menu a.active {
+            background: #3949ab;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 0;
+        }
+
+        header {
+            background: #1a237e;
+            color: #fff;
+            padding: 2rem 1rem 1rem 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px #0001;
+        }
+
+        h1 {
+            margin: 0 0 0.5em 0;
+            font-size: 2.2em;
+            letter-spacing: 1px;
+        }
+
+        h2,
+        h3,
+        h4 {
+            color: #1a237e;
+            margin-top: 2em;
+        }
+
+        section,
+        article {
+            max-width: 900px;
+            margin: 2em auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0002;
+            padding: 2em 2em 1em 2em;
+        }
+
+        ul,
+        ol {
+            margin-left: 2em;
+        }
+
+        code,
+        pre {
+            background: #e3e7f1;
+            color: #1a237e;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 1em;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5em 0;
+            background: #f5f6fa;
+        }
+
+        th,
+        td {
+            border: 1px solid #c5cae9;
+            padding: 0.7em 1em;
+            text-align: left;
+        }
+
+        th {
+            background: #e8eaf6;
+            color: #1a237e;
+        }
+
+        .scenario {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            margin: 1em 0;
+            padding: 1em;
+            border-radius: 6px;
+        }
+
+        .actions {
+            background: #f1f8e9;
+            border-left: 4px solid #388e3c;
+            margin: 1em 0;
+            padding: 1em;
+            border-radius: 6px;
+        }
+
+        footer {
+            text-align: center;
+            color: #888;
+            margin-top: 3em;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 900px) {
+
+            .side-menu {
+                position: static;
+                width: 100%;
+                height: auto;
+                box-shadow: none;
+                flex-direction: row;
+            }
+
+            .side-menu a {
+                border-bottom: none;
+                border-right: 1px solid #3949ab;
+                padding: 0.7em 0.8em;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            section,
+            article {
+                padding: 1em 0.5em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="side-menu">
+        <h2>Navigation</h2>
+        <a href="DOCUMENTATION_MASTER.html">Documentation Maître</a>
+        <a href="STATUS_GLOBAL_FINAL.html">Statut Global</a>
+        <a href="KYC-System-Specifications.html">Spécifications Système</a>
+        <a href="KYC DIAGRAMME DE CLASSE/TEMPLATE_DIAGRAMME_CLASSE.html">Template Classe</a>
+        <a href="KYC DIAGRAMME D'ACTIVITÉ/README.html">Activité - README</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/README.html">Système Ouverture Compte</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/RESUME_CAHIER_DES_CHARGES.html">Résumé Cahier des Charges</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/GRANDES_ETAPES_CAHIER_DES_CHARGES.html">Grandes Étapes</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/STANDARDISATION_COULEURS.html">Standardisation Couleurs</a>
+        <a href="SYSTEME-OUVERTURE-COMPTE/SYNTHESE_COMPARATIVE_FINALE.html">Synthèse Comparative</a>
+    </nav>
+    <div class="main-content">
+        <header>
+            <h1>Besoins Fonctionnels & Non Fonctionnels KYC</h1>
+            <p>Spécification complète – Version du 17/06/2025</p>
+        </header>
+        <section>
+            <h2>1. Introduction</h2>
+            <p>
+                Ce document formalise les exigences du système KYC, en distinguant
+                besoins fonctionnels et non fonctionnels, avec un focus sur les
+                interactions et contraintes côté système. Chaque exigence est
+                accompagnée d’une description détaillée, d’actions à effectuer et de
+                scénarios d’usage.
+            </p>
+        </section>
+        <section>
+            <h2>2. Exigences Fonctionnelles</h2>
+            <article>
+                <h3>2.1 Création et gestion du client</h3>
+                <h4>2.1.1 Préenregistrement et Saisie</h4>
+                <div class="actions">
+                    <strong>Actions à effectuer :</strong>
+                    <ul>
+                        <li>Générer un identifiant unique pour chaque nouveau client.</li>
+                        <li>
+                            Enregistrer toutes les données saisies dans la base de données.
+                        </li>
+                        <li>
+                            Contrôler l’unicité des informations critiques (ex : numéro CNI,
+                            NIU).
+                        </li>
+                        <li>Journaliser chaque opération de création ou modification.</li>
+                    </ul>
+                </div>
+                <div class="scenario">
+                    <strong>Scénario nominal :</strong>
+                    <ol>
+                        <li>L’utilisateur accède au formulaire de création client.</li>
+                        <li>Il saisit toutes les informations requises.</li>
+                        <li>Le système contrôle l’unicité et la complétude.</li>
+                        <li>Un identifiant unique est généré et affiché.</li>
+                        <li>Les données sont enregistrées et l’opération journalisée.</li>
+                    </ol>
+                    <strong>Scénarios alternatifs :</strong>
+                    <ul>
+                        <li>
+                            Si une information obligatoire est manquante, le système bloque la
+                            validation et affiche un message d’erreur.
+                        </li>
+                        <li>
+                            Si un doublon est détecté (CNI déjà existante), le système bloque
+                            la création et notifie l’utilisateur.
+                        </li>
+                    </ul>
+                </div>
+                <h4>2.1.2 Signature électronique</h4>
+                <div class="actions">
+                    <strong>Actions à effectuer :</strong>
+                    <ul>
+                        <li>Afficher le document à signer sur l’ePad.</li>
+                        <li>
+                            Capturer la signature et les métadonnées (pression, horodatage).
+                        </li>
+                        <li>
+                            Stocker le document signé dans le CBS et le journal d’audit.
+                        </li>
+                        <li>
+                            Permettre la consultation de la signature dans l’historique
+                            client.
+                        </li>
+                    </ul>
+                </div>
+                <div class="scenario">
+                    <strong>Scénario nominal :</strong>
+                    <ol>
+                        <li>Le gestionnaire lance la procédure de signature.</li>
+                        <li>Le client signe sur l’ePad.</li>
+                        <li>Le système capture la signature et l’associe au dossier.</li>
+                        <li>Le document signé est archivé et consultable.</li>
+                    </ol>
+                    <strong>Scénarios alternatifs :</strong>
+                    <ul>
+                        <li>
+                            Si la signature est incomplète ou refusée, le système bloque la
+                            validation et affiche une alerte.
+                        </li>
+                        <li>
+                            Si l’ePad n’est pas détecté, le système propose une alternative ou
+                            signale l’incident.
+                        </li>
+                    </ul>
+                </div>
+                <!-- ... Continuez à structurer les autres exigences de la même façon ... -->
+                <h4>2.1.3 Génération de documents</h4>
+                <div class="actions">
+                    <strong>Actions à effectuer :</strong>
+                    <ul>
+                        <li>
+                            Remplir les modèles de documents avec les données du client.
+                        </li>
+                        <li>Générer les fichiers au format PDF.</li>
+                        <li>
+                            Bloquer la génération si des données ou documents obligatoires
+                            sont manquants.
+                        </li>
+                        <li>
+                            Archiver chaque document généré et l’associer au dossier client.
+                        </li>
+                    </ul>
+                </div>
+                <div class="scenario">
+                    <strong>Scénario nominal :</strong>
+                    <ol>
+                        <li>Le gestionnaire valide le dossier client.</li>
+                        <li>
+                            Le système génère automatiquement les documents nécessaires.
+                        </li>
+                        <li>
+                            Les documents sont archivés et disponibles pour consultation ou
+                            impression.
+                        </li>
+                    </ol>
+                    <strong>Scénarios alternatifs :</strong>
+                    <ul>
+                        <li>
+                            Si une donnée obligatoire est manquante, le système bloque la
+                            génération et affiche la liste des éléments à compléter.
+                        </li>
+                        <li>
+                            Si l’archivage échoue, une alerte est envoyée à l’administrateur.
+                        </li>
+                    </ul>
+                </div>
+                <!-- Ajoutez ici les autres exigences fonctionnelles structurées de la même façon -->
+            </article>
+            <!-- Ajoutez d'autres articles pour les autres grandes sections -->
+        </section>
+        <section>
+            <h2>3. Exigences Non Fonctionnelles</h2>
+            <article>
+                <h3>3.1 Sécurité</h3>
+                <div class="actions">
+                    <strong>Actions à effectuer :</strong>
+                    <ul>
+                        <li>
+                            Appliquer l’authentification LDAP + 2FA pour tous les accès
+                            sensibles.
+                        </li>
+                        <li>
+                            Chiffrer tous les flux et données stockées (TLS 1.3, AES-256).
+                        </li>
+                        <li>Déconnecter automatiquement après 15 minutes d’inactivité.</li>
+                        <li>Journaliser tous les accès et actions sensibles.</li>
+                    </ul>
+                </div>
+                <!-- Ajoutez ici des scénarios de test ou d’incident si besoin -->
+            </article>
+            <!-- Ajoutez d'autres articles pour les autres exigences non fonctionnelles -->
+        </section>
+        <footer>
+            Document généré le 17/06/2025 – Version web KYC<br />
+            &copy; Projet KYC – Architecture & Conformité
+        </footer>
+    </div>
+</body>
+
+</html>
