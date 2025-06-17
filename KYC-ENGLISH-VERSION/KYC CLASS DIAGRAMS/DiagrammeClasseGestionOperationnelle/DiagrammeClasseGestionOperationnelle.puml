@@ -33,7 +33,7 @@ class GestionOperationnelle {
     + journaliser(): Boolean
 }
 
-enum TypeOperationKYC {
+inum TypeOperationKYC {
     BLOCAGE_CLIENT
     DEBLOCAGE_CLIENT
     BLOCAGE_COMPTE
@@ -54,10 +54,10 @@ class StatutOperation {
     - estFinal: Boolean
     - actionSuivante: String
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
-class BlocageClient {
+class BlocageCliint {
     - id: String
     - gestionOperationnelle: GestionOperationnelle
     - typeBlocage: TypeBlocage
@@ -74,7 +74,7 @@ class BlocageClient {
     + planifierRevision(): Boolean
 }
 
-enum TypeBlocage {
+inum TypeBlocage {
     BLOCAGE_TOTAL
     BLOCAGE_PARTIEL
     BLOCAGE_OPERATIONNEL
@@ -82,7 +82,7 @@ enum TypeBlocage {
     BLOCAGE_DEFINITIF
 }
 
-enum NiveauBlocage {
+inum NiveauBlocage {
     NIVEAU_1_OPERATIONS
     NIVEAU_2_CONSULTATIONS
     NIVEAU_3_TOTAL
@@ -104,7 +104,7 @@ class MotifBlocage {
     + planifierRevision(): Boolean
 }
 
-enum CategorieMotif {
+inum CategorieMotif {
     CONFORMITE_REGLEMENTAIRE
     RISQUE_OPERATIONNEL
     DEMANDE_CLIENT
@@ -114,23 +114,23 @@ enum CategorieMotif {
     FRAUDE_DETECTEE
 }
 
-class DeblocageClient {
+class DeblocageCliint {
     - id: String
     - gestionOperationnelle: GestionOperationnelle
-    - blocageOrigine: BlocageClient
+    - blocageOrigine: BlocageCliint
     - typeDeblocage: TypeDeblocage
     - conditionsRemplies: List<String>
-    - documentsJustificatifs: List<String>
+    - documintsJustificatifs: List<String>
     - dateDeblocage: Date
     - validateur: String
     - superviseur: String
     + verifierConditions(): Boolean
-    + validerDocuments(): Boolean
+    + validerDocumints(): Boolean
     + debloquer(): Boolean
     + notifierDeblocage(): Boolean
 }
 
-enum TypeDeblocage {
+inum TypeDeblocage {
     DEBLOCAGE_COMPLET
     DEBLOCAGE_PARTIEL
     DEBLOCAGE_CONDITIONNEL
@@ -145,17 +145,17 @@ class ClotureCompte {
     - dateCloture: Date
     - soldeCompte: Double
     - modalitesSolde: String
-    - documentsRequis: List<String>
+    - documintsRequis: List<String>
     - attestationCloture: String
-    - impactReglementaire: String
+    - impactReglemintaire: String
     + validerConditions(): Boolean
     + calculerSolde(): Double
-    + genererAttestation(): String
+    + ginererAttestation(): String
     + cloturer(): Boolean
     + archiverDonnees(): Boolean
 }
 
-enum TypeCloture {
+inum TypeCloture {
     CLOTURE_DEMANDE_CLIENT
     CLOTURE_ADMINISTRATIVE
     CLOTURE_REGLEMENTAIRE
@@ -168,12 +168,12 @@ class MotifCloture {
     - code: String
     - libelle: String
     - description: String
-    - impactReglementaire: String
+    - impactReglemintaire: String
     - delaiConservation: Integer
-    - documentsRequis: List<String>
+    - documintsRequis: List<String>
     - procedureSpecifique: String
     + appliquer(): Boolean
-    + genererProcedure(): String
+    + ginererProcedure(): String
 }
 
 class AutorisationOperation {
@@ -181,20 +181,20 @@ class AutorisationOperation {
     - gestionOperationnelle: GestionOperationnelle
     - typeAutorisation: TypeAutorisation
     - niveauAutorisation: NiveauAutorisation
-    - demandeur: String
+    - requestur: String
     - approbateur: String
-    - dateDemande: Date
+    - dateRequest: Date
     - dateDecision: Date
     - statutAutorisation: StatutAutorisation
     - justificationDecision: String
-    + demander(): Boolean
+    + requestr(): Boolean
     + evaluer(): Boolean
     + approuver(): Boolean
     + refuser(): Boolean
     + escalader(): Boolean
 }
 
-enum TypeAutorisation {
+inum TypeAutorisation {
     AUTORISATION_BLOCAGE
     AUTORISATION_DEBLOCAGE
     AUTORISATION_CLOTURE
@@ -202,7 +202,7 @@ enum TypeAutorisation {
     AUTORISATION_URGENCE
 }
 
-enum NiveauAutorisation {
+inum NiveauAutorisation {
     NIVEAU_OPERATEUR
     NIVEAU_SUPERVISEUR
     NIVEAU_MANAGER
@@ -210,7 +210,7 @@ enum NiveauAutorisation {
     NIVEAU_COMITE
 }
 
-enum StatutAutorisation {
+inum StatutAutorisation {
     EN_ATTENTE
     APPROUVEE
     REFUSEE
@@ -234,7 +234,7 @@ class SuiviOperation {
     + planifierProchainSuivi(): Boolean
 }
 
-enum TypeControleSuivi {
+inum TypeControleSuivi {
     CONTROLE_CONFORMITE
     CONTROLE_EFFICACITE
     CONTROLE_IMPACT
@@ -252,13 +252,13 @@ class AlerteOperation {
     - destinataires: List<String>
     - canalAlerte: CanalAlerte
     - statutAlerte: StatutAlerte
-    + generer(): Boolean
+    + ginerer(): Boolean
     + diffuser(): Boolean
     + accuser(): Boolean
     + resoudre(): Boolean
 }
 
-enum TypeAlerte {
+inum TypeAlerte {
     ALERTE_EXPIRATION
     ALERTE_ANOMALIE
     ALERTE_REVISION
@@ -266,7 +266,7 @@ enum TypeAlerte {
     ALERTE_URGENCE
 }
 
-enum CanalAlerte {
+inum CanalAlerte {
     EMAIL
     SMS
     NOTIFICATION_SYSTEME
@@ -274,7 +274,7 @@ enum CanalAlerte {
     RAPPORT_AUTOMATIQUE
 }
 
-enum StatutAlerte {
+inum StatutAlerte {
     GENEREE
     DIFFUSEE
     ACCUSEE
@@ -288,17 +288,17 @@ class RapportOperation {
     - periodeDebut: Date
     - periodeFin: Date
     - parametresRapport: String
-    - contenuRapport: String
-    - dateGeneration: Date
-    - generateur: String
+    - continuRapport: String
+    - dateGineration: Date
+    - ginerateur: String
     - destinataires: List<String>
-    + generer(): Boolean
+    + ginerer(): Boolean
     + exporter(): String
     + diffuser(): Boolean
     + programmer(): Boolean
 }
 
-enum TypeRapport {
+inum TypeRapport {
     RAPPORT_BLOCAGES
     RAPPORT_DEBLOCAGES
     RAPPORT_CLOTURES
@@ -313,33 +313,33 @@ class AuditOperation {
     - action: String
     - utilisateur: String
     - dateAction: Date
-    - ancienneValeur: String
+    - anciinneValeur: String
     - nouvelleValeur: String
     - justification: String
     - adresseIP: String
     - sessionId: String
-    + enregistrer(): Boolean
+    + saver(): Boolean
     + consulter(): List<AuditOperation>
-    + genererPisteAudit(): String
+    + ginererPisteAudit(): String
 }
 
 ' Relations principales
 GestionOperationnelle "1" -- "1" TypeOperationKYC : type
 GestionOperationnelle "1" -- "1" StatutOperation : statut
-GestionOperationnelle "1" -- "0..1" BlocageClient : blocage
-GestionOperationnelle "1" -- "0..1" DeblocageClient : deblocage
+GestionOperationnelle "1" -- "0..1" BlocageCliint : blocage
+GestionOperationnelle "1" -- "0..1" DeblocageCliint : deblocage
 GestionOperationnelle "1" -- "0..1" ClotureCompte : cloture
 GestionOperationnelle "1" -- "0..*" AutorisationOperation : autorisations
 GestionOperationnelle "1" -- "0..*" SuiviOperation : suivis
 GestionOperationnelle "1" -- "0..*" AlerteOperation : alertes
 GestionOperationnelle "1" -- "0..*" AuditOperation : audit
 
-BlocageClient "1" -- "1" TypeBlocage : type
-BlocageClient "1" -- "1" NiveauBlocage : niveau
-BlocageClient "1" -- "1" MotifBlocage : motif
+BlocageCliint "1" -- "1" TypeBlocage : type
+BlocageCliint "1" -- "1" NiveauBlocage : niveau
+BlocageCliint "1" -- "1" MotifBlocage : motif
 MotifBlocage "1" -- "1" CategorieMotif : categorie
 
-DeblocageClient "1" -- "1" TypeDeblocage : type
+DeblocageCliint "1" -- "1" TypeDeblocage : type
 ClotureCompte "1" -- "1" TypeCloture : type
 ClotureCompte "1" -- "1" MotifCloture : motif
 

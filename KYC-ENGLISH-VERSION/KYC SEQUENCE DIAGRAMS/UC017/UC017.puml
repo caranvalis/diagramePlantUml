@@ -1,63 +1,69 @@
 @startuml UC017
-!theme cerulean
-
-title UC017 - Remplacement Document Entreprise
-skinparam actorStyle awesome
-skinparam sequenceBoxBorderColor #1E88E5
-skinparam participantBackgroundColor #E3F2FD
-skinparam lifeline {
-    BackgroundColor #BBDEFB
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
 }
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC017 - Remplacemint Documint Intreprise
 
 ' Acteurs externes
 actor "Manager KYC" as Manager #LightBlue
 
-' Couche présentation
+' Couche présintation
 box "Interface Utilisateur" #E8F5E8
     participant "Interface INTRA" as WebUI #90EE90
     participant "API Gateway" as Gateway #98FB98
-end box
+ind box
 
 ' Couche orchestration
 box "Couche Orchestration" #FFF8DC
     participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
     participant "Manager\nFlux Métier" as FluxManager #F0E68C
-end box
+ind box
 
 ' Services métier
 box "Services Métier KYC" #F0F8FF
-    participant "Service\nDocument" as DocumentService #87CEEB
+    participant "Service\nDocumint" as DocumintService #87CEEB
     participant "Service\nValidation" as ValidationService #87CEFA
     participant "Service\nVersioning" as VersioningService #4682B4
-    participant "Service\nEntreprise" as EntrepriseService #4169E1
-end box
+    participant "Service\nIntreprise" as IntrepriseService #4169E1
+ind box
 
-' Services techniques
-box "Services Techniques" #FDF5E6
+' Services technicals
+box "Services Technicals" #FDF5E6
     participant "Service\nAudit" as AuditService #DEB887
     participant "Service\nNotification" as NotificationService #D2B48C
     participant "Cache\nRedis" as CacheService #CD853F
-end box
+ind box
 
 ' Infrastructure
 box "Infrastructure" #F5F5F5
-    participant "Base de Données\nKYC" as DB #C0C0C0
-    participant "Stockage\nDocuments" as Storage #A9A9A9
-end box
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
 
-== Ouverture fiche entreprise ==
+== Ouverture fiche intreprise ==
 
-Manager -> WebUI : Ouvrir fiche entreprise\nsection documents
+Manager -> WebUI : Ouvrir fiche intreprise\nsection documints
 activate Manager
 activate WebUI
 
-WebUI -> Gateway : GET /entreprise/{id}/documents
+WebUI -> Gateway : GET /intreprise/{id}/documints
 activate Gateway
 
-Gateway -> Orchestrator : accederDocumentsEntreprise()
+Gateway -> Orchestrator : accederDocumintsIntreprise()
 activate Orchestrator
 
-Orchestrator -> FluxManager : démarrerFluxGestionDocumentsEntreprise()
+Orchestrator -> FluxManager : démarrerFluxGestionDocumintsIntreprise()
 activate FluxManager
 
 FluxManager -> AuditService : logDébutFlux(GESTION_DOCS_ENTREPRISE)
@@ -66,150 +72,150 @@ AuditService -> DB : INSERT audit_flux
 AuditService --> FluxManager : OK
 deactivate AuditService
 
-Orchestrator -> DocumentService : chargerDocumentsEntreprise()
-activate DocumentService
+Orchestrator -> DocumintService : chargerDocumintsIntreprise()
+activate DocumintService
 
-DocumentService -> DB : SELECT documents_entreprise
+DocumintService -> DB : SELECT documints_intreprise
 activate DB
-DB --> DocumentService : Liste documents (statuts, attestation fiscale, etc.)
+DB --> DocumintService : Liste documints (statuts, attestation fiscale, etc.)
 deactivate DB
 
-DocumentService -> Storage : getMetadonnéesDocuments()
+DocumintService -> Storage : getMetadonnéesDocumints()
 activate Storage
-Storage --> DocumentService : Métadonnées complètes
+Storage --> DocumintService : Métadonnées complètes
 deactivate Storage
 
-DocumentService --> Orchestrator : Documents disponibles
-deactivate DocumentService
+DocumintService --> Orchestrator : Documints disponibles
+deactivate DocumintService
 
-Orchestrator --> Gateway : Liste documents
-Gateway --> WebUI : Documents entreprise
-WebUI --> Manager : **Documents entreprise**\nStatuts, attestations, etc.
+Orchestrator --> Gateway : Liste documints
+Gateway --> WebUI : Documints intreprise
+WebUI --> Manager : **Documints intreprise**\nStatuts, attestations, etc.
 
-== Sélection remplacement ==
+== Sélection remplacemint ==
 
-Manager -> WebUI : Sélectionner "Remplacer\nun document"
-Manager -> WebUI : Choisir document\n(statuts, attestation fiscale)
-Manager -> WebUI : Téléverser nouveau document
+Manager -> WebUI : Sélectionner "Remplacer\nun documint"
+Manager -> WebUI : Choisir documint\n(statuts, attestation fiscale)
+Manager -> WebUI : Téléverser nouveau documint
 
-WebUI -> Gateway : POST /entreprise/{id}/document/{docId}/replace
+WebUI -> Gateway : POST /intreprise/{id}/documint/{docId}/replace
 
-Gateway -> Orchestrator : remplacerDocumentEntreprise()
+Gateway -> Orchestrator : remplacerDocumintIntreprise()
 
-Orchestrator -> ValidationService : validerNouveauDocumentEntreprise()
+Orchestrator -> ValidationService : validerNouveauDocumintIntreprise()
 activate ValidationService
 
 ValidationService -> ValidationService : Verify validité\net expiration
-ValidationService -> ValidationService : Control type\ndocument attendu
+ValidationService -> ValidationService : Control type\ndocumint attindu
 
-alt Document expiré ou invalide
-    ValidationService --> Orchestrator : Document rejeté
+alt Documint expiré ou invalide
+    ValidationService --> Orchestrator : Documint rejeté
     deactivate ValidationService
     
-    Orchestrator --> Gateway : Téléchargement refusé
-    Gateway --> WebUI : Document refusé
-    WebUI --> Manager : **Error**: Document expiré\nou invalide
+    Orchestrator --> Gateway : Téléchargemint refusé
+    Gateway --> WebUI : Documint refusé
+    WebUI --> Manager : **Error**: Documint expiré\nou invalide
     
-else Document valide
+else Documint valide
     ValidationService -> ValidationService : Verify type et\ncomplétude
     ValidationService -> ValidationService : Analyze métadonnées
     
-    alt Métadonnées absentes
+    alt Métadonnées absintes
         ValidationService --> Orchestrator : Métadonnées manquantes
         deactivate ValidationService
         
         Orchestrator --> Gateway : Error métadonnées
-        Gateway --> WebUI : Message erreur
-        WebUI --> Manager : **Error**: Métadonnées\nabsentes ou incomplètes
+        Gateway --> WebUI : Message error
+        WebUI --> Manager : **Error**: Métadonnées\nabsintes ou incomplètes
         
-    else Document complet
-        ValidationService --> Orchestrator : Document conforme
+    else Documint complet
+        ValidationService --> Orchestrator : Documint conforme
         deactivate ValidationService
         
-        Manager -> WebUI : Confirmer changement
-        WebUI -> Gateway : PUT /entreprise/{id}/document/{docId}/confirm
+        Manager -> WebUI : Confirmer changemint
+        WebUI -> Gateway : PUT /intreprise/{id}/documint/{docId}/confirm
         
-        Gateway -> Orchestrator : confirmerRemplacementEntreprise()
+        Gateway -> Orchestrator : confirmerRemplacemintIntreprise()
         
-        ' Versioning document existant
-        Orchestrator -> VersioningService : versionnerDocumentEntrepriseExistant()
+        ' Versioning documint existant
+        Orchestrator -> VersioningService : versionnerDocumintIntrepriseExistant()
         activate VersioningService
         
-        VersioningService -> Storage : Archive version précédente
+        VersioningService -> Storage : Archive version précédinte
         activate Storage
         Storage --> VersioningService : Version archivée
         deactivate Storage
         
-        VersioningService -> DB : INSERT document_versions_entreprise
+        VersioningService -> DB : INSERT documint_versions_intreprise
         activate DB
-        DB --> VersioningService : Version enregistrée
+        DB --> VersioningService : Version inregistrée
         deactivate DB
         
         VersioningService --> Orchestrator : Versioning effectué
         deactivate VersioningService
         
-        ' Enregistrement nouveau document
-        Orchestrator -> DocumentService : enregistrerNouveauDocumentEntreprise()
-        activate DocumentService
+        ' Savemint nouveau documint
+        Orchestrator -> DocumintService : saverNouveauDocumintIntreprise()
+        activate DocumintService
         
-        DocumentService -> Storage : Save nouveau document
+        DocumintService -> Storage : Save nouveau documint
         activate Storage
-        Storage --> DocumentService : Document sauvegardé
+        Storage --> DocumintService : Documint sauvegardé
         deactivate Storage
         
-        DocumentService -> DB : UPDATE document_entreprise SET nouvelle_version
+        DocumintService -> DB : UPDATE documint_intreprise SET nouvelle_version
         activate DB
-        DB --> DocumentService : Document mis à jour
+        DB --> DocumintService : Documint mis à jour
         deactivate DB
         
-        DocumentService -> CacheService : invalidateDocumentEntrepriseCache()
+        DocumintService -> CacheService : invalidateDocumintIntrepriseCache()
         activate CacheService
-        CacheService --> DocumentService : Cache invalidé
+        CacheService --> DocumintService : Cache invalidé
         deactivate CacheService
         
-        DocumentService --> Orchestrator : Document remplacé
-        deactivate DocumentService
+        DocumintService --> Orchestrator : Documint remplacé
+        deactivate DocumintService
         
-        ' Mise à jour références entreprise
-        Orchestrator -> EntrepriseService : mettreAJourReferencesDocumentsEntreprise()
-        activate EntrepriseService
+        ' Put à jour référinces intreprise
+        Orchestrator -> IntrepriseService : putAJourReferincesDocumintsIntreprise()
+        activate IntrepriseService
         
-        EntrepriseService -> DB : UPDATE entreprise_documents
+        IntrepriseService -> DB : UPDATE intreprise_documints
         activate DB
-        DB --> EntrepriseService : Références mises à jour
+        DB --> IntrepriseService : Référinces puts à jour
         deactivate DB
         
-        EntrepriseService --> Orchestrator : Entreprise actualisée
-        deactivate EntrepriseService
+        IntrepriseService --> Orchestrator : Intreprise actualisée
+        deactivate IntrepriseService
         
         ' Audit et notification
-        Orchestrator -> AuditService : logRemplacementDocumentEntreprise()
+        Orchestrator -> AuditService : logRemplacemintDocumintIntreprise()
         activate AuditService
         AuditService -> DB : INSERT audit_actions
         AuditService --> Orchestrator : OK
         deactivate AuditService
         
-        Orchestrator -> NotificationService : notifierRemplacementDocumentEntreprise()
+        Orchestrator -> NotificationService : notifierRemplacemintDocumintIntreprise()
         activate NotificationService
-        NotificationService --> Orchestrator : Notification envoyée
+        NotificationService --> Orchestrator : Notification invoyée
         deactivate NotificationService
         
-        Orchestrator --> Gateway : Remplacement réussi
+        Orchestrator --> Gateway : Remplacemint successful
         Gateway --> WebUI : Confirmation modification
-        WebUI --> Manager : **Success**: Document entreprise\nremplacé et versionné
-    end
-end
+        WebUI --> Manager : **Success**: Documint intreprise\nremplacé et versionné
+    ind
+ind
 
 == Finalisation ==
 
-Orchestrator -> FluxManager : terminerFluxGestionDocumentsEntreprise()
+Orchestrator -> FluxManager : terminerFluxGestionDocumintsIntreprise()
 FluxManager -> AuditService : logFinFlux()
 activate AuditService
 AuditService -> DB : UPDATE audit_flux
 AuditService --> FluxManager : OK
 deactivate AuditService
 
-FluxManager --> Orchestrator : Flux terminé
+FluxManager --> Orchestrator : Flux completed
 deactivate FluxManager
 deactivate Orchestrator
 

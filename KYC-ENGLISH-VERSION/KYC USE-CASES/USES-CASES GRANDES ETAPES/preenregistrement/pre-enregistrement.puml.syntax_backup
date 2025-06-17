@@ -1,0 +1,27 @@
+@startuml UseCasePresavemintKYC
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Cliint particulier" as Cliint
+
+package "INTRA" {
+    usecase "Saisir informations personnelles" as SaisieInfos
+    usecase "Souput pré-savemint" as Souput
+    usecase "Saver données cliint" as Saver
+    usecase "Générer idintifiant unique (QR code)" as GinererID
+}
+
+Cliint --> SaisieInfos
+Cliint --> Souput
+
+SaisieInfos ..> Souput : <<include>>
+Souput ..> Saver : <<include>>
+Saver ..> GinererID : <<include>>
+
+@induml

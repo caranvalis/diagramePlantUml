@@ -1,0 +1,130 @@
+@startuml NotificationManagementActivityDiagram
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Activity Diagram - Notification Management with Acknowledgment Receipt
+
+|Trigger|
+start
+:KYC Event detected;
+:Identify notification type;
+:Retrieve contextual data;
+
+|Notification Manager|
+:Create notification;
+:Determine recipient;
+:Select preferred channel;
+:Choose appropriate template;
+
+if (Acknowledgment required?) then (Yes)
+    :Generate confirmation code;
+    :Configure acknowledgment type;
+    :Define waiting delay;
+else (No)
+    :Mark as no acknowledgment;
+endif
+
+:Personalize content;
+:Add acknowledgment links/codes;
+
+|Communication Channel|
+:Validate message format;
+:Send notification;
+
+if (Send successful?) then (Yes)
+    :Mark as sent;
+    :Record timestamp;
+else (No)
+    :Record send error;
+    :Schedule next attempt;
+    :Notify temporary failure;
+endif
+
+|Client|
+:Receive notification;
+:Read content;
+
+if (Acknowledgment action available?) then (Yes)
+    if (Client acknowledges receipt?) then (Yes)
+        :Click link/reply code;
+        :Send confirmation;
+    else (No)
+        :Ignore notification;
+    endif
+else (No)
+    :Processing completed on client side;
+endif
+
+|Acknowledgment Service|
+if (Acknowledgment received?) then (Yes)
+    :Validate confirmation code;
+    :Record metadata;
+    :Timestamp reception;
+    
+    if (Valid acknowledgment?) then (Yes)
+        :Mark as acknowledged;
+        :Notify success;
+        :Archive proof;
+    else (No)
+        :Reject invalid acknowledgment;
+        :Schedule resend;
+    endif
+else (No)
+    :Wait for configured delay;
+endif
+
+|Notification Manager|
+:Check waiting delay;
+
+if (Delay exceeded?) then (Yes)
+    :Increment attempt counter;
+    
+    if (Attempts < maximum?) then (Yes)
+        :Select alternative channel;
+        :Modify message urgency;
+        :Schedule resend;
+        :Resend notification;
+    else (No)
+        :Mark as definitive failure;
+        :Alert supervision;
+        :Escalate if critical;
+        :Archive with failure status;
+    endif
+else (No)
+    :Continue monitoring;
+endif
+
+|Reporting System|
+:Collect statistics;
+:Calculate delivery rate;
+:Calculate acknowledgment rate;
+:Analyze channel performance;
+:Generate periodic reports;
+
+note right
+    Monitored metrics:
+    - Delivery rate per channel
+    - Average reception delay
+    - Acknowledgment rate per type
+    - Resend effectiveness
+    - Cost per notification
+end note
+
+if (Notification completely processed?) then (Yes)
+    :Archive notification;
+    :Update statistics;
+    :Clean temporary data;
+    stop
+else (No)
+    :Maintain under monitoring;
+    :Continue processing;
+endif
+
+@enduml

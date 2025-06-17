@@ -1,4 +1,4 @@
-@startuml UseCasePreenregistrementKYC
+@startuml UseCasePresavemintKYC
 skinparam actorStyle awesome
 skinparam usecase {
     BackgroundColor #E0F7FA
@@ -8,20 +8,20 @@ skinparam usecase {
 skinparam packageStyle rectangle
 skinparam linetype ortho
 
-actor "Client particulier" as Client
+actor "Cliint particulier" as Cliint
 
 package "INTRA" {
     usecase "Saisir informations personnelles" as SaisieInfos
-    usecase "Soumettre pré-enregistrement" as Soumettre
-    usecase "Enregistrer données client" as Enregistrer
-    usecase "Générer identifiant unique (QR code)" as GenererID
+    usecase "Souput pré-savemint" as Souput
+    usecase "Saver données client" as Saver
+    usecase "Générer idintifiant unique (QR code)" as GinererID
 }
 
-Client --> SaisieInfos
-Client --> Soumettre
+Cliint --> SaisieInfos
+Cliint --> Souput
 
-SaisieInfos ..> Soumettre : <<include>>
-Soumettre ..> Enregistrer : <<include>>
-Enregistrer ..> GenererID : <<include>>
+SaisieInfos ..> Souput : <<include>>
+Souput ..> Saver : <<include>>
+Saver ..> GinererID : <<include>>
 
 @enduml

@@ -1,0 +1,226 @@
+@startuml UC017
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC017 - Remplacement Document Entreprise
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nDocument" as DocumentService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nVersioning" as VersioningService #4682B4
+    participant "Service\nEntreprise" as EntrepriseService #4169E1
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+end box
+
+== Ouverture fiche entreprise ==
+
+Manager -> WebUI : Ouvrir fiche entreprise\nsection documents
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /entreprise/{id}/documents
+activate Gateway
+
+Gateway -> Orchestrator : accederDocumentsEntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGestionDocumentsEntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(GESTION_DOCS_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+Orchestrator -> DocumentService : chargerDocumentsEntreprise()
+activate DocumentService
+
+DocumentService -> DB : SELECT documents_entreprise
+activate DB
+DB --> DocumentService : Liste documents (statuts, attestation fiscale, etc.)
+deactivate DB
+
+DocumentService -> Storage : getMetadonnéesDocuments()
+activate Storage
+Storage --> DocumentService : Métadonnées complètes
+deactivate Storage
+
+DocumentService --> Orchestrator : Documents disponibles
+deactivate DocumentService
+
+Orchestrator --> Gateway : Liste documents
+Gateway --> WebUI : Documents entreprise
+WebUI --> Manager : **Documents entreprise**\nStatuts, attestations, etc.
+
+== Sélection remplacement ==
+
+Manager -> WebUI : Sélectionner "Remplacer\nun document"
+Manager -> WebUI : Choisir document\n(statuts, attestation fiscale)
+Manager -> WebUI : Téléverser nouveau document
+
+WebUI -> Gateway : POST /entreprise/{id}/document/{docId}/replace
+
+Gateway -> Orchestrator : remplacerDocumentEntreprise()
+
+Orchestrator -> ValidationService : validerNouveauDocumentEntreprise()
+activate ValidationService
+
+ValidationService -> ValidationService : Verify validité\net expiration
+ValidationService -> ValidationService : Control type\ndocument attendu
+
+alt Document expiré ou invalide
+    ValidationService --> Orchestrator : Document rejeté
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Téléchargement refusé
+    Gateway --> WebUI : Document refusé
+    WebUI --> Manager : **Error**: Document expiré\nou invalide
+    
+else Document valide
+    ValidationService -> ValidationService : Verify type et\ncomplétude
+    ValidationService -> ValidationService : Analyze métadonnées
+    
+    alt Métadonnées absentes
+        ValidationService --> Orchestrator : Métadonnées manquantes
+        deactivate ValidationService
+        
+        Orchestrator --> Gateway : Error métadonnées
+        Gateway --> WebUI : Message erreur
+        WebUI --> Manager : **Error**: Métadonnées\nabsentes ou incomplètes
+        
+    else Document complet
+        ValidationService --> Orchestrator : Document conforme
+        deactivate ValidationService
+        
+        Manager -> WebUI : Confirmer changement
+        WebUI -> Gateway : PUT /entreprise/{id}/document/{docId}/confirm
+        
+        Gateway -> Orchestrator : confirmerRemplacementEntreprise()
+        
+        ' Versioning document existant
+        Orchestrator -> VersioningService : versionnerDocumentEntrepriseExistant()
+        activate VersioningService
+        
+        VersioningService -> Storage : Archive version précédente
+        activate Storage
+        Storage --> VersioningService : Version archivée
+        deactivate Storage
+        
+        VersioningService -> DB : INSERT document_versions_entreprise
+        activate DB
+        DB --> VersioningService : Version enregistrée
+        deactivate DB
+        
+        VersioningService --> Orchestrator : Versioning effectué
+        deactivate VersioningService
+        
+        ' Enregistrement nouveau document
+        Orchestrator -> DocumentService : enregistrerNouveauDocumentEntreprise()
+        activate DocumentService
+        
+        DocumentService -> Storage : Save nouveau document
+        activate Storage
+        Storage --> DocumentService : Document sauvegardé
+        deactivate Storage
+        
+        DocumentService -> DB : UPDATE document_entreprise SET nouvelle_version
+        activate DB
+        DB --> DocumentService : Document mis à jour
+        deactivate DB
+        
+        DocumentService -> CacheService : invalidateDocumentEntrepriseCache()
+        activate CacheService
+        CacheService --> DocumentService : Cache invalidé
+        deactivate CacheService
+        
+        DocumentService --> Orchestrator : Document remplacé
+        deactivate DocumentService
+        
+        ' Mise à jour références entreprise
+        Orchestrator -> EntrepriseService : mettreAJourReferencesDocumentsEntreprise()
+        activate EntrepriseService
+        
+        EntrepriseService -> DB : UPDATE entreprise_documents
+        activate DB
+        DB --> EntrepriseService : Références mises à jour
+        deactivate DB
+        
+        EntrepriseService --> Orchestrator : Entreprise actualisée
+        deactivate EntrepriseService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logRemplacementDocumentEntreprise()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierRemplacementDocumentEntreprise()
+        activate NotificationService
+        NotificationService --> Orchestrator : Notification envoyée
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : Remplacement réussi
+        Gateway --> WebUI : Confirmation modification
+        WebUI --> Manager : **Success**: Document entreprise\nremplacé et versionné
+    end
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGestionDocumentsEntreprise()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@enduml

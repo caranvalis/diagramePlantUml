@@ -1,0 +1,342 @@
+@startuml UC011
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC011 - Signature Représentant Légal avec ePad
+
+' Acteurs externes
+actor "Représentant\nLégal" as Representant #LightGreen
+actor "Manager KYC" as Manager #LightBlue
+participant "ePad Signature" as ePad #LightYellow
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nSignature" as SignatureService #87CEEB
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nSécurité" as SecurityService #4169E1
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nReprésentant" as RepresentantService #6495ED
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+    participant "HSM\nSécurisé" as HSM #808080
+end box
+
+== Préparation signature représentant ==
+
+Manager -> WebUI : Initier signature\nreprésententant légal
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : POST /signature/representant/init
+activate Gateway
+
+Gateway -> Orchestrator : initierSignatureRepresentant()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxSignatureRepresentant()
+activate FluxManager
+
+FluxManager -> SecurityService : vérifierHabilitationsManager()
+activate SecurityService
+SecurityService -> DB : SELECT permissions
+activate DB
+DB --> SecurityService : Permissions validées
+deactivate DB
+SecurityService --> FluxManager : Accès autorisé
+deactivate SecurityService
+
+FluxManager -> AuditService : logDébutSignatureRepresentant()
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Préparation des documents
+Orchestrator -> DocumentService : préparerDocumentsRepresentant()
+activate DocumentService
+
+DocumentService -> Storage : Récupérer documents entreprise
+activate Storage
+Storage --> DocumentService : Documents à signer
+deactivate Storage
+
+DocumentService -> DocumentService : Préparer documents\npour signature représentant
+DocumentService -> DocumentService : Generate métadonnées\nsignature légale
+
+DocumentService --> Orchestrator : Documents préparés
+deactivate DocumentService
+
+' Vérification identité représentant
+Orchestrator -> RepresentantService : vérifierIdentitéReprésentant()
+activate RepresentantService
+
+RepresentantService -> DB : SELECT representant_legal
+activate DB
+DB --> RepresentantService : Informations représentant
+deactivate DB
+
+RepresentantService -> RepresentantService : Validate habilitations\nsignature
+RepresentantService -> RepresentantService : Control statut\nactif
+
+RepresentantService --> Orchestrator : Représentant habilité
+deactivate RepresentantService
+
+Orchestrator --> Gateway : Session préparée
+Gateway --> WebUI : Interface signature prête
+WebUI --> Manager : **Session signature préparée**\nReprésent légal habilité
+
+== Initialisation ePad ==
+
+Manager -> WebUI : Lancer connexion ePad\npour représentant
+WebUI -> Gateway : POST /signature/epad/connect-representant
+
+Gateway -> Orchestrator : connecterEPadRepresentant()
+
+Orchestrator -> SignatureService : initialiserEPadRepresentant()
+activate SignatureService
+
+SignatureService -> ePad : Verify connexion ePad
+activate ePad
+
+alt ePad non fonctionnel
+    ePad --> SignatureService : Error matériel
+    deactivate ePad
+    
+    SignatureService -> AuditService : logErrorEPad()
+    activate AuditService
+    AuditService -> DB : INSERT audit_erreurs
+    AuditService --> SignatureService : OK
+    deactivate AuditService
+    
+    SignatureService --> Orchestrator : ePad défaillant
+    deactivate SignatureService
+    
+    Orchestrator --> Gateway : Error matériel
+    Gateway --> WebUI : ePad non fonctionnel
+    WebUI --> Manager : **Error**: ePad défaillant\nSignature impossible
+    
+    Manager -> Representant : Informer échec\nsignature impossible
+    activate Representant
+    Representant --> Manager : Compris - Report signature
+    deactivate Representant
+    
+    note over Manager : Procédure reportée\nVerify matériel ePad
+    
+else ePad opérationnel
+    ePad --> SignatureService : Connexion établie
+    
+    SignatureService -> SecurityService : authentifierEPadRepresentant()
+    activate SecurityService
+    SecurityService -> HSM : Verify certificat
+    activate HSM
+    HSM --> SecurityService : Certificat valide
+    deactivate HSM
+    SecurityService --> SignatureService : ePad authentifié
+    deactivate SecurityService
+    
+    SignatureService -> DocumentService : chargerDocumentsPourRepresentant()
+    activate DocumentService
+    DocumentService --> SignatureService : Documents formatés
+    deactivate DocumentService
+    
+    SignatureService -> ePad : Load documents représentant
+    ePad --> SignatureService : Documents chargés
+    
+    SignatureService --> Orchestrator : ePad prêt
+    deactivate SignatureService
+    
+    Orchestrator --> Gateway : ePad initialisé
+    Gateway --> WebUI : ePad connecté
+    WebUI --> Manager : **ePad prêt**\nInviter représentant à signer
+    
+    == Processus signature ==
+    
+    Manager -> Representant : Inviter à signer\ndocuments entreprise
+    activate Representant
+    
+    Representant -> ePad : Consulter documents
+    ePad -> SignatureService : Afficher documents
+    activate SignatureService
+    
+    SignatureService -> AuditService : logConsultationRepresentant()
+    activate AuditService
+    AuditService -> DB : INSERT audit_actions
+    AuditService --> SignatureService : OK
+    deactivate AuditService
+    
+    SignatureService --> ePad : Documents affichés
+    ePad --> Representant : **Documents à signer**\nLecture et validation
+    
+    note over Representant : Représentant lit\net vérifie documents\nentreprise
+    
+    alt Rejection de signature
+        Representant -> ePad : Rejectioner signature
+        ePad -> SignatureService : Rejection documenté
+        
+        SignatureService -> AuditService : logRejectionSignature()
+        activate AuditService
+        AuditService -> DB : INSERT audit_refus
+        AuditService --> SignatureService : OK
+        deactivate AuditService
+        
+        SignatureService --> ePad : Rejection enregistré
+        ePad --> Representant : **Rejection enregistré**
+        Representant --> Manager : Rejection de signature\nAnnulation procédure
+        deactivate Representant
+        
+        SignatureService --> Orchestrator : Signature refusée
+        deactivate SignatureService
+        
+        Orchestrator --> Gateway : Procédure annulée
+        Gateway --> WebUI : Signature refusée
+        WebUI --> Manager : **Signature refusée**\nProcédure annulée
+        
+        note over Manager : Signature refusée\nAnalyze motifs
+        
+    else Signature acceptée
+        Representant -> ePad : Apposer signature\net empreinte légale
+        
+        ePad -> SignatureService : Capturer signature\nreprésent légal
+        
+        SignatureService -> SignatureService : Traiter données\nbiométriques légales
+        
+        alt Signature partielle
+            SignatureService -> ValidationService : validerSignatureRepresentant()
+            activate ValidationService
+            ValidationService --> SignatureService : Signature incomplète
+            deactivate ValidationService
+            
+            SignatureService -> AuditService : logSignaturePartielle()
+            activate AuditService
+            AuditService -> DB : INSERT audit_erreurs
+            AuditService --> SignatureService : OK
+            deactivate AuditService
+            
+            SignatureService --> ePad : Recommencer signature
+            ePad --> Representant : **Signature incomplète**\nRecommencer
+            
+            note over Representant : Signature à refaire\nQualité insuffisante
+            
+        else Signature complète et valide
+            SignatureService -> ValidationService : validerSignatureRepresentant()
+            activate ValidationService
+            ValidationService -> ValidationService : Control qualité\nsignature légale
+            ValidationService -> ValidationService : Verify intégrité\nempreinte représentant
+            ValidationService --> SignatureService : Signature valide
+            deactivate ValidationService
+            
+            ' Intégration documents signés
+            SignatureService -> DocumentService : integrerSignatureRepresentant()
+            activate DocumentService
+            
+            DocumentService -> HSM : Horodater signature légale
+            activate HSM
+            HSM --> DocumentService : Horodatage sécurisé
+            deactivate HSM
+            
+            DocumentService -> DocumentService : Generate documents\nsignés finaux
+            DocumentService -> Storage : Archive documents légaux
+            activate Storage
+            Storage --> DocumentService : Documents archivés
+            deactivate Storage
+            
+            DocumentService -> DB : INSERT signature_representant
+            activate DB
+            DB --> DocumentService : Signature enregistrée
+            deactivate DB
+            
+            DocumentService --> SignatureService : Documents finalisés
+            deactivate DocumentService
+            
+            ' Audit et notification
+            SignatureService -> AuditService : logSignatureRepresentantReussie()
+            activate AuditService
+            AuditService -> DB : INSERT audit_actions
+            AuditService --> SignatureService : OK
+            deactivate AuditService
+            
+            SignatureService -> NotificationService : notifierSignatureRepresentant()
+            activate NotificationService
+            NotificationService -> NotificationService : Préparer notifications\nentreprise + équipes
+            NotificationService --> SignatureService : Notifications envoyées
+            deactivate NotificationService
+            
+            SignatureService --> ePad : Signature finalisée
+            ePad --> Representant : **Signature réussie**\nDocuments légaux signés
+            deactivate Representant
+            
+            SignatureService --> Orchestrator : Signature complète
+            deactivate SignatureService
+            
+            Orchestrator --> Gateway : Processus terminé
+            Gateway --> WebUI : Signature représentant réussie
+            WebUI --> Manager : **Success**: Documents signés\npar représentant légal
+            
+            note over Manager : Signature légale finalisée\nDocuments archivés\nConformité assurée
+        end
+    end
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxSignatureRepresentant()
+FluxManager -> SignatureService : nettoyerSessionEPadRepresentant()
+activate SignatureService
+SignatureService -> ePad : Effacer données temporaires
+activate ePad
+ePad --> SignatureService : Nettoyage effectué
+deactivate ePad
+SignatureService --> FluxManager : Session fermée
+deactivate SignatureService
+
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over HSM : Signatures représentants\nlégaux horodatées\net sécurisées
+
+@enduml

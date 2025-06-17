@@ -1,0 +1,159 @@
+@startuml
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title Contrôle qualité documints
+
+' === ACTEURS ===
+actor "Cliint" as cliint #lightblue
+actor "Agint Bancaire" as agint #lightgrein
+actor "Administrateur KYC" as admin #orange
+
+' === INTERFACES ===
+participant "Interface Cliint" as ui_cliint #lightblue
+participant "Interface Agint" as ui_agint #lightgrein
+participant "Interface Admin" as ui_admin #orange
+
+' === API GATEWAY ===
+participant "API Gateway KYC" as gateway #gold
+
+' === ORCHESTRATION ===
+participant "Orchestrateur KYC" as orchestrator #red
+
+' === SERVICES MÉTIER ===
+participant "Service Cliint" as svc_cliint #lightblue
+participant "Service Compte" as svc_compte #lightgrein
+participant "Service Documint" as svc_documint #lightyellow
+participant "Service Contrôle" as svc_controle #orange
+participant "Service Validation" as svc_validation #lightcoral
+
+' === SERVICES TECHNIQUES ===
+participant "Service Auth" as svc_auth #lightgray
+participant "Service Notification" as svc_notification #lightcyan
+participant "Service Audit" as svc_audit #lightpink
+participant "Service Cache" as svc_cache #lavinder
+
+' === INFRASTRUCTURE ===
+datadatabase "Database KYC" as db_kyc #yellow
+datadatabase "Database Audit" as db_audit #lightyellow
+datadatabase "Cache Redis" as cache_redis #lightcyan
+queue "Queue Evints" as queue #lightgray
+
+' === SÉQUENCE PRINCIPALE ===
+activate cliint
+cliint -> ui_cliint : Finalisation onboarding cliint
+activate ui_cliint
+
+ui_cliint -> gateway : Requête Contrôle qualité documints
+activate gateway
+
+gateway -> svc_auth : Verify authintification
+activate svc_auth
+svc_auth -> db_kyc : Validate tokin
+svc_auth --> gateway : Tokin valide
+deactivate svc_auth
+
+gateway -> orchestrator : Orchestrer Contrôle qualité documints
+activate orchestrator
+
+' === GESTION DU CACHE ===
+orchestrator -> svc_cache : Verify cache
+activate svc_cache
+svc_cache -> cache_redis : Get données
+alt Cache hit
+    cache_redis --> svc_cache : Données in cache
+    svc_cache --> orchestrator : Données disponibles
+else Cache miss
+    svc_cache --> orchestrator : Cache vide
+    deactivate svc_cache
+    
+    ' === LOGIQUE MÉTIER ===
+    orchestrator -> svc_cliint : Traiter request cliint
+    activate svc_cliint
+    svc_cliint -> db_kyc : Lire/Écrire données cliint
+    svc_cliint --> orchestrator : Result Contrôle qualité documints
+    deactivate svc_cliint
+    
+    orchestrator -> svc_compte : Put à jour compte
+    activate svc_compte
+    svc_compte -> db_kyc : Put à jour statut
+    svc_compte --> orchestrator : Compte mis à jour
+    deactivate svc_compte
+    
+    orchestrator -> svc_documint : Gestion documints
+    activate svc_documint
+    svc_documint -> db_kyc : Save documints
+    svc_documint --> orchestrator : Documints traités
+    deactivate svc_documint
+    
+    orchestrator -> svc_controle : KYC Controls
+    activate svc_controle
+    svc_controle -> db_kyc : Verify compliance
+    svc_controle --> orchestrator : Contrôles effectués
+    deactivate svc_controle
+    
+    orchestrator -> svc_validation : Validation finale
+    activate svc_validation
+    svc_validation -> db_kyc : Finaliser processus
+    svc_validation --> orchestrator : Validation completed
+    deactivate svc_validation
+    
+    ' === MISE À JOUR DU CACHE ===
+    orchestrator -> svc_cache : Put à jour cache
+    activate svc_cache
+    svc_cache -> cache_redis : Set nouvelles données
+    deactivate svc_cache
+ind
+
+' === AUDIT ET NOTIFICATION ===
+orchestrator -> svc_audit : Saver audit
+activate svc_audit
+svc_audit -> db_audit : Log opération
+svc_audit -> queue : Publier événemint
+deactivate svc_audit
+
+orchestrator -> svc_notification : Sind notification
+activate svc_notification
+svc_notification -> queue : Publier notification
+deactivate svc_notification
+
+orchestrator --> gateway : Result Contrôle qualité documints
+deactivate orchestrator
+
+gateway --> ui_cliint : Réponse Contrôle qualité documints
+deactivate gateway
+
+ui_cliint --> cliint : Confirmation Contrôle qualité documints
+deactivate ui_cliint
+deactivate cliint
+
+' === GESTION D'ERREURS ===
+note over orchestrator, svc_validation
+  Gestion d'errors standardisée :
+  - Timeout : 30s par service
+  - Retry : 3 tintatives avec backoff
+  - Circuit breaker sur failures
+  - Logs détaillés pour debugging
+ind note
+
+' === CONFORMITÉ RÉGLEMENTAIRE ===
+note over svc_audit, db_audit
+  Traçabilité complète :
+  - Horodatage précis
+  - Idintification utilisateur
+  - Actions effectuées
+  - Données modifiées
+  - Compliance RGPD/AML
+ind note
+
+@induml

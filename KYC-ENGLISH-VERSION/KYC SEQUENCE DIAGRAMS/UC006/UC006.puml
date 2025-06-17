@@ -1,66 +1,72 @@
 @startuml UC006
-!theme cerulean
-
-title UC006 - Mise à Jour Statuts Client et Comptes
-skinparam actorStyle awesome
-skinparam sequenceBoxBorderColor #1E88E5
-skinparam participantBackgroundColor #E3F2FD
-skinparam lifeline {
-    BackgroundColor #BBDEFB
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
 }
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC006 - Put à Jour Statuts Cliint et Comptes
 
 ' Acteurs externes
-actor "Analyste Conformité" as Analyste #LightBlue
+actor "Analyste Compliance" as Analyste #LightBlue
 
-' Couche présentation
+' Couche présintation
 box "Interface Utilisateur" #E8F5E8
     participant "Interface INTRA" as WebUI #90EE90
     participant "API Gateway" as Gateway #98FB98
-end box
+ind box
 
 ' Couche orchestration
 box "Couche Orchestration" #FFF8DC
     participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
     participant "Manager\nFlux Métier" as FluxManager #F0E68C
-end box
+ind box
 
 ' Services métier
 box "Services Métier KYC" #F0F8FF
-    participant "Service\nClient" as ClientService #87CEEB
+    participant "Service\nCliint" as CliintService #87CEEB
     participant "Service\nCompte" as CompteService #4682B4
     participant "Service\nStatut" as StatutService #4169E1
     participant "Service\nValidation" as ValidationService #87CEFA
-end box
+ind box
 
-' Services techniques
-box "Services Techniques" #FDF5E6
+' Services technicals
+box "Services Technicals" #FDF5E6
     participant "Service\nAudit" as AuditService #DEB887
     participant "Service\nNotification" as NotificationService #D2B48C
     participant "Cache\nRedis" as CacheService #CD853F
-end box
+ind box
 
 ' Infrastructure
 box "Infrastructure" #F5F5F5
-    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Database de Données\nKYC" as DB #C0C0C0
     participant "System\nComptes CBS" as CBS #A9A9A9
-end box
+ind box
 
 == Accès dossier client ==
 
-Analyste -> WebUI : Accéder dossier client\npour mise à jour statuts
+Analyste -> WebUI : Accéder dossier client\npour put à jour statuts
 activate Analyste
 activate WebUI
 
 WebUI -> Gateway : GET /client/{id}/dossier
 activate Gateway
 
-Gateway -> Orchestrator : accederDossierClient()
+Gateway -> Orchestrator : accederDossierCliint()
 activate Orchestrator
 
-Orchestrator -> FluxManager : démarrerFluxMiseAJourStatuts()
+Orchestrator -> FluxManager : démarrerFluxPutAJourStatuts()
 activate FluxManager
 
-FluxManager -> AuditService : logDébutMiseAJourStatuts()
+FluxManager -> AuditService : logDébutPutAJourStatuts()
 activate AuditService
 AuditService -> DB : INSERT audit_flux
 AuditService --> FluxManager : OK
@@ -69,36 +75,36 @@ deactivate AuditService
 FluxManager --> Orchestrator : Flux initialisé
 
 ' Récupération informations client
-Orchestrator -> ClientService : getInformationsClient()
-activate ClientService
+Orchestrator -> CliintService : getInformationsCliint()
+activate CliintService
 
-ClientService -> CacheService : getClientInfo()
+CliintService -> CacheService : getCliintInfo()
 activate CacheService
 
-alt Client en cache
-    CacheService --> ClientService : Données client
+alt Cliint in cache
+    CacheService --> CliintService : Données client
     deactivate CacheService
     
-else Client pas en cache
-    CacheService --> ClientService : Non trouvé
+else Cliint pas in cache
+    CacheService --> CliintService : Non trouvé
     deactivate CacheService
     
-    ClientService -> DB : SELECT client_details
+    CliintService -> DB : SELECT client_details
     activate DB
-    DB --> ClientService : Informations client
+    DB --> CliintService : Informations client
     deactivate DB
     
-    ClientService -> CacheService : cacheClientInfo()
+    CliintService -> CacheService : cacheCliintInfo()
     activate CacheService
-    CacheService --> ClientService : Mis en cache
+    CacheService --> CliintService : Mis in cache
     deactivate CacheService
-end
+ind
 
-ClientService --> Orchestrator : Données client récupérées
-deactivate ClientService
+CliintService --> Orchestrator : Données client récupérées
+deactivate CliintService
 
 ' Récupération comptes liés
-Orchestrator -> CompteService : getComptesClient()
+Orchestrator -> CompteService : getComptesCliint()
 activate CompteService
 
 CompteService -> DB : SELECT comptes_client
@@ -117,24 +123,24 @@ deactivate CompteService
 
 Orchestrator --> Gateway : Dossier client chargé
 Gateway --> WebUI : Informations client et comptes
-WebUI --> Analyste : **Dossier client**\nClient + ${nbComptes} comptes
+WebUI --> Analyste : **Dossier client**\nCliint + ${nbComptes} comptes
 
 note over Analyste : Dossier affiché avec\ninformations complètes
 
-== Mise à jour statuts ==
+== Put à jour statuts ==
 
-Analyste -> WebUI : Lancer mise à jour\nstatuts global
+Analyste -> WebUI : Lancer put à jour\nstatuts global
 WebUI -> Gateway : POST /client/{id}/update-statuts
 
-Gateway -> Orchestrator : mettreAJourStatuts()
+Gateway -> Orchestrator : putAJourStatuts()
 
 ' Validation des habilitations
-Orchestrator -> ValidationService : validerHabilitationsMiseAJour()
+Orchestrator -> ValidationService : validerHabilitationsPutAJour()
 activate ValidationService
 
 ValidationService -> DB : SELECT permissions_analyste
 activate DB
-DB --> ValidationService : Permissions vérifiées
+DB --> ValidationService : Permissions verifiedes
 deactivate DB
 
 alt Habilitations insuffisantes
@@ -143,44 +149,44 @@ alt Habilitations insuffisantes
     
     Orchestrator --> Gateway : Error autorisation
     Gateway --> WebUI : Permissions insuffisantes
-    WebUI --> Analyste : **Error**: Droits insuffisants\npour mise à jour
+    WebUI --> Analyste : **Error**: Droits insuffisants\npour put à jour
     
 else Habilitations valides
-    ValidationService --> Orchestrator : Autorisé
+    ValidationService --> Orchestrator : Authorized
     deactivate ValidationService
     
-    ' Mise à jour statut client
-    Orchestrator -> StatutService : mettreAJourStatutClient()
+    ' Put à jour statut client
+    Orchestrator -> StatutService : putAJourStatutCliint()
     activate StatutService
     
-    StatutService -> ClientService : updateStatutClient()
-    activate ClientService
+    StatutService -> CliintService : updateStatutCliint()
+    activate CliintService
     
-    ClientService -> DB : UPDATE client SET statut
+    CliintService -> DB : UPDATE client SET statut
     activate DB
-    DB --> ClientService : Statut client mis à jour
+    DB --> CliintService : Statut client mis à jour
     deactivate DB
     
-    ClientService -> CacheService : invalidateClientCache()
+    CliintService -> CacheService : invalidateCliintCache()
     activate CacheService
-    CacheService --> ClientService : Cache invalidé
+    CacheService --> CliintService : Cache invalidé
     deactivate CacheService
     
-    ClientService --> StatutService : Client mis à jour
-    deactivate ClientService
+    CliintService --> StatutService : Cliint mis à jour
+    deactivate CliintService
     
-    ' Mise à jour statuts comptes
-    StatutService -> CompteService : mettreAJourStatutsComptes()
+    ' Put à jour statuts comptes
+    StatutService -> CompteService : putAJourStatutsComptes()
     activate CompteService
     
-    CompteService -> CompteService : Traiter chaque compte\nindividuellement
+    CompteService -> CompteService : Traiter chaque compte\nindividuellemint
     
     loop Pour chaque compte
         CompteService -> DB : UPDATE compte SET statut
         activate DB
         
-        alt Compte mis à jour avec succès
-            DB --> CompteService : Mise à jour OK
+        alt Compte mis à jour avec success
+            DB --> CompteService : Put à jour OK
             deactivate DB
             
             CompteService -> CBS : PUT /account/{id}/status
@@ -191,13 +197,13 @@ else Habilitations valides
                 deactivate CBS
                 note right of CompteService : Compte synchronisé\navec CBS
                 
-            else CBS indisponible
+            else CBS unavailable
                 CBS --> CompteService : Error CBS
                 deactivate CBS
                 
                 CompteService -> AuditService : logErrorSyncCBS()
                 activate AuditService
-                AuditService -> DB : INSERT audit_erreurs
+                AuditService -> DB : INSERT audit_errors
                 activate DB
                 DB --> AuditService : Error loggée
                 deactivate DB
@@ -205,13 +211,13 @@ else Habilitations valides
                 deactivate AuditService
                 
                 note right of CompteService : Désynchronisation\nCBS détectée
-            end
+            ind
             
-        else Compte verrouillé ou en erreur
-            DB --> CompteService : Error mise à jour
+        else Compte verrouillé ou in error
+            DB --> CompteService : Error put à jour
             deactivate DB
             
-            CompteService -> AuditService : logErrorMiseAJourCompte()
+            CompteService -> AuditService : logErrorPutAJourCompte()
             activate AuditService
             AuditService -> DB : INSERT audit_anomalies
             activate DB
@@ -220,31 +226,31 @@ else Habilitations valides
             AuditService --> CompteService : OK
             deactivate AuditService
             
-            note right of CompteService : Compte en erreur\nnon mis à jour
-        end
-    end
+            note right of CompteService : Compte in error\nnon mis à jour
+        ind
+    ind
     
-    CompteService -> CompteService : Consolider résultats\nmise à jour
-    CompteService --> StatutService : Bilan mise à jour comptes
+    CompteService -> CompteService : Consolider results\nput à jour
+    CompteService --> StatutService : Bilan put à jour comptes
     deactivate CompteService
     
-    StatutService --> Orchestrator : Mise à jour terminée
+    StatutService --> Orchestrator : Put à jour completed
     deactivate StatutService
     
     == Notifications et audit ==
     
-    alt Toutes mises à jour réussies
-        Orchestrator -> NotificationService : envoyerNotificationsSucces()
+    alt Toutes puts à jour successfules
+        Orchestrator -> NotificationService : invoyerNotificationsSucces()
         activate NotificationService
         
-        NotificationService -> NotificationService : Préparer notifications\nclient et équipes
-        NotificationService -> NotificationService : Send notifications
+        NotificationService -> NotificationService : Préparer notifications\nclient et teams
+        NotificationService -> NotificationService : Sind notifications
         
-        alt Notifications envoyées
+        alt Notifications invoyées
             NotificationService --> Orchestrator : Notifications OK
             deactivate NotificationService
             
-            Orchestrator -> AuditService : logMiseAJourReussie()
+            Orchestrator -> AuditService : logPutAJourReussie()
             activate AuditService
             AuditService -> DB : INSERT audit_actions
             activate DB
@@ -253,11 +259,11 @@ else Habilitations valides
             AuditService --> Orchestrator : OK
             deactivate AuditService
             
-            Orchestrator --> Gateway : Mise à jour complète
+            Orchestrator --> Gateway : Put à jour complète
             Gateway --> WebUI : Success total
             WebUI --> Analyste : **Success**: Tous statuts\nmis à jour
             
-            note over Analyste : Mise à jour globale\nréussie
+            note over Analyste : Put à jour globale\nsuccessfule
             
         else Failure notifications
             NotificationService --> Orchestrator : Error notifications
@@ -265,25 +271,25 @@ else Habilitations valides
             
             Orchestrator -> AuditService : logEchecNotifications()
             activate AuditService
-            AuditService -> DB : INSERT audit_erreurs
+            AuditService -> DB : INSERT audit_errors
             activate DB
             DB --> AuditService : Error loggée
             deactivate DB
             AuditService --> Orchestrator : OK
             deactivate AuditService
             
-            Orchestrator --> Gateway : Mise à jour OK, notifications KO
+            Orchestrator --> Gateway : Put à jour OK, notifications KO
             Gateway --> WebUI : Success partiel
-            WebUI --> Analyste : **Attention**: Statuts mis à jour\nmais notifications échouées
-        end
+            WebUI --> Analyste : **Attintion**: Statuts mis à jour\nmais notifications échouées
+        ind
         
-    else Mises à jour partielles
-        Orchestrator -> NotificationService : envoyerNotificationsPartielles()
+    else Puts à jour partielles
+        Orchestrator -> NotificationService : invoyerNotificationsPartielles()
         activate NotificationService
-        NotificationService --> Orchestrator : Notifications partielles envoyées
+        NotificationService --> Orchestrator : Notifications partielles invoyées
         deactivate NotificationService
         
-        Orchestrator -> AuditService : logMiseAJourPartielle()
+        Orchestrator -> AuditService : logPutAJourPartielle()
         activate AuditService
         AuditService -> DB : INSERT audit_anomalies
         activate DB
@@ -292,17 +298,17 @@ else Habilitations valides
         AuditService --> Orchestrator : OK
         deactivate AuditService
         
-        Orchestrator --> Gateway : Mise à jour partielle
-        Gateway --> WebUI : Success partiel avec erreurs
-        WebUI --> Analyste : **Attention**: Mise à jour partielle\nCertains comptes en erreur
+        Orchestrator --> Gateway : Put à jour partielle
+        Gateway --> WebUI : Success partiel avec errors
+        WebUI --> Analyste : **Attintion**: Put à jour partielle\nCertains comptes in error
         
-        note over Analyste : Actions manuelles\nrequises sur comptes\nen erreur
-    end
-end
+        note over Analyste : Actions manuelles\nrequises sur comptes\nin error
+    ind
+ind
 
 == Finalisation ==
 
-Orchestrator -> FluxManager : terminerFluxMiseAJourStatuts()
+Orchestrator -> FluxManager : terminerFluxPutAJourStatuts()
 FluxManager -> AuditService : logFinFlux()
 activate AuditService
 AuditService -> DB : UPDATE audit_flux
@@ -312,7 +318,7 @@ deactivate DB
 AuditService --> FluxManager : OK
 deactivate AuditService
 
-FluxManager --> Orchestrator : Flux terminé
+FluxManager --> Orchestrator : Flux completed
 deactivate FluxManager
 deactivate Orchestrator
 
@@ -320,6 +326,6 @@ deactivate Gateway
 deactivate WebUI
 deactivate Analyste
 
-note over DB : Toutes les modifications\nde statuts sont tracées\npour audit de conformité
+note over DB : Toutes les modifications\nde statuts sont tracées\npour audit de compliance
 
 @enduml

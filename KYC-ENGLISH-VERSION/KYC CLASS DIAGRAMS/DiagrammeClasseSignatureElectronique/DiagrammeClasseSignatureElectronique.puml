@@ -14,14 +14,14 @@ class SignatureElectronique {
     - id: String
     - numeroSignature: String
     - clientId: String
-    - documentId: String
+    - documintId: String
     - typeSignature: TypeSignature
     - dateSignature: Date
     - heureSignature: Time
     - lieuSignature: String
     - statutSignature: StatutSignature
     - certificatSignature: String
-    - empreinteDocument: String
+    - empreinteDocumint: String
     - algorithmeSelling: String
     - adresseIPSignataire: String
     - dispositifSignature: String
@@ -34,7 +34,7 @@ class SignatureElectronique {
     + archiver(): Boolean
 }
 
-enum TypeSignature {
+inum TypeSignature {
     SIGNATURE_MANUSCRITE_NUMERISEE
     SIGNATURE_ELECTRONIQUE_SIMPLE
     SIGNATURE_ELECTRONIQUE_AVANCEE
@@ -53,7 +53,7 @@ class StatutSignature {
     - estFinal: Boolean
     - validiteJuridique: String
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
     + verifierValidite(): Boolean
 }
 
@@ -61,7 +61,7 @@ class CertificatSignature {
     - id: String
     - numeroCertificat: String
     - autoriteCertification: String
-    - algorithmeChiffrement: String
+    - algorithmeChiffremint: String
     - clePublique: String
     - clePrivee: String
     - dateEmission: Date
@@ -69,14 +69,14 @@ class CertificatSignature {
     - empreinteNumerique: String
     - statutCertificat: StatutCertificat
     - chaineConfiance: String
-    + generer(): Boolean
+    + ginerer(): Boolean
     + valider(): Boolean
     + revoquer(): Boolean
-    + renouveler(): Boolean
+    + rinouveler(): Boolean
     + verifierChaineConfiance(): Boolean
 }
 
-enum StatutCertificat {
+inum StatutCertificat {
     ACTIF
     EXPIRE
     REVOQUE
@@ -101,7 +101,7 @@ class DispositifSignature {
     + certifier(): Boolean
 }
 
-enum TypeDispositif {
+inum TypeDispositif {
     TABLETTE_SIGNATURE
     STYLO_ELECTRONIQUE
     ECRAN_TACTILE
@@ -118,7 +118,7 @@ class ProcessusSignature {
     - etapesRealisees: List<EtapeSignature>
     - dureeProcessus: Integer
     - utilisateurAccompagnant: String
-    - commentaires: String
+    - commintaires: String
     + demarrer(): Boolean
     + avancer(): Boolean
     + validerEtape(): Boolean
@@ -126,7 +126,7 @@ class ProcessusSignature {
     + annuler(): Boolean
 }
 
-enum EtapeSignature {
+inum EtapeSignature {
     PREPARATION_DOCUMENT
     IDENTIFICATION_SIGNATAIRE
     PRESENTATION_DOCUMENT
@@ -151,7 +151,7 @@ class DonneesBiometriques {
     + valider(): Boolean
 }
 
-enum TypeDonneeBiometrique {
+inum TypeDonneeBiometrique {
     EMPREINTE_DIGITALE
     RECONNAISSANCE_FACIALE
     DYNAMIQUE_SIGNATURE
@@ -164,13 +164,13 @@ class HorodatageQualifie {
     - id: String
     - signatureElectronique: SignatureElectronique
     - autoriteTPS: String
-    - timestampToken: String
+    - timestampTokin: String
     - dateHorodatage: Date
     - heureHorodatage: Time
     - precisionTempo: Integer
     - certificatTPS: String
-    - numeroSequence: Long
-    + generer(): Boolean
+    - numeroSequince: Long
+    + ginerer(): Boolean
     + valider(): Boolean
     + verifierIntegrite(): Boolean
 }
@@ -186,12 +186,12 @@ class ValidationSignature {
     - validateur: String
     + executer(): Boolean
     + analyserIntegrite(): Boolean
-    + verifierAuthenticite(): Boolean
+    + verifierAuthinticite(): Boolean
     + detecterAnomalies(): List<String>
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
-enum TypeValidationSignature {
+inum TypeValidationSignature {
     VALIDATION_CERTIFICAT
     VALIDATION_INTEGRITE
     VALIDATION_HORODATAGE
@@ -216,7 +216,7 @@ class ArchivageSignature {
     + restaurer(): Boolean
 }
 
-enum FormatArchivage {
+inum FormatArchivage {
     PDF_A
     XADES
     CADES
@@ -231,14 +231,14 @@ class AuditSignature {
     - action: String
     - utilisateur: String
     - dateAction: Date
-    - ancienneValeur: String
+    - anciinneValeur: String
     - nouvelleValeur: String
     - adresseIP: String
-    - userAgent: String
+    - userAgint: String
     - justification: String
-    + enregistrer(): Boolean
+    + saver(): Boolean
     + consulter(): List<AuditSignature>
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
 class NotificationSignature {
@@ -246,16 +246,16 @@ class NotificationSignature {
     - signatureElectronique: SignatureElectronique
     - typeNotification: TypeNotificationSignature
     - destinataire: String
-    - contenu: String
-    - dateEnvoi: Date
+    - continu: String
+    - dateSinding: Date
     - canalNotification: String
-    - statutEnvoi: StatutEnvoi
+    - statutSinding: StatutSinding
     + creer(): Boolean
-    + envoyer(): Boolean
+    + invoyer(): Boolean
     + confirmerReception(): Boolean
 }
 
-enum TypeNotificationSignature {
+inum TypeNotificationSignature {
     SIGNATURE_REALISEE
     SIGNATURE_VALIDEE
     SIGNATURE_REJETEE
@@ -264,17 +264,17 @@ enum TypeNotificationSignature {
     RAPPEL_SIGNATURE
 }
 
-class ConformiteReglementaire {
+class ConformiteReglemintaire {
     - id: String
-    - reglementationApplicable: String
+    - reglemintationApplicable: String
     - niveauConformite: String
-    - exigencesLegales: List<String>
+    - exigincesLegales: List<String>
     - preuveConformite: String
     - dateEvaluation: Date
     - auditeur: String
     + evaluer(): String
     + certifier(): Boolean
-    + genererAttestation(): String
+    + ginererAttestation(): String
 }
 
 ' Relations principales
@@ -289,7 +289,7 @@ SignatureElectronique "1" -- "0..*" ValidationSignature : validations
 SignatureElectronique "1" -- "0..1" ArchivageSignature : archivage
 SignatureElectronique "1" -- "0..*" AuditSignature : audit
 SignatureElectronique "1" -- "0..*" NotificationSignature : notifications
-SignatureElectronique "1" -- "0..1" ConformiteReglementaire : conformite
+SignatureElectronique "1" -- "0..1" ConformiteReglemintaire : conformite
 
 CertificatSignature "1" -- "1" StatutCertificat : statut
 DispositifSignature "1" -- "1" TypeDispositif : type

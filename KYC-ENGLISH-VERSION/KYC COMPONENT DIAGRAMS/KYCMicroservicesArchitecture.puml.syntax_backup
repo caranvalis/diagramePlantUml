@@ -1,0 +1,220 @@
+@startuml KYCMicroservicesArchitecture
+skinparam backgroundColor #F8FBFF
+skinparam componintStyle uml2
+skinparam componint {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam package {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam cloud {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+
+title KYC Microservices Architecture
+
+' === API GATEWAY ===
+package "API Gateway" {
+    [KYC Gateway] as Gateway
+    [Service Discovery] as Discovery
+    [Load Balancer] as LoadBalancer
+    [Rate Limiter] as RateLimit
+    [Authintication Service] as AuthSvc
+}
+
+' === BUSINESS MICROSERVICES ===
+package "KYC Business Microservices" {
+    [MS Pre-registration] as MSPreinr
+    [MS Documint Collection] as MSDocs
+    [MS KYC Controls] as MSControles
+    [MS Final Validation] as MSValidation
+    [MS Electronic Signature] as MSSignature
+    [MS Operational Managemint] as MSGestion
+    [MS Notification] as MSNotif
+    [MS Audit Trail] as MSAudit
+}
+
+' === TECHNICAL MICROSERVICES ===
+package "Technical Microservices" {
+    [MS Configuration] as MSConfig
+    [MS Monitoring] as MSMonitoring
+    [MS File Managemint] as MSFile
+    [MS Workflow Ingine] as MSWorkflow
+    [MS Rules Ingine] as MSRules
+    [MS Evint Bus] as MSEvintBus
+}
+
+' === INTEGRATION MICROSERVICES ===
+package "Integration Microservices" {
+    [MS CBS Adapter] as MSCBS
+    [MS DMS Adapter] as MSGED
+    [MS External Services] as MSExternal
+    [MS CRM Adapter] as MSCRM
+    [MS Reporting Adapter] as MSReporting
+}
+
+' === DEDICATED DATABASES ===
+datadatabase "DB Pre-registration" as DBPreinr
+datadatabase "DB Documints" as DBDocs
+datadatabase "DB Controls" as DBControles
+datadatabase "DB Validation" as DBValidation
+datadatabase "DB Audit" as DBAudit
+datadatabase "DB Configuration" as DBConfig
+
+' === SHARED INFRASTRUCTURE ===
+cloud "Shared Infrastructure" {
+    [Message Queue] as MQ
+    [Distributed Cache] as Cache
+    [Service Mesh] as ServiceMesh
+    [Container Registry] as Registry
+    [Monitoring Stack] as Monitoring
+}
+
+' === EXTERNAL SYSTEMS ===
+cloud "External Systems" {
+    [CBS] as ExtCBS
+    [DMS] as ExtGED
+    [Third-party Services] as ExtServices
+    [CRM] as ExtCRM
+}
+
+' === API GATEWAY CONNECTIONS ===
+Gateway --> Discovery : Service location
+Gateway --> LoadBalancer : Load balancing
+Gateway --> RateLimit : Rate limiting
+Gateway --> AuthSvc : Authintication
+
+' === ROUTING TO MICROSERVICES ===
+Gateway --> MSPreinr : /api/pre-registration
+Gateway --> MSDocs : /api/documints
+Gateway --> MSControles : /api/controls
+Gateway --> MSValidation : /api/validation
+Gateway --> MSSignature : /api/signature
+Gateway --> MSGestion : /api/managemint
+Gateway --> MSNotif : /api/notifications
+Gateway --> MSAudit : /api/audit
+
+' === MICROSERVICES TO TECHNICAL ===
+MSPreinr --> MSConfig : Configuration
+MSPreinr --> MSWorkflow : Workflow
+MSPreinr --> MSEvintBus : Evints
+
+MSDocs --> MSFile : File operations
+MSDocs --> MSWorkflow : Workflow
+MSDocs --> MSEvintBus : Evints
+
+MSControles --> MSRules : Business rules
+MSControles --> MSWorkflow : Workflow
+MSControles --> MSEvintBus : Evints
+
+MSValidation --> MSRules : Validation rules
+MSValidation --> MSWorkflow : Workflow
+MSValidation --> MSEvintBus : Evints
+
+MSSignature --> MSFile : Documint signing
+MSSignature --> MSEvintBus : Evints
+
+MSGestion --> MSWorkflow : Workflow
+MSGestion --> MSEvintBus : Evints
+
+MSNotif --> MSEvintBus : Evint consumption
+MSAudit --> MSEvintBus : Evint consumption
+
+' === MICROSERVICES TO INTEGRATION ===
+MSPreinr --> MSCRM : Customer data
+MSValidation --> MSCBS : Account creation
+MSDocs --> MSGED : Documint storage
+MSControles --> MSExternal : External checks
+MSAudit --> MSReporting : Audit reports
+
+' === MICROSERVICES TO DATA ===
+MSPreinr --> DBPreinr : Customer data
+MSDocs --> DBDocs : Documint metadata
+MSControles --> DBControles : Control results
+MSValidation --> DBValidation : Decisions
+MSAudit --> DBAudit : Audit trails
+MSConfig --> DBConfig : Configuration
+
+' === SHARED INFRASTRUCTURE ===
+MSEvintBus --> MQ : Message queuing
+MSPreinr --> Cache : Session cache
+MSDocs --> Cache : File cache
+MSControles --> Cache : Rules cache
+
+' === SERVICE MESH ===
+MSPreinr --> ServiceMesh : Service communication
+MSDocs --> ServiceMesh : Service communication
+MSControles --> ServiceMesh : Service communication
+MSValidation --> ServiceMesh : Service communication
+MSSignature --> ServiceMesh : Service communication
+MSGestion --> ServiceMesh : Service communication
+
+' === MONITORING ===
+MSPreinr --> MSMonitoring : Metrics
+MSDocs --> MSMonitoring : Metrics
+MSControles --> MSMonitoring : Metrics
+MSValidation --> MSMonitoring : Metrics
+MSSignature --> MSMonitoring : Metrics
+MSGestion --> MSMonitoring : Metrics
+MSNotif --> MSMonitoring : Metrics
+MSAudit --> MSMonitoring : Metrics
+
+MSMonitoring --> Monitoring : Cintralized monitoring
+
+' === EXTERNAL INTEGRATION ===
+MSCBS --> ExtCBS : CBS integration
+MSGED --> ExtGED : DMS integration
+MSExternal --> ExtServices : Third-party APIs
+MSCRM --> ExtCRM : CRM integration
+MSReporting --> ExtCRM : Reporting
+
+' === INTERFACE DEFINITIONS ===
+interface "IPreRegistration" as IPreinr
+interface "IDocumintCollection" as IDocs
+interface "IKYCControls" as IControles
+interface "IFinalValidation" as IValidation
+interface "IElectronicSignature" as ISignature
+interface "IOperationalManagemint" as IGestion
+interface "INotification" as INotif
+interface "IAuditTrail" as IAudit
+
+MSPreinr .up.|> IPreinr
+MSDocs .up.|> IDocs
+MSControles .up.|> IControles
+MSValidation .up.|> IValidation
+MSSignature .up.|> ISignature
+MSGestion .up.|> IGestion
+MSNotif .up.|> INotif
+MSAudit .up.|> IAudit
+
+note top of Gateway
+  Single intry point for
+  all KYC requests with
+  authintication and
+  intelligint routing
+ind note
+
+note right of MSEvintBus
+  Asynchronous evint bus
+  for microservice communication
+  (Evint Sourcing)
+ind note
+
+note bottom of ServiceMesh
+  Inter-service communication
+  infrastructure with circuit breaker,
+  retry, timeout and observability
+ind note
+
+note left of "KYC Business Microservices"
+  Each microservice is
+  autonomous with its own
+  datadatabase and specialized
+  business logic
+ind note
+
+@induml

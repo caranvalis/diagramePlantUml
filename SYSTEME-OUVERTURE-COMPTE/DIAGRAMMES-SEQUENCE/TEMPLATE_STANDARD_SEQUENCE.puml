@@ -1,0 +1,30 @@
+@startuml TemplateStandardSequence
+skinparam shadowing false
+
+title Diagramme de Séquence - [TITRE DU PROCESSUS]
+
+actor "Acteur Principal" as Acteur
+participant "Système\nPrincipal" as Systeme
+participant "Service\nExterne" as Service
+participant "Base\nDonnées" as BDD
+
+== Phase d'Initialisation ==
+Acteur -> Systeme : actionInitiale(parametres)
+Systeme -> Systeme : traitementInterne()
+Systeme -> Service : appelService(donnees)
+Service --> Systeme : reponseService
+
+== Phase de Traitement ==
+Systeme -> BDD : consulterDonnees(criteres)
+BDD --> Systeme : resultats
+Systeme -> Systeme : analyserResultats()
+
+== Phase de Finalisation ==
+Systeme --> Acteur : reponseFinale(resultat)
+
+note right of Systeme
+  Note explicative
+  sur le comportement du système
+end note
+
+@enduml

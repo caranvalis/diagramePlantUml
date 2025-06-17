@@ -1,0 +1,192 @@
+@startuml UC010
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC010 - Génération Fiche Entreprise PDF
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nEntreprise" as EntrepriseService #87CEEB
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nTemplate" as TemplateService #4169E1
+    participant "Service\nPDF" as PDFService #87CEFA
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+    participant "Générateur\nPDF" as PDFEngine #A9A9A9
+end box
+
+== Initialisation génération fiche ==
+
+Manager -> WebUI : Request génération\nfiche entreprise
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /entreprise/{id}/fiche/generate
+activate Gateway
+
+Gateway -> Orchestrator : genererFicheEntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGenerationEntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutGeneration()
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Vérification template entreprise
+Orchestrator -> CacheService : getTemplateFicheEntreprise()
+activate CacheService
+
+alt Template en cache
+    CacheService --> Orchestrator : Template trouvé
+    deactivate CacheService
+    
+else Template pas en cache
+    CacheService --> Orchestrator : Non trouvé
+    deactivate CacheService
+    
+    Orchestrator -> TemplateService : chargerTemplateFicheEntreprise()
+    activate TemplateService
+    
+    TemplateService -> Storage : GET template_fiche_entreprise.xml
+    activate Storage
+    Storage --> TemplateService : Template chargé
+    deactivate Storage
+    
+    TemplateService -> CacheService : cacheTemplate()
+    activate CacheService
+    CacheService --> TemplateService : Mis en cache
+    deactivate CacheService
+    
+    TemplateService --> Orchestrator : Template prêt
+    deactivate TemplateService
+end
+
+== Collecte données entreprise ==
+
+Orchestrator -> EntrepriseService : collecterDonneesEntreprise()
+activate EntrepriseService
+
+EntrepriseService -> DB : SELECT données_entreprise
+activate DB
+DB --> EntrepriseService : Informations entreprise
+deactivate DB
+
+EntrepriseService -> DB : SELECT representants_legaux
+activate DB
+DB --> EntrepriseService : Représentants légaux
+deactivate DB
+
+EntrepriseService -> DocumentService : getDocumentsEntreprise()
+activate DocumentService
+DocumentService -> DB : SELECT documents_associés
+activate DB
+DB --> DocumentService : Documents entreprise
+deactivate DB
+DocumentService --> EntrepriseService : Documents référencés
+deactivate DocumentService
+
+EntrepriseService -> EntrepriseService : Consolider dataset\nentreprise complet
+EntrepriseService --> Orchestrator : Dataset entreprise complet
+deactivate EntrepriseService
+
+== Génération PDF ==
+
+Orchestrator -> PDFService : genererFicheEntreprisePDF()
+activate PDFService
+
+PDFService -> PDFEngine : Generate PDF entreprise
+activate PDFEngine
+
+alt Génération successfule
+    PDFEngine --> PDFService : PDF generated
+    deactivate PDFEngine
+    
+    PDFService -> Storage : Save PDF
+    activate Storage
+    Storage --> PDFService : URL PDF
+    deactivate Storage
+    
+    PDFService --> Orchestrator : Fiche generated
+    deactivate PDFService
+    
+    Orchestrator -> AuditService : logGenerationReussie()
+    activate AuditService
+    AuditService -> DB : INSERT audit_actions
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : PDF disponible
+    Gateway --> WebUI : Fiche generated
+    WebUI --> Manager : **Fiche entreprise generated**\nOptions: Télécharger/Imprimer/Send
+    
+else Error génération
+    PDFEngine --> PDFService : Error génération
+    deactivate PDFEngine
+    
+    PDFService --> Orchestrator : Failure génération
+    deactivate PDFService
+    
+    Orchestrator --> Gateway : Error PDF
+    Gateway --> WebUI : Failure génération
+    WebUI --> Manager : **Error**: Failure génération PDF
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGeneration()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@enduml

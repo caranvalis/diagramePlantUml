@@ -11,6 +11,7 @@ SYSTEME-OUVERTURE-COMPTE/
 ├── DIAGRAMMES-CLASSE/          # Architecture statique du système
 ├── DIAGRAMMES-SEQUENCE/        # Interactions dynamiques
 ├── DIAGRAMMES-ACTIVITE/        # Processus métier détaillés
+├── CAS-USAGE/                  # Cas d'usage fonctionnels
 └── README.md                   # Ce fichier
 ```
 
@@ -39,6 +40,12 @@ SYSTEME-OUVERTURE-COMPTE/
 - **Intégrations Externes** : Vérifications externes
 - **Gestion Exceptions** : Traitement des cas particuliers
 - **Clôture Dossier** : Finalisation et archivage
+
+### Cas d'Usage (Exigences Fonctionnelles)
+- **50 cas d'usage** organisés en 10 packages fonctionnels
+- **8 acteurs principaux** couvrant tous les rôles métier
+- **Relations include/extend** pour la réutilisabilité
+- **Couverture complète** du processus d'ouverture de compte
 
 ## 🎯 Conformité Métier
 

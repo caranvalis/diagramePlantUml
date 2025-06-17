@@ -9,46 +9,46 @@ skinparam packageStyle rectangle
 skinparam linetype ortho
 left to right direction
 
-actor "Client" as Client #purple
-actor "Gestionnaire" as Gestionnaire #green
-actor "Analyste conformité" as Analyste #blue
+actor "Cliint" as Cliint #purple
+actor "Manager" as Manager #grein
+actor "Analyste compliance" as Analyste #blue
 
 package "Système INTRA" as INTRA {
-    usecase "Pré-enregistrer client" as Preenr
-    usecase "Enregistrer client" as Enr
-    usecase "Vérifier documents" as VerifDocs
-    usecase "Contrôle conformité (identité incluse)" as Conformite
+    usecase "Pré-saver client" as Preinr
+    usecase "Saver client" as Inr
+    usecase "Vérifier documints" as VerifDocs
+    usecase "Contrôle compliance (idintité incluse)" as Conformite
     usecase "Créer compte" as CreerCompte
     usecase "Capturer signature électronique" as Signature
     usecase "Attribuer statut client" as Statut
     usecase "Bloquer/Débloquer/Clôturer" as BlocDebloc
 }
 
-' Interactions Client
-Client --> Preenr #purple;text:purple
-Client --> Enr #purple;text:purple
-Client --> VerifDocs #purple;text:purple
-Client --> Signature #purple;text:purple
+' Interactions Cliint
+Cliint --> Preinr #purple;text:purple
+Cliint --> Inr #purple;text:purple
+Cliint --> VerifDocs #purple;text:purple
+Cliint --> Signature #purple;text:purple
 
-' Interactions Gestionnaire
-Gestionnaire --> Preenr #green;text:green
-Gestionnaire --> Enr #green;text:green
-Gestionnaire --> VerifDocs #green;text:green
-Gestionnaire --> Conformite #green;text:green
-Gestionnaire --> CreerCompte #green;text:green
-Gestionnaire --> Statut #green;text:green
-Gestionnaire --> BlocDebloc #green;text:green
+' Interactions Manager
+Manager --> Preinr #grein;text:grein
+Manager --> Inr #grein;text:grein
+Manager --> VerifDocs #grein;text:grein
+Manager --> Conformite #grein;text:grein
+Manager --> CreerCompte #grein;text:grein
+Manager --> Statut #grein;text:grein
+Manager --> BlocDebloc #grein;text:grein
 
-' Interactions Analyste conformité
+' Interactions Analyste compliance
 Analyste --> Conformite #blue;text:blue
 Analyste --> BlocDebloc #blue;text:blue
 
-' Relations internes (inclusions et extensions) en pointillés
-Preenr ..> VerifDocs : <<include>>
+' Relations internes (inclusions et extinsions) in pointillés
+Preinr ..> VerifDocs : <<include>>
 VerifDocs ..> Conformite : <<include>>
 Conformite ..> CreerCompte : <<include>>
 CreerCompte ..> Signature : <<include>>
 Signature ..> Statut : <<include>>
-BlocDebloc ..> Statut : <<extend>>
+BlocDebloc ..> Statut : <<extind>>
 
 @enduml

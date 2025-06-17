@@ -1,0 +1,238 @@
+@startuml UC023
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC023 - Validation Automatique des Documents d'Identification</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+participant "<color:#96ceb4>Service Document</color>" as DocumentService
+participant "<color:#96ceb4>Service OCR</color>" as OCRService
+participant "<color:#96ceb4>Service IA</color>" as AIService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+participant "<color:#9c88ff>Service Fichier</color>" as FileService
+
+' Infrastructure
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+participant "<color:#5f27cd>Stockage Fichiers</color>" as FileStorage
+
+== Soumission des Documents ==
+
+Manager -> WebUI : <color:#00ff00>Upload documents identification</color>
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/documents/validation</color>
+activate Gateway
+
+Gateway -> Gateway : <color:#ffa726>Validation Token & Permissions</color>
+Gateway -> Orchestrator : <color:#45b7d1>Validate documents soumis</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début validation</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Vérification Technique des Fichiers ==
+
+Orchestrator -> FileService : <color:#9c88ff>Analyze fichiers uploadés</color>
+activate FileService
+
+FileService -> FileService : <color:#ffa726>Verify formats autorisés</color>
+FileService -> FileService : <color:#ffa726>Verify taille fichiers</color>
+FileService -> FileService : <color:#ffa726>Analyze intégrité</color>
+
+alt <color:#ff6b6b>Fichiers corrompus ou invalides</color>
+    FileService --> Orchestrator : <color:#ff6b6b>ERREUR: Fichiers invalides</color>
+    
+    Orchestrator -> AuditService : <color:#feca57>Log rejet technique</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre rejet
+    deactivate AuditService
+    
+    Orchestrator -> NotificationService : <color:#ff9ff3>Notify rejet technique</color>
+    activate NotificationService
+    NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+    deactivate NotificationService
+    
+    Orchestrator --> Gateway : <color:#ff6b6b>Fichiers invalides</color>
+    Gateway --> WebUI : <color:#ff6b6b>400 Bad Request</color>
+    WebUI --> Manager : <color:#ff6b6b>Fichiers corrompus ou format invalide</color>
+    
+else <color:#00ff00>Fichiers techniquement valides</color>
+    FileService -> FileStorage : <color:#5f27cd>Stocker fichiers temporaires</color>
+    activate FileStorage
+    FileStorage --> FileService : <color:#00d2d3>Fichiers stockés</color>
+    deactivate FileStorage
+    
+    FileService --> Orchestrator : <color:#00ff00>Fichiers acceptés</color>
+    deactivate FileService
+    
+    == Traitement OCR ==
+    
+    Orchestrator -> OCRService : <color:#96ceb4>Extraire texte des documents</color>
+    activate OCRService
+    
+    OCRService -> FileStorage : <color:#5f27cd>Récupérer fichiers</color>
+    activate FileStorage
+    FileStorage --> OCRService : <color:#00d2d3>Données fichiers</color>
+    deactivate FileStorage
+    
+    OCRService -> OCRService : <color:#ffa726>Traitement OCR avancé</color>
+    OCRService -> OCRService : <color:#ffa726>Extraction métadonnées</color>
+    
+    alt <color:#ff6b6b>Failure OCR</color>
+        OCRService --> Orchestrator : <color:#ff6b6b>Impossible de lire le document</color>
+        
+        Orchestrator -> AuditService : <color:#feca57>Log échec OCR</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notify échec OCR</color>
+        activate NotificationService
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : <color:#ff6b6b>Document illisible</color>
+        Gateway --> WebUI : <color:#ff6b6b>422 Unprocessable Entity</color>
+        WebUI --> Manager : <color:#ff6b6b>Document illisible - OCR échoué</color>
+        
+    else <color:#00ff00>OCR réussi</color>
+        OCRService --> Orchestrator : <color:#00ff00>Texte extrait + métadonnées</color>
+        deactivate OCRService
+        
+        == Validation par IA ==
+        
+        Orchestrator -> AIService : <color:#96ceb4>Analyze contenu document</color>
+        activate AIService
+        
+        AIService -> AIService : <color:#ffa726>Verify cohérence données</color>
+        AIService -> AIService : <color:#ffa726>Détecter falsifications</color>
+        AIService -> AIService : <color:#ffa726>Validate format document</color>
+        AIService -> AIService : <color:#ffa726>Verify lisibilité</color>
+        
+        AIService --> Orchestrator : <color:#00ff00>Analyse IA terminée</color>
+        deactivate AIService
+        
+        == Application des Règles de Validation ==
+        
+        Orchestrator -> ValidationService : <color:#96ceb4>Appliquer règles métier</color>
+        activate ValidationService
+        
+        ValidationService -> ValidationService : <color:#ffa726>Verify règles obligatoires</color>
+        ValidationService -> ValidationService : <color:#ffa726>Validate champs requis</color>
+        ValidationService -> ValidationService : <color:#ffa726>Control dates validité</color>
+        ValidationService -> ValidationService : <color:#ffa726>Calculate score confiance</color>
+        
+        alt <color:#ff6b6b>Validation échouée</color>
+            ValidationService --> Orchestrator : <color:#ff6b6b>REJET: Règles non respectées</color>
+            
+            Orchestrator -> DocumentService : <color:#96ceb4>Marquer document REJETÉ</color>
+            activate DocumentService
+            DocumentService -> KYCDB : <color:#00d2d3>UPDATE documents SET status='REJECTED'</color>
+            activate KYCDB
+            KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+            deactivate KYCDB
+            DocumentService --> Orchestrator : <color:#00d2d3>Document rejeté</color>
+            deactivate DocumentService
+            
+            Orchestrator -> AuditService : <color:#feca57>Log rejet validation</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre rejet + raisons
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify rejet validation</color>
+            activate NotificationService
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : <color:#ff6b6b>Document rejeté</color>
+            Gateway --> WebUI : <color:#ff6b6b>422 Unprocessable Entity</color>
+            WebUI --> Manager : <color:#ff6b6b>Document rejeté - Règles non respectées</color>
+            
+        else <color:#00ff00>Validation réussie</color>
+            ValidationService --> Orchestrator : <color:#00ff00>ACCEPTÉ: Document valide</color>
+            deactivate ValidationService
+            
+            == Finalisation ==
+            
+            Orchestrator -> DocumentService : <color:#96ceb4>Marquer document VALIDÉ</color>
+            activate DocumentService
+            DocumentService -> KYCDB : <color:#00d2d3>UPDATE documents SET status='VALIDATED'</color>
+            activate KYCDB
+            KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+            deactivate KYCDB
+            
+            DocumentService -> CacheService : <color:#54a0ff>Invalider cache document</color>
+            activate CacheService
+            CacheService --> DocumentService : <color:#00d2d3>Cache invalidé</color>
+            deactivate CacheService
+            
+            DocumentService --> Orchestrator : <color:#00d2d3>Document validé</color>
+            deactivate DocumentService
+            
+            Orchestrator -> AuditService : <color:#feca57>Log succès validation</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre succès + score
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify succès validation</color>
+            activate NotificationService
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : <color:#00ff00>Document validé avec succès</color>
+            deactivate Orchestrator
+            Gateway --> WebUI : <color:#00ff00>200 OK + Détails validation</color>
+            deactivate Gateway
+            WebUI --> Manager : <color:#00ff00>Document validé automatiquement</color>
+            deactivate WebUI
+            
+        end
+    end
+end
+
+deactivate Manager
+
+@enduml

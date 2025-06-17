@@ -1,4 +1,4 @@
-@startuml UseCaseEnregistrementParticulier
+@startuml UseCaseSavemintParticulier
 skinparam actorStyle awesome
 skinparam usecase {
     BackgroundColor #E0F7FA
@@ -8,53 +8,53 @@ skinparam usecase {
 skinparam packageStyle rectangle
 left to right direction
 
-actor "Client particulier" as Client #purple
-actor "Gestionnaire" as Gestionnaire #green
-actor "Analyste conformité" as Analyste #blue
-actor "Gestionnaire référentiel" as RefGestionnaire #orange
+actor "Cliint particulier" as Cliint #purple
+actor "Manager" as Manager #grein
+actor "Analyste compliance" as Analyste #blue
+actor "Manager référintiel" as RefManager #orange
 
 package "INTRA" {
-    usecase "Pré-enregistrement via Web" as PreenrWeb
+    usecase "Pré-savemint via Web" as PreinrWeb
     usecase "Création via INTRA" as CreationIntra
-    usecase "Rapatriement depuis Amplitude" as Rapatriement
+    usecase "Rapatriemint depuis Amplitude" as Rapatriemint
     usecase "Capture signature électronique" as Signature
-    usecase "Génération fiche client" as FicheClient
+    usecase "Génération fiche client" as FicheCliint
     usecase "Gestion statut client" as Statut
     usecase "Ajout mandataire" as AjoutMandat
     usecase "Consultation mandataires" as ConsultMandat
     usecase "Suppression mandataire" as SuppMandat
     usecase "Gestion matricule client" as Matricule
-    usecase "Gestion référentiel client" as RefClient
+    usecase "Gestion référintiel client" as RefCliint
     usecase "Déclaration système matrimonial" as SysMatri
     usecase "Déclaration régime matrimonial" as RegimeMatri
 }
 
-' Interactions positives (validation, création, consultation) en vert
-Client --> PreenrWeb #purple;text:purple
-Gestionnaire --> CreationIntra #green;text:green
-Gestionnaire --> Rapatriement #green;text:green
-Gestionnaire --> Signature #green;text:green
-Gestionnaire --> FicheClient #green;text:green
-Gestionnaire --> Statut #green;text:green
-Gestionnaire --> AjoutMandat #green;text:green
-Gestionnaire --> ConsultMandat #green;text:green
-Gestionnaire --> SuppMandat #green;text:green
-Gestionnaire --> Matricule #green;text:green
-Gestionnaire --> SysMatri #green;text:green
-Gestionnaire --> RegimeMatri #green;text:green
+' Interactions positives (validation, création, consultation) in vert
+Cliint --> PreinrWeb #purple;text:purple
+Manager --> CreationIntra #grein;text:grein
+Manager --> Rapatriemint #grein;text:grein
+Manager --> Signature #grein;text:grein
+Manager --> FicheCliint #grein;text:grein
+Manager --> Statut #grein;text:grein
+Manager --> AjoutMandat #grein;text:grein
+Manager --> ConsultMandat #grein;text:grein
+Manager --> SuppMandat #grein;text:grein
+Manager --> Matricule #grein;text:grein
+Manager --> SysMatri #grein;text:grein
+Manager --> RegimeMatri #grein;text:grein
 
-' Interactions de contrôle ou d'audit en bleu
+' Interactions de contrôle ou d'audit in bleu
 Analyste --> ConsultMandat #blue;text:blue
 Analyste --> Matricule #blue;text:blue
 
-' Interactions de gestion référentiel en orange
-RefGestionnaire --> RefClient #orange;text:orange
+' Interactions de gestion référintiel in orange
+RefManager --> RefCliint #orange;text:orange
 
-' Relations internes (inclusions) en noir normal et pointillées
-PreenrWeb --> FicheClient : <<include>>
-CreationIntra --> FicheClient : <<include>>
-Rapatriement --> FicheClient : <<include>>
-FicheClient --> Statut : <<include>>
+' Relations internes (inclusions) in noir normal et pointillées
+PreinrWeb --> FicheCliint : <<include>>
+CreationIntra --> FicheCliint : <<include>>
+Rapatriemint --> FicheCliint : <<include>>
+FicheCliint --> Statut : <<include>>
 AjoutMandat --> ConsultMandat : <<include>>
 SuppMandat --> ConsultMandat : <<include>>
 SysMatri --> RegimeMatri : <<include>>

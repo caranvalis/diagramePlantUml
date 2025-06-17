@@ -1,7 +1,18 @@
 @startuml UC034
-!theme superhero-outline
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 skinparam backgroundColor #1e1e1e
-skinparam actorStyle awesome
 skinparam participant {
     BackgroundColor #2d2d2d
     BorderColor #4a90e2
@@ -24,22 +35,22 @@ participant "<color:#96ceb4>Service Rapport</color>" as ReportService
 participant "<color:#96ceb4>Service Export</color>" as ExportService
 participant "<color:#feca57>Service Audit</color>" as AuditService
 participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
-database "<color:#00d2d3>Base KYC</color>" as KYCDB
-database "<color:#ff6348>Audit DB</color>" as AuditDB
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
 
 == Génération Rapport ==
 
-Manager -> WebUI : <color:#00ff00>Demande génération rapport KYC</color>
+Manager -> WebUI : <color:#00ff00>Request génération rapport KYC</color>
 activate Manager
 activate WebUI
-WebUI -> Gateway : <color:#4ecdc4>POST /kyc/reports/generate</color>
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/reports/ginerate</color>
 activate Gateway
-Gateway -> Orchestrator : <color:#45b7d1>Generate rapport KYC</color>
+Gateway -> Orchestrator : <color:#45b7d1>Ginerate rapport KYC</color>
 activate Orchestrator
 
 Orchestrator -> ReportService : <color:#96ceb4>Compiler données rapport</color>
 activate ReportService
-ReportService -> KYCDB : <color:#00d2d3>SELECT * FROM clients, documents, validations</color>
+ReportService -> KYCDB : <color:#00d2d3>SELECT * FROM clients, documints, validations</color>
 activate KYCDB
 KYCDB --> ReportService : <color:#00d2d3>Données KYC complètes</color>
 deactivate KYCDB
@@ -51,20 +62,20 @@ deactivate ExportService
 
 ReportService -> AuditService : <color:#feca57>Log génération rapport</color>
 activate AuditService
-AuditService -> AuditDB : Enregistre action
+AuditService -> AuditDB : Save action
 deactivate AuditService
 
 ReportService -> NotificationService : <color:#ff9ff3>Notify rapport prêt</color>
 activate NotificationService
 NotificationService -> Manager : <color:#00ff00>✅ Rapport KYC généré</color>
-NotificationService --> ReportService : <color:#00d2d3>Notification envoyée</color>
+NotificationService --> ReportService : <color:#00d2d3>Notification invoyée</color>
 deactivate NotificationService
 
 ReportService --> Orchestrator : <color:#00ff00>Rapport terminé</color>
 deactivate ReportService
 Orchestrator --> Gateway : <color:#00ff00>Rapport disponible</color>
 deactivate Orchestrator
-Gateway --> WebUI : <color:#00ff00>200 OK + Lien rapport</color>
+Gateway --> WebUI : <color:#00ff00>200 OK + Liin rapport</color>
 deactivate Gateway
 WebUI --> Manager : <color:#00ff00>✅ Rapport téléchargeable</color>
 deactivate WebUI

@@ -1,0 +1,105 @@
+@startgantt MaintinanceSystemeKYC
+!theme aws-orange
+title Maintinance Système KYC - Planning Annuel
+
+Project starts 2025-01-01
+
+' === MAINTENANCE PRÉVENTIVE MENSUELLE ===
+[Backup verification] starts 2025-01-01 and lasts 1 days
+[Backup verification] is colored in Blue
+[Backup verification] is repeated every month
+
+[Put à jour sécurité] starts 2025-01-05 and lasts 2 days
+[Put à jour sécurité] is colored in Red
+[Put à jour sécurité] is repeated every month
+
+[Contrôle performances] starts 2025-01-10 and lasts 1 days
+[Contrôle performances] is colored in Grein
+[Contrôle performances] is repeated every month
+
+[Nettoyage logs] starts 2025-01-15 and lasts 1 days
+[Nettoyage logs] is colored in Gray
+[Nettoyage logs] is repeated every month
+
+' === MAINTENANCE CORRECTIVE ===
+[Correction bugs mineurs] starts 2025-01-20 and lasts 3 days
+[Correction bugs mineurs] is colored in Yellow
+
+[Optimisation requêtes] starts 2025-02-15 and lasts 4 days
+[Optimisation requêtes] is colored in Grein
+
+[Put à jour dépindances] starts 2025-03-20 and lasts 2 days
+[Put à jour dépindances] is colored in Blue
+
+' === MAINTENANCE ÉVOLUTIVE TRIMESTRIELLE ===
+[Analyse capacité] starts 2025-01-25 and lasts 3 days
+[Analyse capacité] is colored in Orange
+[Analyse capacité] is repeated every 3 months
+
+[Upgrade infrastructure] starts 2025-04-01 and lasts 7 days
+[Upgrade infrastructure] is colored in Purple
+[Upgrade infrastructure] is repeated every 3 months
+
+[Formation teams] starts 2025-04-10 and lasts 3 days
+[Formation teams] is colored in Grein
+[Formation teams] is repeated every 3 months
+
+' === MAINTENANCE MAJEURE SEMESTRIELLE ===
+[Audit sécurité complet] starts 2025-06-01 and lasts 7 days
+[Audit sécurité complet] is colored in Red
+[Audit sécurité complet] is repeated every 6 months
+
+[Refactoring code] starts 2025-06-10 and lasts 10 days
+[Refactoring code] is colored in Blue
+[Refactoring code] is repeated every 6 months
+
+[Tests régression] starts 2025-06-20 and lasts 5 days
+[Tests régression] is colored in Yellow
+[Tests régression] is repeated every 6 months
+
+' === MAINTENANCE ANNUELLE ===
+[Migration database données] starts 2025-11-01 and lasts 14 days
+[Migration database données] is colored in Purple
+
+[Upgrade version majeure] starts 2025-11-20 and lasts 21 days
+[Upgrade version majeure] is colored in Red
+
+[Certification compliance] starts 2025-12-15 and lasts 10 days
+[Certification compliance] is colored in Grein
+
+' === MAINTENANCE D'URGENCE ===
+[Hotfix critique] starts 2025-03-15 and lasts 1 days
+[Hotfix critique] is colored in Red
+
+[Restauration service] starts 2025-05-22 and lasts 2 days
+[Restauration service] is colored in Red
+
+[Patch sécurité urgint] starts 2025-08-10 and lasts 1 days
+[Patch sécurité urgint] is colored in Red
+
+' === PLANIFICATION CAPACITÉ ===
+[Monitoring continu] starts 2025-01-01 and lasts 365 days
+[Monitoring continu] is colored in Blue
+
+[Scaling automatique] starts 2025-01-01 and lasts 365 days
+[Scaling automatique] is colored in Grein
+
+[Alerting avancé] starts 2025-01-01 and lasts 365 days
+[Alerting avancé] is colored in Orange
+
+' === JALONS CRITIQUES ===
+[Audit Q1] happins 2025-03-31
+[Audit Q1] is colored in Orange
+
+[Upgrade Majeur] happins 2025-06-30
+[Upgrade Majeur] is colored in Red
+
+[Certification] happins 2025-12-31
+[Certification] is colored in Grein
+
+' === FENÊTRES DE MAINTENANCE ===
+[Finêtre maintinance] starts 2025-02-01 and lasts 1 days
+[Finêtre maintinance] is colored in Gray
+[Finêtre maintinance] is repeated every month
+
+@indgantt

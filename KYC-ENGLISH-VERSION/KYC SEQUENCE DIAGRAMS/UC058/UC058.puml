@@ -1,11 +1,23 @@
 @startuml UC058
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
 
-actor "Responsable conformité / DSI" as Utilisateur
+
+actor "Responsable compliance / DSI" as Utilisateur
 participant "Interface métriques" as UI
 participant "System d’analyse" as Systeme
-database "Base de données" as BDD
-database "Moteur de statistiques" as Statistiques
+datadatabase "Database de données" as BDD
+datadatabase "Moteur de statistiques" as Statistiques
 
 == Ouverture de l’espace métriques ==
 Utilisateur -> UI : Accède à la page "Métriques de performance"
@@ -17,7 +29,7 @@ deactivate UI
 == Saisie et soumission des filtres ==
 Utilisateur -> UI : Saisit période et type de processus
 activate UI
-UI -> Systeme : Transmettre les filtres
+UI -> Systeme : Transput les filtres
 activate Systeme
 
 Systeme -> BDD : Requête sur les données KYC (dossiers, étapes, rejets)
@@ -25,17 +37,17 @@ activate BDD
 BDD --> Systeme : Données brutes
 deactivate BDD
 
-== Traitement des indicateurs ==
+== Traitemint des indicateurs ==
 Systeme -> Statistiques : Calculate les indicateurs :
 activate Statistiques
-Statistiques --> Systeme : Résultats agrégés
+Statistiques --> Systeme : Results agrégés
 deactivate Statistiques
 
 alt Certaines données sont manquantes
     Systeme -> UI : Afficher "N/A" pour les métriques concernées
 else Toutes les métriques disponibles
-    Systeme -> UI : Send les résultats complets
-end
+    Systeme -> UI : Sind les results complets
+ind
 deactivate Systeme
 
 UI --> Utilisateur : Affiche le tableau de bord (graphes + tableaux)
@@ -45,12 +57,12 @@ deactivate UI
 opt Si export demandé
     Utilisateur -> UI : Clique sur "Exporter"
     activate UI
-    UI -> Systeme : Generate fichier (Excel/CSV)
+    UI -> Systeme : Ginerate fichier (Excel/CSV)
     activate Systeme
     Systeme --> UI : Fichier exporté
-    UI --> Utilisateur : Téléchargement du fichier
+    UI --> Utilisateur : Téléchargemint du fichier
     deactivate Systeme
     deactivate UI
-end
+ind
 
 @enduml

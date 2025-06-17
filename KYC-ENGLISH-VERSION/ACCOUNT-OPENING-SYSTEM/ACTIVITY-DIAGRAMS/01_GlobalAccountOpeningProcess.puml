@@ -1,0 +1,201 @@
+@startuml GlobalAccountOpeningProcess
+skinparam backgroundColor #F8FBFF
+skinparam activityBackgroundColor #E8F5E8
+skinparam activityBorderColor #1976D2
+skinparam activityFontColor #0D47A1
+skinparam activityStartColor #4CAF50
+skinparam activityEndColor #F44336
+skinparam activityDiamondBackgroundColor #E8F5E8
+skinparam activityDiamondBorderColor #1976D2
+skinparam activityDiamondFontColor #0D47A1
+skinparam shadowing true
+skinparam roundCorner 15
+
+title Global Account Opening Process
+
+start
+
+:Client expresses interest in account opening;
+note right: **Entry Point**\nMultiple channels:\n• Branch visit\n• Online application\n• Phone inquiry\n• Partner referral
+
+:Agent initiates new request in system;
+:Generate unique reference number;
+
+:Collect basic client information;
+note left: **Initial Data Collection**\n• Personal identification\n• Contact information\n• Account type preference\n• Basic eligibility check
+
+if (Client eligible for account?) then (no)
+  :Inform client of ineligibility;
+  :Log reason and close request;
+  stop
+else (yes)
+endif
+
+:Generate document checklist;
+:Present requirements to client;
+
+if (Client accepts to proceed?) then (no)
+  :Thank client for interest;
+  :Archive request as abandoned;
+  stop
+else (yes)
+endif
+
+:Client provides required documents;
+
+partition "Document Verification Phase" {
+  :Scan and upload documents;
+  
+  repeat
+    :Verify document authenticity;
+    :Check document completeness;
+    
+    if (Documents complete and valid?) then (no)
+      :Request missing/corrected documents;
+      :Notify client of requirements;
+    else (yes)
+    endif
+  repeat while (All documents verified?) is (no)
+  
+  :Mark documents as verified;
+}
+
+partition "Regulatory Controls Phase" {
+  fork
+    :Execute blacklist screening;
+    note right: **OFAC, EU Sanctions**\nPEP lists, Local blacklists
+  fork again
+    :Perform PPE verification;
+    note right: **Political Exposure**\nFamily connections\nBusiness relationships
+  fork again
+    :Conduct FATCA assessment;
+    note right: **US Tax Compliance**\nW-8/W-9 forms\nTax residency
+  fork again
+    :Execute KYC evaluation;
+    note right: **Know Your Customer**\nIdentity verification\nRisk assessment
+  end fork
+  
+  :Compile control results;
+  
+  if (All controls passed?) then (no)
+    if (Critical failure?) then (yes)
+      :Generate compliance alert;
+      :Escalate to compliance officer;
+      
+      if (Override authorized?) then (no)
+        :Reject request with detailed reason;
+        :Notify client of rejection;
+        :Archive request;
+        stop
+      else (yes)
+        :Document override justification;
+      endif
+    else (no)
+      :Request additional information;
+      :Update client file;
+    endif
+  else (yes)
+  endif
+}
+
+partition "Commercial Validation Phase" {
+  :Agent reviews complete file;
+  :Validate business rationale;
+  
+  if (Agent approval level sufficient?) then (no)
+    :Transfer to authorized agent/manager;
+    :Update workflow assignment;
+  else (yes)
+  endif
+  
+  :Commercial validation decision;
+  
+  if (Commercially approved?) then (no)
+    :Document rejection reason;
+    :Notify client of decision;
+    :Offer alternative solutions if applicable;
+    stop
+  else (yes)
+  endif
+}
+
+partition "Technical Validation Phase" {
+  :Validate technical feasibility;
+  :Check system constraints;
+  :Verify account type availability;
+  
+  if (Technical validation passed?) then (no)
+    :Escalate technical issue;
+    :Resolve constraints;
+  else (yes)
+  endif
+}
+
+partition "Final Approval Phase" {
+  if (Manager approval required?) then (yes)
+    :Send to manager for final approval;
+    
+    if (Manager approves?) then (no)
+      :Document manager rejection;
+      :Notify client and agent;
+      stop
+    else (yes)
+    endif
+  else (no)
+  endif
+  
+  :Final approval granted;
+}
+
+partition "Account Creation Phase" {
+  fork
+    :Generate account number;
+  fork again
+    :Create account in Core Banking System;
+  fork again
+    :Generate IBAN;
+  fork again
+    :Setup initial account parameters;
+  end fork
+  
+  if (Account creation successful?) then (no)
+    :Log technical error;
+    :Escalate to technical team;
+    :Notify client of delay;
+    stop
+  else (yes)
+  endif
+}
+
+partition "Account Activation Phase" {
+  fork
+    :Issue debit card(s);
+  fork again
+    :Setup online banking access;
+  fork again
+    :Prepare welcome package;
+  fork again
+    :Schedule relationship manager meeting;
+  end fork
+}
+
+partition "Client Notification Phase" {
+  fork
+    :Send account creation confirmation;
+    note right: **Multi-channel**\n• SMS notification\n• Email confirmation\n• Physical mail
+  fork again
+    :Provide account details;
+  fork again
+    :Send welcome package;
+  fork again
+    :Schedule onboarding appointment;
+  end fork
+}
+
+:Update request status to "Completed";
+:Generate completion report;
+:Archive all documents;
+
+stop
+
+@enduml

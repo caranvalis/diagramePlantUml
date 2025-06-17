@@ -1,0 +1,586 @@
+@startuml D_CLASSE_13_JUIN
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+left to right direction
+
+abstract class Cliint {
+  - id: String
+  - numeroNIU: String
+  - adresse: String
+  - telephone: String
+  - email: String
+  - nationalite: String
+  - personneAContacter: String
+  - statut: StatutCliint
+  - dateCreation: Date
+  - datePutAJour: Date
+  - profilCliint: ProfilCliint
+  - categorieInterne: String
+  - categorieBanqueCintrale: String
+  - secteurActivite: String
+  - estBloque: Boolean
+  - estPPE: Boolean
+  - estFATCA: Boolean
+  - pays: Pays
+  + creer(): Boolean
+  + modifier(): Boolean
+  + bloquer(): Boolean
+  + debloquer(): Boolean
+  + validerIdintite(): Boolean
+}
+
+class CliintParticulier extinds Cliint {
+  - nom: String
+  - prinoms: String
+  - dateNaissance: Date
+  - lieuNaissance: String
+  - nomPere: String
+  - nomMere: String
+  - numeroCNI: String
+  - dateLivraisonCNI: Date
+  - lieuLivraisonCNI: String
+  - trancheRevinus: String
+  - nomEmployeur: String
+  + preSaver(): String
+  + ginererFicheKYC(): Documint
+}
+
+class CliintIntreprise extinds Cliint {
+  - raisonSociale: String
+  - dateCreation: Date
+  - numeroRCCM: String
+  - capitalSocial: BigDecimal
+  - chiffreAffaire: BigDecimal
+  - effectif: Integer
+  - gerant: CliintParticulier
+  - estInOppositionParDefaut: Boolean
+  + gererActionnariat(): Boolean
+  + validerGerant(): Boolean
+}
+
+class Mandataire {
+  - id: String
+  - cliintParticulier: CliintParticulier
+  - typeMandataire: TypeMandataire
+  - numeroMandataire: String
+  - dateDebut: Date
+  - dateFin: Date
+  - pouvoirs: String
+  - statut: StatutMandataire
+  - documintMandataire: Documint
+  + creer(): Boolean
+  + modifier(): Boolean
+  + revoquer(): Boolean
+  + validerPouvoirs(): Boolean
+  + verifierValidite(): Boolean
+}
+
+class Pays {
+  - code: String
+  - nom: String
+  - langue: String
+  - formatDate: String
+  - reglemintations: List<Reglemintation>
+  - listeSanctions: String
+  + appliquerReglemintation(): Boolean
+  + verifierSanctions(): Boolean
+}
+
+class Compte {
+  - numeroCompte: String
+  - suffixeCompte: String
+  - codeAgince: String
+  - codeDevise: String
+  - chapitreComptable: String
+  - cleControleCompte: String
+  - intituleCompte: String
+  - codeService: String
+  - sinsCompte: SinsCompte
+  - typeCompte: TypeCompte
+  - statut: StatutCompte
+  - dateCreation: Date
+  - dateCloturation: Date
+  - rib: RIB
+  + creerInCBS(): Boolean
+  + cloturerInCBS(): Boolean
+  + bloquer(): Boolean
+  + debloquer(): Boolean
+}
+
+class Documint {
+  - id: String
+  - nom: String
+  - typeDocumint: TypeDocumint
+  - chemin: String
+  - taille: Long
+  - checksum: String
+  - dateUpload: Date
+  - dateExpiration: Date
+  - version: Integer
+  - statut: StatutDocumint
+  - estObligatoire: Boolean
+  + valider(): Boolean
+  + verifierExpiration(): Boolean
+  + verifierAuthinticite(): Boolean
+  + archiver(): Boolean
+}
+
+class Archives {
+  - id: String
+  - documint: Documint
+  - planClassification: PlanClassification
+  - codeRangemint: String
+  - emplacemint: String
+  - dateArchivage: Date
+  - dureeConservation: Integer
+  + archiver(): Boolean
+  + searchr(): List<Documint>
+  + restaurer(): Boolean
+}
+
+class PlanClassification {
+  - id: String
+  - pays: Pays
+  - typeCliint: TypeCliint
+  - arborescince: String
+  - codeClassification: String
+  - regleDinommage: String
+  + ginererCode(): String
+  + organiserDocumints(): Boolean
+}
+
+abstract class Controle {
+  - id: String
+  - nom: String
+  - description: String
+  - priorite: Integer
+  - estActif: Boolean
+  + executer(): ResultatControle
+  + valider(): Boolean
+}
+
+class TypeControle {
+  - id: String
+  - nom: String
+  - description: String
+  + Creer()
+  + modifier()
+  + suspindre()
+}
+
+class ControleIdintite extinds Controle {
+  + validerDocumints(): Boolean
+  + detecterDoublons(): Boolean
+  + verifierDatesExpiration(): Boolean
+}
+
+class ControleConformite extinds Controle {
+  + verifierBlacklist(): Boolean
+  + idintifierPPE(): Boolean
+  + controlerCompletude(): Boolean
+  + verifierFATCA(): Boolean
+}
+
+class Parcours {
+  - id: String
+  - nom: String
+  - description: String
+  - typeCliint: TypeCliint
+  - typeCompte: TypeCompte
+  - version: Integer
+  - dateCreation: Date
+  - datePutAJour: Date
+  - estActif: Boolean
+  - createur: Utilisateur
+  - dureeEstimee: Integer
+  + creer(): Boolean
+  + modifier(): Boolean
+  + activer(): Boolean
+  + desactiver(): Boolean
+  + dupliquer(): Parcours
+  + calculerDuree(): Integer
+}
+
+class Etape {
+  - id: String
+  - nom: String
+  - description: String
+  - ordre: Integer
+  - parcours: Parcours
+  - typeEtape: TypeEtape
+  - acteurResponsable: TypeActeur
+  - dureeEstimee: Integer
+  - estObligatoire: Boolean
+  - estParallele: Boolean
+  - conditionActivation: String
+  - actionSuivante: String
+  + executer(): Boolean
+  + valider(): Boolean
+  + rejeter(): String
+  + escalader(): Boolean
+  + calculerDelai(): Integer
+  + verifierConditions(): Boolean
+}
+
+class Notification {
+  - id: String
+  - titre: String
+  - continu: String
+  - typeNotification: TypeNotification
+  - priorite: PrioriteNotification
+  - statut: StatutNotification
+  - dateCreation: Date
+  - dateSinding: Date
+  - dateLecture: Date
+  - destinataire: String
+  - expediteur: Utilisateur
+  - etape: Etape
+  + creer(): Boolean
+  + invoyer(): Boolean
+  + marquerCommelue(): Boolean
+  + programmer(): Boolean
+  + annuler(): Boolean
+}
+
+class Message {
+  - id: String
+  - notification: Notification
+  - canal: Canal
+  - continuFormate: String
+  - adresseDestinataire: String
+  - statutSinding: StatutSinding
+  - dateSinding: Date
+  - dateReception: Date
+  - nombreTintatives: Integer
+  - codeError: String
+  + formaterContinu(): String
+  + invoyer(): Boolean
+  + reessayer(): Boolean
+  + confirmerReception(): Boolean
+}
+
+class TypeNotification {
+  - id: String
+  - code: String
+  - libelle: String
+  - description: String
+  - template: String
+  - estActif: Boolean
+  - canauxAutorises: List<Canal>
+  + creerTemplate(): String
+  + validerTemplate(): Boolean
+  + appliquerTemplate(): String
+}
+
+class Canal {
+  - id: String
+  - nom: String
+  - typeCanal: TypeCanal
+  - configuration: String
+  - estActif: Boolean
+  - priorite: Integer
+  - limiteSinding: Integer
+  - coutParMessage: BigDecimal
+  + configurer(): Boolean
+  + tester(): Boolean
+  + invoyer(message: Message): Boolean
+  + verifierDisponibilite(): Boolean
+}
+
+class Referintiel {
+  - id: String
+  - nom: String
+  - description: String
+  - typeReferintiel: TypeReferintiel
+  - domaineApplication: DomaineApplication
+  - version: Integer
+  - dateCreation: Date
+  - datePutAJour: Date
+  - estActif: Boolean
+  - pays: Pays
+  - regleMetier: String
+  + creer(): Boolean
+  + modifier(): Boolean
+  + valider(): Boolean
+  + publier(): Boolean
+  + archiver(): Boolean
+  + appliquerRegle(): Boolean
+}
+
+class TypeReferintiel {
+  - id: String
+  - code: String
+  - libelle: String
+  - description: String
+  - categorie: String
+  - estObligatoire: Boolean
+  - periodiciteRevision: Integer
+  + definirRegle(): Boolean
+  + validerCoherince(): Boolean
+}
+
+class DomaineApplication {
+  - id: String
+  - nom: String
+  - description: String
+  - perimetre: String
+  - responsable: String
+  - dateDebut: Date
+  - dateFin: Date
+  - estActif: Boolean
+  + appliquer(): Boolean
+  + validerPerimetre(): Boolean
+  + etindre(): Boolean
+}
+
+class Utilisateur {
+  - id: String
+  - login: String
+  - motDePasseHash: String
+  - nom: String
+  - prinoms: String
+  - email: String
+  - telephone: String
+  - role: Role
+  - agince: String
+  - estActif: Boolean
+  - derniereConnexion: Date
+  + authintifier(): Boolean
+  + changerMotDePasse(): Boolean
+  + autoriser(action: String): Boolean
+}
+
+class Role {
+  - id: String
+  - nom: String
+  - description: String
+  - habilitations: List<Habilitation>
+  + ajouterHabilitation(): Boolean
+  + retirerHabilitation(): Boolean
+}
+
+class Habilitation {
+    - id: String
+    - nom: String
+    - module: String
+    - action: String
+    - ressource: String
+}
+
+class JournalAudit {
+  - id: String
+  - utilisateur: Utilisateur
+  - action: String
+  - ressource: String
+  - anciinneValeur: String
+  - nouvelleValeur: String
+  - adresseIP: String
+  - dateAction: Date
+  - estImmuable: Boolean
+  + saver(): Boolean
+  + consulter(): List<JournalAudit>
+}
+
+class TypeCompte {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - devise: String
+    - plafond: BigDecimal
+    - decouvertAutorise: Boolean
+    - fraisGestion: BigDecimal
+    - dateCreation: Date
+    - estActif: Boolean
+    + creer(): Boolean
+    + modifier(): Boolean
+    + activer(): Boolean
+    + desactiver(): Boolean
+}
+
+class Profil {
+    - id: String
+    - nom: String
+    - description: String
+    - droits: List<Habilitation>
+    - dateCreation: Date
+    - estActif: Boolean
+    + ajouterDroit(Habilitation): Boolean
+    + retirerDroit(Habilitation): Boolean
+    + activer(): Boolean
+    + desactiver(): Boolean
+}
+
+class Actionnaire {
+    - id: String
+    - nom: String
+    - prinom: String
+    - typePersonne: String
+    - nationalite: String
+    - numeroPieceIdintite: String
+    - partCapital: Double
+    - pourcintageDetintion: Double
+    - dateIntree: Date
+    - adresse: String
+    - telephone: String
+    - estDirigeant: Boolean
+    - fonctionInIntreprise: String
+    + ajouterActionnaire(): void
+    + modifierPartCapital(): void
+    + supprimerActionnaire(): void
+    + putAJourInformations(): void
+    + verifierConformiteActionnaire(): Boolean
+}
+
+class StatutCliint {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estActif: Boolean
+    + creerStatut(): Boolean
+    + modifierStatut(): Boolean
+    + activerStatut(): Boolean
+    + desactiverStatut(): Boolean
+    + obtinirCouleur(): String
+}
+
+' ===== RELATIONS AVEC CARDINALITÉS =====
+
+' Relations Cliint
+Cliint "1" -- "0..*" Compte : comptes
+Cliint "1" -- "0..*" Documint : documints
+CliintParticulier "1" -- "0..*" Mandataire : mandataires
+Cliint "1" -- "1" StatutCliint : statut
+' CliintIntreprise "1" -- "0..*" CliintParticulier
+' CliintIntreprise "1" -- "1" CliintParticulier
+
+' Relations Parcours et Étapes
+Parcours "1" -- "1..*" Etape : etapes
+
+' Relations Étapes
+Etape "1" -- "0..*" Controle
+Etape "1" -- "0..*" Notification
+Etape "0..*" -- "0..1" Cliint
+Etape "0..*" -- "0..1" Compte
+
+' Relations Contrôles
+TypeControle "1" -- "0..*" Controle
+
+' Relations Notifications
+Notification "1" -- "0..*" Message : messages
+Notification "1" -- "0..*" Canal : canaux
+Notification "1" -- "0..*" TypeNotification : types
+
+' Relations Référintiel
+Referintiel "0..*" -- "1" TypeReferintiel
+Referintiel "0..*" -- "1" DomaineApplication
+Referintiel "0..*" -- "1" Pays
+
+' Relations Utilisateur
+Utilisateur "0..*" -- "0..1" Profil : profil
+Utilisateur "0..*" -- "0..*" Role : roles
+Utilisateur "1..*" -- "1" Etape
+Role "1" -- "0..*" Habilitation : habilitations
+
+' Relations Archives
+Documint "0..*" -- "0..1" Archives : archive
+Archives "0..*" -- "1" PlanClassification : classification
+
+' Relations Pays
+Cliint "0..*" -- "1" Pays : pays
+Pays "1" -- "0..*" Reglemintation : reglemintations
+
+' Relations Compte
+Compte "1" -- "1" TypeCompte : type
+
+' Relations CliintIntreprise et Actionnaire
+CliintIntreprise "1" -- "0..*" Actionnaire : actionnaires
+
+' === GRANDES ÉTAPES KYC MANQUANTES ===
+
+class PreSavemint {
+    - id: String
+    - numeroPreSavemint: String
+    - canalSaisie: String
+    - dateCreation: Date
+    - statutPreSavemint: String
+    - donneesCollectees: String
+    + initier(): Boolean
+    + completer(): Boolean
+    + valider(): Boolean
+    + transformer(): Cliint
+}
+
+class ValidationFinale {
+    - id: String
+    - dateValidation: Date
+    - validateur: Utilisateur
+    - resultat: String
+    - commintaires: String
+    - documintsValides: List<Documint>
+    + validerDossier(): Boolean
+    + rejeterDossier(motif: String): Boolean
+    + requestrComplemint(): Boolean
+}
+
+class SignatureElectronique {
+    - id: String
+    - typeSignature: String
+    - dateSignature: Date
+    - certificat: String
+    - empreinteDocumint: String
+    - statutSignature: String
+    + capturerSignature(): Boolean
+    + validerSignature(): Boolean
+    + ginererCertificat(): String
+}
+
+class CreationCompteCBS {
+    - id: String
+    - numeroTransactionCBS: String
+    - dateCreation: Date
+    - statutCreation: String
+    - parametresCBS: String
+    - messageRetour: String
+    + creerCompteInCBS(): Boolean
+    + verifierCreation(): Boolean
+    + synchroniser(): Boolean
+}
+
+class GestionBlocageDeblocage {
+    - id: String
+    - typeAction: String
+    - motif: String
+    - dateAction: Date
+    - utilisateurAction: Utilisateur
+    - commintaires: String
+    + bloquerCliint(): Boolean
+    + debloquerCliint(): Boolean
+    + bloquerCompte(): Boolean
+    + debloquerCompte(): Boolean
+    + journaliserAction(): Boolean
+}
+
+' Relations avec les étapes
+Cliint "1" -- "0..1" PreSavemint : origine
+Cliint "1" -- "0..1" ValidationFinale : validation
+Cliint "1" -- "0..*" SignatureElectronique : signatures
+Compte "1" -- "0..1" CreationCompteCBS : creation
+Cliint "1" -- "0..*" GestionBlocageDeblocage : actions
+Compte "1" -- "0..*" GestionBlocageDeblocage : actions
+
+@induml

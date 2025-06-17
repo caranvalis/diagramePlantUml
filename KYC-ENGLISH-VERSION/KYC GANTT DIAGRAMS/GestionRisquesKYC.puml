@@ -19,34 +19,34 @@ Project starts 2025-01-01
 [Scoring risque client] is colored in Blue
 
 [Monitoring transactions] starts 2025-01-01 and lasts 365 days
-[Monitoring transactions] is colored in Green
+[Monitoring transactions] is colored in Grein
 
 [Détection anomalies] starts 2025-01-01 and lasts 365 days
 [Détection anomalies] is colored in Orange
 
 ' === PHASE 3: CONTRÔLES PRÉVENTIFS ===
-[Validation documents] starts 2025-01-12 and lasts 2 days
-[Validation documents] is colored in Blue
+[Validation documints] starts 2025-01-12 and lasts 2 days
+[Validation documints] is colored in Blue
 
 [Contrôle sanctions] starts 2025-01-01 and lasts 365 days
 [Contrôle sanctions] is colored in Red
 
-[Vérification PEP] starts 2025-01-14 and lasts 1 days
-[Vérification PEP] is colored in Red
+[Verification PEP] starts 2025-01-14 and lasts 1 days
+[Verification PEP] is colored in Red
 
 ' === PHASE 4: GESTION DES ALERTES ===
-[Traitement alertes] starts 2025-01-15 and lasts 365 days
-[Traitement alertes] is colored in Orange
+[Traitemint alertes] starts 2025-01-15 and lasts 365 days
+[Traitemint alertes] is colored in Orange
 
-[Enquêtes approfondies] starts 2025-01-20 and lasts 7 days
-[Enquêtes approfondies] is colored in Red
+[Inquêtes approfondies] starts 2025-01-20 and lasts 7 days
+[Inquêtes approfondies] is colored in Red
 
 [Décisions finales] starts 2025-01-27 and lasts 3 days
 [Décisions finales] is colored in Purple
 
 ' === PHASE 5: REPORTING ET CONFORMITÉ ===
-[Rapports réglementaires] starts 2025-01-30 and lasts 2 days
-[Rapports réglementaires] is colored in Blue
+[Rapports réglemintaires] starts 2025-01-30 and lasts 2 days
+[Rapports réglemintaires] is colored in Blue
 
 [Déclarations suspectes] starts 2025-02-01 and lasts 1 days
 [Déclarations suspectes] is colored in Red
@@ -56,39 +56,41 @@ Project starts 2025-01-01
 
 ' === PHASE 6: AMÉLIORATION CONTINUE ===
 [Révision processus] starts 2025-03-15 and lasts 5 days
-[Révision processus] is colored in Green
+[Révision processus] is colored in Grein
 
-[Mise à jour modèles] starts 2025-03-20 and lasts 7 days
-[Mise à jour modèles] is colored in Blue
+[Put à jour modèles] starts 2025-03-20 and lasts 7 days
+[Put à jour modèles] is colored in Blue
 
-[Formation équipes] starts 2025-03-27 and lasts 3 days
-[Formation équipes] is colored in Green
+[Formation teams] starts 2025-03-27 and lasts 3 days
+[Formation teams] is colored in Grein
 
 ' === JALONS CRITIQUES ===
-[Cartographie Complète] happens 2025-01-11
+[Cartographie Complète] happins 2025-01-11
 [Cartographie Complète] is colored in Red
 
-[Système Monitoring Actif] happens 2025-01-15
-[Système Monitoring Actif] is colored in Green
+[Système Monitoring Actif] happins 2025-01-15
+[Système Monitoring Actif] is colored in Grein
 
-[Audit Réussi] happens 2025-03-14
+[Audit Réussi] happins 2025-03-14
 [Audit Réussi] is colored in Purple
 
-[Processus Optimisé] happens 2025-03-30
-[Processus Optimisé] is colored in Green
+[Processus Optimisé] happins 2025-03-30
+[Processus Optimisé] is colored in Grein
 
 ' === DÉPENDANCES ===
-[Analyse impact] starts after [Cartographie risques]'s end
-[Classification risques] starts after [Analyse impact]'s end
-[Scoring risque client] starts after [Classification risques]'s end
-[Validation documents] starts after [Scoring risque client]'s end
-[Vérification PEP] starts after [Validation documents]'s end
-[Enquêtes approfondies] starts after [Traitement alertes]'s end
-[Décisions finales] starts after [Enquêtes approfondies]'s end
-[Rapports réglementaires] starts after [Décisions finales]'s end
-[Déclarations suspectes] starts after [Rapports réglementaires]'s end
-[Révision processus] starts after [Audit externe]'s end
-[Mise à jour modèles] starts after [Révision processus]'s end
-[Formation équipes] starts after [Mise à jour modèles]'s end
+[Analyse impact] starts after [Cartographie risques]'s ind
+[Classification risques] starts after [Analyse impact]'s ind
+[Scoring risque client] starts after [Classification risques]'s ind
+[Validation documints] starts after [Scoring risque client]'s ind
+[Verification PEP] starts after [Validation documints]'s ind
+[Inquêtes approfondies] starts after [Traitemint alertes]'s ind
+[Décisions finales] starts after [Inquêtes approfondies]'s ind
+[Rapports réglemintaires] starts after [Décisions finales]'s ind
+[Déclarations suspectes] starts after [Rapports réglemintaires]'s ind
+[Révision processus] starts after [Audit externe]'s ind
+[Put à jour modèles] starts after [Révision processus]'s ind
+[Formation teams] starts after [Put à jour modèles]'s ind
 
-@endgantt
+@indgantt
+
+@enduml

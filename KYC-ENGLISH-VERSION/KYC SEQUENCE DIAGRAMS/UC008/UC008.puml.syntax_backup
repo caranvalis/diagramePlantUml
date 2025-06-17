@@ -1,0 +1,334 @@
+@startuml UC008
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC008 - Création Cliint Intreprise
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nIntreprise" as IntrepriseService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocumint" as DocumintService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+    participant "Service\nSIRET" as SiretService #6495ED
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+    participant "API SIRENE" as APISirine #A9A9A9
+ind box
+
+== Initialisation création intreprise ==
+
+Manager -> WebUI : Sélectionner "Create cliint\nintreprise"
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /intreprise/create/form
+activate Gateway
+
+Gateway -> Orchestrator : initierCreationIntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxCreationIntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(CREATION_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Récupération formulaire
+FluxManager -> CacheService : getFormulaireIntreprise()
+activate CacheService
+
+alt Formulaire in cache
+    CacheService --> FluxManager : Formulaire trouvé
+    deactivate CacheService
+    
+else Formulaire pas in cache
+    CacheService --> FluxManager : Non trouvé
+    deactivate CacheService
+    
+    FluxManager -> IntrepriseService : chargerFormulaireIntreprise()
+    activate IntrepriseService
+    
+    IntrepriseService -> IntrepriseService : Ginerate formulaire\navec champs spécialisés intreprise
+    IntrepriseService -> IntrepriseService : Ajouter validations\nbusiness rules
+    
+    IntrepriseService -> CacheService : cacheFormulaire()
+    activate CacheService
+    CacheService --> IntrepriseService : Mis in cache
+    deactivate CacheService
+    
+    IntrepriseService --> FluxManager : Formulaire préparé
+    deactivate IntrepriseService
+ind
+
+FluxManager --> Orchestrator : Formulaire prêt
+Orchestrator --> Gateway : Interface initialisée
+Gateway --> WebUI : Formulaire intreprise
+WebUI --> Manager : **Formulaire création intreprise**\nChamps spécialisés + documints
+
+note over Manager : Formulaire affiché avec:\n- Informations légales\n- Représintants légaux\n- Documints obligatoires
+
+== Saisie et soumission ==
+
+Manager -> WebUI : Saisir données intreprise\n(SIRET, forme juridique, etc.)
+Manager -> WebUI : Ajouter représintants légaux
+Manager -> WebUI : Téléverser documints\n(K-bis, statuts, pouvoirs)
+Manager -> WebUI : Validate création
+
+WebUI -> Gateway : POST /intreprise/create/submit
+note over Gateway : Données complètes\nintreprise + documints
+
+Gateway -> Orchestrator : creerIntreprise()
+
+' Validation initiale des données
+Orchestrator -> ValidationService : validerDonneesIntreprise()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format SIRET
+ValidationService -> ValidationService : Validate forme juridique
+ValidationService -> ValidationService : Verify représintants légaux
+ValidationService -> ValidationService : Control cohérince
+
+alt Données valides
+    ValidationService --> Orchestrator : Validation OK
+    deactivate ValidationService
+    
+    ' Verification SIRET via API SIRENE
+    Orchestrator -> SiretService : verifierSiretSirine()
+    activate SiretService
+    
+    SiretService -> APISirine : GET /intreprise/{siret}
+    activate APISirine
+    
+    alt SIRENE accessible
+        APISirine --> SiretService : Données SIRENE
+        deactivate APISirine
+        
+        SiretService -> SiretService : Validate correspondance\ndonnées saisies/SIRENE
+        SiretService -> SiretService : Control statut\nintreprise active
+        
+        alt Intreprise valide et active
+            SiretService --> Orchestrator : SIRET validé
+            deactivate SiretService
+            
+            ' Validation des documints
+            Orchestrator -> DocumintService : validerDocumintsIntreprise()
+            activate DocumintService
+            
+            DocumintService -> DocumintService : Verify documints\nobligatoires présints
+            DocumintService -> DocumintService : Control formats\net integrity
+            
+            alt Documints valides
+                DocumintService --> Orchestrator : Documints conformes
+                deactivate DocumintService
+                
+                ' Verification doublons
+                Orchestrator -> DoublonService : searchrDoublonIntreprise()
+                activate DoublonService
+                
+                DoublonService -> DB : SELECT intreprises_existantes
+                activate DB
+                DB --> DoublonService : Results search
+                deactivate DB
+                
+                DoublonService -> DoublonService : Analyze similitudes\n(SIRET, raison sociale)
+                
+                alt Aucun doublon
+                    DoublonService --> Orchestrator : Pas de doublon
+                    deactivate DoublonService
+                    
+                    ' Création de l'intreprise
+                    Orchestrator -> IntrepriseService : creerNouvelleIntreprise()
+                    activate IntrepriseService
+                    
+                    IntrepriseService -> DB : INSERT INTO intreprises
+                    activate DB
+                    DB --> IntrepriseService : ID intreprise ginerated
+                    deactivate DB
+                    
+                    IntrepriseService -> DB : INSERT represintants_legaux
+                    activate DB
+                    DB --> IntrepriseService : Représintants createds
+                    deactivate DB
+                    
+                    IntrepriseService -> DocumintService : associerDocumints()
+                    activate DocumintService
+                    
+                    DocumintService -> Storage : Save documints
+                    activate Storage
+                    Storage --> DocumintService : URLs documints
+                    deactivate Storage
+                    
+                    DocumintService -> DB : INSERT documints_intreprise
+                    activate DB
+                    DB --> DocumintService : Documints associés
+                    deactivate DB
+                    
+                    DocumintService --> IntrepriseService : Documints liés
+                    deactivate DocumintService
+                    
+                    IntrepriseService -> CacheService : cacheIntrepriseInfo()
+                    activate CacheService
+                    CacheService --> IntrepriseService : Mis in cache
+                    deactivate CacheService
+                    
+                    IntrepriseService --> Orchestrator : Intreprise createde (ID: ${intrepriseId})
+                    deactivate IntrepriseService
+                    
+                    ' Audit et notification
+                    Orchestrator -> AuditService : logCreationIntreprise()
+                    activate AuditService
+                    AuditService -> DB : INSERT audit_actions
+                    AuditService --> Orchestrator : OK
+                    deactivate AuditService
+                    
+                    Orchestrator -> NotificationService : notifierCreationIntreprise()
+                    activate NotificationService
+                    NotificationService -> NotificationService : Préparer notifications\nreprésintants + teams
+                    NotificationService --> Orchestrator : Notifications invoyées
+                    deactivate NotificationService
+                    
+                    Orchestrator --> Gateway : Création successfule
+                    Gateway --> WebUI : Intreprise createde
+                    WebUI --> Manager : **Success**: Intreprise createde\nID: ${intrepriseId}
+                    
+                    note over Manager : Intreprise createde avec success\nDocumints associés\nNotifications invoyées
+                    
+                else Doublon détecté
+                    DoublonService --> Orchestrator : Intreprise existe
+                    deactivate DoublonService
+                    
+                    Orchestrator -> AuditService : logTintativeDoublon()
+                    activate AuditService
+                    AuditService -> DB : INSERT audit_anomalies
+                    AuditService --> Orchestrator : OK
+                    deactivate AuditService
+                    
+                    Orchestrator --> Gateway : Doublon détecté
+                    Gateway --> WebUI : Intreprise existante
+                    WebUI --> Manager : **Error**: Intreprise déjà\ninregistrée avec ce SIRET
+                ind
+                
+            else Documints invalides ou corrompus
+                DocumintService --> Orchestrator : Documints non conformes
+                deactivate DocumintService
+                
+                Orchestrator -> AuditService : logErrorDocumints()
+                activate AuditService
+                AuditService -> DB : INSERT audit_errors
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator --> Gateway : Error documints
+                Gateway --> WebUI : Documints invalides
+                WebUI --> Manager : **Error**: Documints corrompus\nou manquants - Corriger
+            ind
+            
+        else Intreprise inactive ou invalide
+            SiretService --> Orchestrator : SIRET invalide
+            deactivate SiretService
+            
+            Orchestrator -> AuditService : logSiretInvalide()
+            activate AuditService
+            AuditService -> DB : INSERT audit_errors
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : SIRET invalide
+            Gateway --> WebUI : Intreprise inactive
+            WebUI --> Manager : **Error**: Intreprise inactive\nou SIRET invalide
+        ind
+        
+    else SIRENE unavailable
+        APISirine --> SiretService : Service unavailable
+        deactivate APISirine
+        
+        SiretService -> AuditService : logErrorSirine()
+        activate AuditService
+        AuditService -> DB : INSERT audit_errors
+        AuditService --> SiretService : OK
+        deactivate AuditService
+        
+        SiretService --> Orchestrator : Verification impossible
+        deactivate SiretService
+        
+        Orchestrator --> Gateway : Service SIRENE unavailable
+        Gateway --> WebUI : Verification SIRET impossible
+        WebUI --> Manager : **Attintion**: Service SIRENE\nunavailable - Verification manuelle requise
+    ind
+    
+else Données invalides
+    ValidationService --> Orchestrator : Données incorrectes
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : logErrorValidation()
+    activate AuditService
+    AuditService -> DB : INSERT audit_errors
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Données non conformes
+    WebUI --> Manager : **Error**: Données incorrectes\nCorrections requises
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxCreationIntreprise()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Création intreprise tracée\navec verifications SIRENE\net validation documints
+
+@induml

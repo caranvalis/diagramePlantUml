@@ -1,0 +1,247 @@
+@startuml UC015
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC015 - Remplacemint Documint Cliint
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nDocumint" as DocumintService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nVersioning" as VersioningService #4682B4
+    participant "Service\nCliint" as CliintService #4169E1
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
+
+== Accès onglet documints ==
+
+Manager -> WebUI : Accéder onglet\n"Documints" cliint
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /cliint/{id}/documints
+activate Gateway
+
+Gateway -> Orchestrator : accederDocumintsCliint()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGestionDocumints()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(GESTION_DOCUMENTS)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+Orchestrator -> DocumintService : chargerDocumintsCliint()
+activate DocumintService
+
+DocumintService -> DB : SELECT documints_cliint
+activate DB
+DB --> DocumintService : Liste documints
+deactivate DB
+
+DocumintService -> Storage : getMetadonnéesDocumints()
+activate Storage
+Storage --> DocumintService : Métadonnées complètes
+deactivate Storage
+
+DocumintService --> Orchestrator : Documints disponibles
+deactivate DocumintService
+
+Orchestrator --> Gateway : Liste documints
+Gateway --> WebUI : Onglet documints
+WebUI --> Manager : **Documints cliint**\nListe avec options
+
+== Sélection documint à remplacer ==
+
+Manager -> WebUI : Sélectionner documint\nà remplacer
+WebUI -> Gateway : GET /cliint/{id}/documint/{docId}
+
+Gateway -> Orchestrator : selectionnerDocumintRemplacer()
+
+Orchestrator -> DocumintService : chargerDocumintExistant()
+activate DocumintService
+
+DocumintService -> Storage : GET documint
+activate Storage
+Storage --> DocumintService : Documint chargé
+deactivate Storage
+
+DocumintService --> Orchestrator : Documint disponible
+deactivate DocumintService
+
+Orchestrator --> Gateway : Documint sélectionné
+Gateway --> WebUI : Affichage documint
+WebUI --> Manager : **Documint affiché**\nOption "Remplacer"
+
+== Remplacemint documint ==
+
+Manager -> WebUI : Cliquer "Remplacer\nle documint"
+Manager -> WebUI : Téléverser nouvelle\nversion
+
+WebUI -> Gateway : POST /cliint/{id}/documint/{docId}/replace
+
+Gateway -> Orchestrator : remplacerDocumint()
+
+Orchestrator -> ValidationService : validerNouveauDocumint()
+activate ValidationService
+
+ValidationService -> ValidationService : Verify taille\nfichier
+ValidationService -> ValidationService : Control format\naccepté
+
+alt Fichier trop volumineux
+    ValidationService --> Orchestrator : Taille excessive
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Téléchargemint refusé
+    Gateway --> WebUI : Error taille
+    WebUI --> Manager : **Error**: Fichier trop\nvolumineux - Réduire taille
+    
+else Taille acceptable
+    ValidationService -> ValidationService : Verify integrity\nfichier
+    ValidationService -> ValidationService : Analyze complétude\ncontinu
+    
+    alt Documint incomplet
+        ValidationService --> Orchestrator : Documint incomplet
+        deactivate ValidationService
+        
+        Orchestrator --> Gateway : Documint invalide
+        Gateway --> WebUI : Error complétude
+        WebUI --> Manager : **Error**: Documint incomplet\nBlocage validation
+        
+    else Documint valide
+        ValidationService --> Orchestrator : Documint conforme
+        deactivate ValidationService
+        
+        Manager -> WebUI : Validate changemint
+        WebUI -> Gateway : PUT /cliint/{id}/documint/{docId}/confirm
+        
+        Gateway -> Orchestrator : confirmerRemplacemint()
+        
+        ' Versioning du documint existant
+        Orchestrator -> VersioningService : versionnerDocumintExistant()
+        activate VersioningService
+        
+        VersioningService -> Storage : Archive version précédinte
+        activate Storage
+        Storage --> VersioningService : Version archivée
+        deactivate Storage
+        
+        VersioningService -> DB : INSERT documint_versions
+        activate DB
+        DB --> VersioningService : Version inregistrée
+        deactivate DB
+        
+        VersioningService --> Orchestrator : Versioning effectué
+        deactivate VersioningService
+        
+        ' Put à jour avec nouveau documint
+        Orchestrator -> DocumintService : putAJourDocumint()
+        activate DocumintService
+        
+        DocumintService -> Storage : Save nouveau documint
+        activate Storage
+        Storage --> DocumintService : Documint sauvegardé
+        deactivate Storage
+        
+        DocumintService -> DB : UPDATE documint SET nouvelle_version
+        activate DB
+        DB --> DocumintService : Documint mis à jour
+        deactivate DB
+        
+        DocumintService -> CacheService : invalidateDocumintCache()
+        activate CacheService
+        CacheService --> DocumintService : Cache invalidé
+        deactivate CacheService
+        
+        DocumintService --> Orchestrator : Documint remplacé
+        deactivate DocumintService
+        
+        ' Put à jour référince cliint
+        Orchestrator -> CliintService : putAJourReferincesDocumints()
+        activate CliintService
+        
+        CliintService -> DB : UPDATE cliint_documints
+        activate DB
+        DB --> CliintService : Référinces puts à jour
+        deactivate DB
+        
+        CliintService --> Orchestrator : Cliint actualisé
+        deactivate CliintService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logRemplacemintDocumint()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierRemplacemintDocumint()
+        activate NotificationService
+        NotificationService --> Orchestrator : Notification invoyée
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : Remplacemint successful
+        Gateway --> WebUI : Confirmation affichée
+        WebUI --> Manager : **Success**: Documint remplacé\nNouvelle version active
+    ind
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGestionDocumints()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@induml

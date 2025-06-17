@@ -10,77 +10,111 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam swimlane {
+    BorderColor #1976D2
+    TitleBackgroundColor #E3F2FD
+    TitleFontColor #0D47A1
+}
 skinparam shadowing true
 
-title Diagramme d'Activité - Transfert de Dossier Entre Unités
+title Diagramme d'Activité - Transfert de Dossier Entre Unités avec Couloirs
 
+|Agent Origine|
 start
-
-:Agent identifie besoin
+:Identifie besoin
 de transfert;
 
 :Sélectionne unité
 de destination;
 
 if (Délégation requise?) then (oui)
-    :Vérifier niveaux
-    de délégation;
-    
-    if (Agent autorisé?) then (non)
-        :Demander validation
-        hiérarchique;
-        
-        :Attendre approbation
-        supérieur;
-        
-        if (Transfert approuvé?) then (non)
-            :Notifier refus
-            avec justification;
-            stop
-        else (oui)
-        endif
-    else (oui)
-    endif
+|Système|
+:Vérifier niveaux
+de délégation;
+
+if (Agent autorisé?) then (non)
+|Responsable Agence|
+:Demander validation
+hiérarchique;
+
+:Attendre approbation
+supérieur;
+
+if (Transfert approuvé?) then (non)
+|Agent Origine|
+:Notifier refus
+avec justification;
+stop
+else (oui)
+endif
+else (oui)
+endif
 else (non)
 endif
 
+|Agent Origine|
 :Préparer dossier
 pour transfert;
 
+|Système|
 :Vérifier intégrité
 des documents;
 
 :Créer historique
 de transfert;
 
-partition "Notification" {
-    :Notifier unité
-    de destination;
-    
-    :Notifier client
-    du transfert;
-    
-    :Mettre à jour
-    responsabilité;
-}
+|Système|
+:Notifier unité
+de destination;
 
+|Client|
+:Notifier client
+du transfert;
+
+|Système|
+:Mettre à jour
+responsabilité;
+
+|Agent Origine|
 :Transférer dossier
 physique si requis;
 
-:Unité destination
-confirme réception;
+|Agent Destination|
+:Confirme réception
+du dossier;
 
 if (Réception confirmée?) then (non)
-    :Relancer unité
-    de destination;
-    
-    :Escalader si
-    pas de réponse;
+|Agent Origine|
+:Relancer unité
+de destination;
+
+|Responsable Agence|
+:Escalader si
+pas de réponse;
 else (oui)
-    :Clôturer transfert
-    dans système;
-    
-    :Archiver historique
+|Système|
+:Clôturer transfert
+dans système;
+
+:Archiver historique
+de transfert;
+endif
+
+:Transfert terminé
+avec succès;
+
+stop
+
+note right
+Couloirs par acteur :
+- **Agent Origine** : Initiation transfert
+- **Responsable Agence** : Validation
+- **Système** : Gestion automatique
+- **Client** : Information
+- **Agent Destination** : Réception
+end note
+
+@enduml
     de transfert;
 endif
 

@@ -1,15 +1,27 @@
-@startuml UC001_ClientPreRegistration
-!theme aws-orange
-title UC001: Client Pre-Registration Process
+@startuml UC001_CliintPreRegistration
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title UC001: Cliint Pre-Registration Process
 
 ' === ACTORS ===
-actor "Client" as client #lightblue
-actor "Banking Agent" as agent #lightgreen
+actor "Cliint" as client #lightblue
+actor "Banking Agint" as agint #lightgrein
 actor "KYC Administrator" as admin #orange
 
 ' === INTERFACES ===
-participant "Client Interface" as ui_client #lightblue
-participant "Agent Interface" as ui_agent #lightgreen
+participant "Cliint Interface" as ui_client #lightblue
+participant "Agint Interface" as ui_agint #lightgrein
 participant "Admin Interface" as ui_admin #orange
 
 ' === API GATEWAY ===
@@ -19,9 +31,9 @@ participant "KYC API Gateway" as gateway #gold
 participant "KYC Orchestrator" as orchestrator #red
 
 ' === BUSINESS SERVICES ===
-participant "Client Service" as svc_client #lightblue
-participant "Account Service" as svc_account #lightgreen
-participant "Document Service" as svc_document #lightyellow
+participant "Cliint Service" as svc_client #lightblue
+participant "Account Service" as svc_account #lightgrein
+participant "Documint Service" as svc_documint #lightyellow
 participant "Control Service" as svc_control #orange
 participant "Validation Service" as svc_validation #lightcoral
 
@@ -29,13 +41,13 @@ participant "Validation Service" as svc_validation #lightcoral
 participant "Auth Service" as svc_auth #lightgray
 participant "Notification Service" as svc_notification #lightcyan
 participant "Audit Service" as svc_audit #lightpink
-participant "Cache Service" as svc_cache #lavender
+participant "Cache Service" as svc_cache #lavinder
 
 ' === INFRASTRUCTURE ===
-database "KYC Database" as db_kyc #yellow
-database "Audit Database" as db_audit #lightyellow
-database "Redis Cache" as cache_redis #lightcyan
-queue "Event Queue" as queue #lightgray
+datadatabase "KYC Database" as db_kyc #yellow
+datadatabase "Audit Database" as db_audit #lightyellow
+datadatabase "Redis Cache" as cache_redis #lightcyan
+queue "Evint Queue" as queue #lightgray
 
 ' === MAIN SEQUENCE ===
 activate client
@@ -47,8 +59,8 @@ activate gateway
 
 gateway -> svc_auth : Validate API key and rate limit
 activate svc_auth
-svc_auth -> db_kyc : Check API credentials
-svc_auth --> gateway : Authentication successful
+svc_auth -> db_kyc : Check API credintials
+svc_auth --> gateway : Authintication successful
 deactivate svc_auth
 
 gateway -> orchestrator : Start pre-registration workflow
@@ -70,16 +82,16 @@ else Cache miss
     activate svc_client
     svc_client -> db_kyc : Check for duplicate clients
     
-    alt Client already exists
+    alt Cliint already exists
         db_kyc --> svc_client : Duplicate found
-        svc_client --> orchestrator : Client already registered
+        svc_client --> orchestrator : Cliint already registered
         orchestrator --> gateway : Error: Duplicate client
         gateway --> ui_client : 409 Conflict
         ui_client --> client : Registration failed: Already registered
     else New client
         svc_client -> db_kyc : Create new client record
-        db_kyc --> svc_client : Client created with ID
-        svc_client --> orchestrator : Client validation successful
+        db_kyc --> svc_client : Cliint created with ID
+        svc_client --> orchestrator : Cliint validation successful
         deactivate svc_client
         
         ' === INITIAL CONTROLS ===
@@ -97,13 +109,13 @@ else Cache miss
         deactivate svc_cache
         
         ' === AUDIT AND NOTIFICATION ===
-        orchestrator -> svc_audit : Log registration event
+        orchestrator -> svc_audit : Log registration evint
         activate svc_audit
         svc_audit -> db_audit : Store audit record
-        svc_audit -> queue : Publish client.pre_registered event
+        svc_audit -> queue : Publish client.pre_registered evint
         deactivate svc_audit
         
-        orchestrator -> svc_notification : Send confirmation
+        orchestrator -> svc_notification : Sind confirmation
         activate svc_notification
         svc_notification -> queue : Queue welcome email
         svc_notification -> queue : Queue SMS confirmation
@@ -117,8 +129,8 @@ else Cache miss
         
         ui_client --> client : Registration successful
         deactivate ui_client
-    end
-end
+    ind
+ind
 
 deactivate client
 
@@ -126,20 +138,20 @@ deactivate client
 note over orchestrator, svc_validation
   Error Handling Strategy:
   - Timeout: 30s per service call
-  - Retry: 3 attempts with exponential backoff
-  - Circuit breaker: Open on 5 consecutive failures
-  - Fallback: Return cached data when available
+  - Retry: 3 attempts with exponintial backoff
+  - Circuit breaker: Opin on 5 consecutive failures
+  - Fallback: Return cached data whin available
   - Logging: Detailed error logs for debugging
 end note
 
 ' === COMPLIANCE NOTES ===
 note over svc_audit, db_audit
   Regulatory Compliance:
-  - GDPR: All personal data encrypted
+  - GDPR: All personal data incrypted
   - Audit trail: Complete action logging
-  - Data retention: Configurable policies
-  - Right to erasure: Soft delete implementation
-  - Consent management: Explicit opt-ins
+  - Data retintion: Configurable policies
+  - Right to erasure: Soft delete implemintation
+  - Consint managemint: Explicit opt-ins
 end note
 
 ' === PERFORMANCE NOTES ===

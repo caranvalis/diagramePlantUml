@@ -10,12 +10,18 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Clôture et Archivage de Dossier
 
-start
 
+|Système|
+start
 :Dossier atteint
 état terminal;
 
@@ -23,6 +29,7 @@ start
 de clôture;
 
 if (Clôture type?) then (Compte ouvert)
+    
     partition "Clôture Positive" {
         :Confirmer ouverture
         effective du compte;
@@ -36,14 +43,17 @@ if (Clôture type?) then (Compte ouvert)
         :Créer profil client
         dans système bancaire;
         
+        
         :Notifier client
         de l'ouverture;
         
         :Transmettre informations
         de connexion;
+        
     }
     
 elseif (Compte refusé) then
+    
     partition "Clôture Négative" {
         :Compiler justifications
         du refus;
@@ -61,7 +71,9 @@ elseif (Compte refusé) then
         du refus justifié;
     }
     
+    
 else (Abandon client)
+    
     partition "Clôture par Abandon" {
         :Documenter date
         et cause d'abandon;
@@ -75,7 +87,9 @@ else (Abandon client)
         :Conserver traces
         de la tentative;
     }
+    
 endif
+
 
 partition "Préparation Archivage" {
     :Compiler dossier
@@ -128,6 +142,7 @@ partition "Archivage Sécurisé" {
     selon politique rétention;
 }
 
+
 partition "Mise à Jour Systèmes" {
     :Mettre à jour statut
     dans système workflow;
@@ -142,16 +157,20 @@ partition "Mise à Jour Systèmes" {
     pour reporting;
 }
 
+
 partition "Communications Finales" {
     if (Clôture positive?) then (oui)
+        
         :Notifier services
         bancaires de l'ouverture;
+        
         
         :Informer équipes
         commerciales;
         
         :Planifier suivi
         relation client;
+        
         
     else (non)
         :Informer équipes
@@ -162,12 +181,14 @@ partition "Communications Finales" {
     endif
 }
 
+
 :Libérer ressources
 système temporaires;
 
 :Clôturer officiellement
 le dossier;
 
+|Système|
 :Générer certificat
 de clôture;
 

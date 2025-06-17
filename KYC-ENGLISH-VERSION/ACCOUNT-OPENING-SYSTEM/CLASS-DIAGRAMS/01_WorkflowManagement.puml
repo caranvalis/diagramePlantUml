@@ -1,0 +1,313 @@
+@startuml WorkflowManagement
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Account Opening Workflow Management
+
+package "Main Workflow" #DDFFDD {
+  class AccountOpeningRequest {
+    - id: String
+    - referenceNumber: String
+    - clientType: ClientType
+    - initiationChannel: InitiationChannel
+    - initiatingAgent: Agent
+    - processingAgent: Agent
+    - managementUnit: ManagementUnit
+    - requestStatus: RequestStatus
+    - priority: RequestPriority
+    - creationDate: Date
+    - validationDate: Date
+    - lastModificationDate: Date
+    - globalComment: String
+    - currentStep: ValidationStep
+    - stepsHistory: List<ValidationStep>
+    - complianceBoard: ComplianceBoard
+    - generatedAccountNumber: String
+    - generatedIBAN: IBAN
+    + create(): Boolean
+    + initialize(): Boolean
+    + submit(): Boolean
+    + validate(): Boolean
+    + reject(reason: String): Boolean
+    + transfer(newAgent: Agent): Boolean
+    + progress(): Boolean
+    + archive(): Boolean
+  }
+
+  class ValidationStep {
+    - id: String
+    - request: AccountOpeningRequest
+    - stepType: StepType
+    - sequenceNumber: Integer
+    - responsibleAgent: Agent
+    - startDate: Date
+    - endDate: Date
+    - processingDuration: Long
+    - stepStatus: StepStatus
+    - comment: String
+    - actionPerformed: StepAction
+    - nextStep: ValidationStep
+    - previousStep: ValidationStep
+    - isActive: Boolean
+    - isCompleted: Boolean
+    - requiresReturn: Boolean
+    - returnReason: String
+    + start(): Boolean
+    + process(): Boolean
+    + validate(): Boolean
+    + reject(reason: String): Boolean
+    + delegate(agent: Agent): Boolean
+    + calculateDuration(): Long
+    + notifyAgent(): Boolean
+  }
+
+  class ComplianceBoard {
+    - id: String
+    - request: AccountOpeningRequest
+    - complianceLines: List<ComplianceLine>
+    - validationSteps: List<ValidationStep>
+    - compliancePercentage: Float
+    - totalControls: Integer
+    - completedControls: Integer
+    - pendingControls: Integer
+    - failedControls: Integer
+    - creationDate: Date
+    - lastUpdateDate: Date
+    + initialize(): Boolean
+    + addComplianceLine(line: ComplianceLine): Boolean
+    + updateCompliance(): Boolean
+    + calculatePercentage(): Float
+    + getStatus(): ComplianceStatus
+    + generateReport(): ComplianceReport
+  }
+
+  class ComplianceLine {
+    - id: String
+    - board: ComplianceBoard
+    - controlName: String
+    - controlType: ControlType
+    - controlCategory: ControlCategory
+    - executionOrder: Integer
+    - responsibleAgent: Agent
+    - delegatedAgent: Agent
+    - executionDate: Date
+    - completionDate: Date
+    - status: ControlStatus
+    - result: ControlResult
+    - score: Float
+    - comment: String
+    - automaticExecution: Boolean
+    - requiredForValidation: Boolean
+    - blockingControl: Boolean
+    + execute(): Boolean
+    + validate(): Boolean
+    + reject(reason: String): Boolean
+    + delegate(agent: Agent): Boolean
+    + updateStatus(status: ControlStatus): Boolean
+    + addComment(comment: String): Boolean
+  }
+}
+
+package "Workflow Configuration" #E8F8FF {
+  enum ClientType {
+    INDIVIDUAL
+    PROFESSIONAL
+    COMPANY
+    ASSOCIATION
+    PUBLIC_ENTITY
+  }
+
+  enum InitiationChannel {
+    BRANCH
+    ONLINE
+    MOBILE
+    PHONE
+    MAIL
+    PARTNER
+  }
+
+  enum RequestStatus {
+    DRAFT
+    SUBMITTED
+    IN_PROGRESS
+    PENDING_VALIDATION
+    VALIDATED
+    REJECTED
+    ARCHIVED
+    SUSPENDED
+  }
+
+  enum RequestPriority {
+    LOW
+    NORMAL
+    HIGH
+    URGENT
+    CRITICAL
+  }
+
+  enum StepType {
+    INITIALIZATION
+    DOCUMENT_COLLECTION
+    IDENTITY_VERIFICATION
+    REGULATORY_CONTROLS
+    RISK_ASSESSMENT
+    COMMERCIAL_VALIDATION
+    TECHNICAL_VALIDATION
+    FINAL_APPROVAL
+    ACCOUNT_CREATION
+    NOTIFICATION
+  }
+
+  enum StepStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    REJECTED
+    DELEGATED
+    SUSPENDED
+    EXPIRED
+  }
+
+  enum StepAction {
+    CREATED
+    STARTED
+    PROCESSED
+    VALIDATED
+    REJECTED
+    DELEGATED
+    TRANSFERRED
+    SUSPENDED
+    RESUMED
+    COMPLETED
+  }
+
+  enum ControlType {
+    BLACKLIST_CHECK
+    PPE_VERIFICATION
+    FATCA_CONTROL
+    KYC_ASSESSMENT
+    DOCUMENT_VERIFICATION
+    SIGNATURE_VALIDATION
+    RISK_EVALUATION
+    COMMERCIAL_APPROVAL
+  }
+
+  enum ControlCategory {
+    REGULATORY
+    COMMERCIAL
+    TECHNICAL
+    RISK
+    COMPLIANCE
+    OPERATIONAL
+  }
+
+  enum ControlStatus {
+    NOT_STARTED
+    IN_PROGRESS
+    COMPLETED
+    FAILED
+    BYPASSED
+    DELEGATED
+    EXPIRED
+  }
+
+  enum ControlResult {
+    PASSED
+    FAILED
+    WARNING
+    MANUAL_REVIEW
+    BLOCKED
+    CONDITIONAL
+  }
+}
+
+package "Workflow Rules" #FFF8E8 {
+  class WorkflowRule {
+    - id: String
+    - name: String
+    - description: String
+    - ruleType: RuleType
+    - condition: String
+    - action: String
+    - priority: Integer
+    - isActive: Boolean
+    - creationDate: Date
+    + evaluate(request: AccountOpeningRequest): Boolean
+    + execute(request: AccountOpeningRequest): Boolean
+  }
+
+  class ValidationCriteria {
+    - id: String
+    - stepType: StepType
+    - criteria: List<String>
+    - minimumScore: Float
+    - isBlocking: Boolean
+    - autoValidation: Boolean
+    + validate(data: Map<String, Object>): ValidationResult
+    + calculateScore(data: Map<String, Object>): Float
+  }
+
+  class EscalationRule {
+    - id: String
+    - stepType: StepType
+    - triggerCondition: String
+    - escalationLevel: Integer
+    - targetAgent: Agent
+    - targetUnit: ManagementUnit
+    - notificationDelay: Long
+    + checkEscalation(step: ValidationStep): Boolean
+    + escalate(step: ValidationStep): Boolean
+  }
+}
+
+' === RELATIONSHIPS ===
+
+' Main workflow relationships
+AccountOpeningRequest ||--o{ ValidationStep : "contains"
+AccountOpeningRequest ||--|| ComplianceBoard : "has"
+ComplianceBoard ||--o{ ComplianceLine : "contains"
+ValidationStep ||--o{ ComplianceLine : "executes"
+
+' Status and type relationships
+AccountOpeningRequest ||--|| ClientType : "has"
+AccountOpeningRequest ||--|| InitiationChannel : "initiated via"
+AccountOpeningRequest ||--|| RequestStatus : "has"
+AccountOpeningRequest ||--|| RequestPriority : "has"
+
+ValidationStep ||--|| StepType : "is of type"
+ValidationStep ||--|| StepStatus : "has status"
+ValidationStep ||--|| StepAction : "last action"
+
+ComplianceLine ||--|| ControlType : "executes"
+ComplianceLine ||--|| ControlCategory : "belongs to"
+ComplianceLine ||--|| ControlStatus : "has status"
+ComplianceLine ||--|| ControlResult : "produces"
+
+' Workflow rules relationships
+ValidationStep ||--o{ WorkflowRule : "governed by"
+ValidationStep ||--o{ ValidationCriteria : "validated against"
+ValidationStep ||--o{ EscalationRule : "escalated by"
+
+' Sequential relationships
+ValidationStep ||--o| ValidationStep : "next/previous"
+
+note top of AccountOpeningRequest : **Central Entity**\nOrchestrates the complete\naccount opening process\nwith full audit trail
+
+note right of ValidationStep : **Process Step**\nRepresents each validation\nstep in the workflow with\ntiming and responsibility
+
+note bottom of ComplianceBoard : **Compliance Dashboard**\nCentralized view of all\nregulatory and business\ncompliance checks
+
+note left of ComplianceLine : **Individual Control**\nSpecific compliance check\nwith execution details\nand results
+
+@enduml

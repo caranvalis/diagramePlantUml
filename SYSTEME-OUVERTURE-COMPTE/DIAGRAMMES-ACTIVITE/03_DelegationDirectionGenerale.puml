@@ -10,15 +10,21 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Délégation Direction Générale
 
+|Agent Responsable|
 start
-
 :Dossier nécessite
 délégation DG;
 
+|Système|
 :Système identifie
 critères de délégation;
 
@@ -39,6 +45,7 @@ partition "Vérification Critères" {
     endif
 }
 
+|Service Préparation|
 :Préparer dossier
 pour DG;
 
@@ -48,8 +55,10 @@ de risque complète;
 :Joindre recommandations
 du niveau précédent;
 
+
 :Notifier Direction
 Générale;
+
 
 partition "Évaluation DG" {
     :DG reçoit notification
@@ -62,8 +71,10 @@ partition "Évaluation DG" {
         :Demander
         compléments;
         
+        
         :Agent complète
         informations;
+        
         
         :Retour vers DG;
     else (oui)
@@ -74,16 +85,21 @@ partition "Évaluation DG" {
 }
 
 if (Décision DG?) then (Approuvé)
+    
     :Enregistrer approbation
     DG avec commentaires;
     
     :Notifier agent
     et unité opérationnelle;
     
+    
+    
     :Continuer processus
     d'ouverture;
     
+    
 elseif (Refusé) then
+    
     :Enregistrer refus DG
     avec justifications;
     
@@ -93,15 +109,20 @@ elseif (Refusé) then
     :Archiver dossier
     avec statut refusé;
     
+    
     stop
     
 else (Délégué)
+    
     :Déléguer à niveau
     hiérarchique approprié;
     
+    
     :Traitement par
     délégataire;
+    
 endif
+
 
 :Mettre à jour historique
 des décisions;

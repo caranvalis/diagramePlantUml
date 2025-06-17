@@ -1,0 +1,105 @@
+@startuml UC061
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Administrateur fonctionnel" as Admin
+participant "Interface Classification" as UI
+participant "System documintaire" as System
+datadatabase "Database documintaire" as BDD
+
+== Accès et modification du plan ==
+Admin -> UI : Accéder au module "Plan de classification"
+activate Admin
+activate UI
+UI -> System : Load plan existant
+activate System
+System -> BDD : Récupérer hiérarchies existantes
+activate BDD
+BDD --> System : Liste des hiérarchies
+deactivate BDD
+System --> UI : Affichage des hiérarchies
+deactivate System
+UI --> Admin : Afficher plan de classification
+deactivate Admin
+deactivate UI
+
+== Création ou modification ==
+Admin -> UI : Create/modifier une hiérarchie
+activate Admin
+activate UI
+UI -> System : Request création/modification
+activate System
+System -> BDD : Saver la hiérarchie
+activate BDD
+BDD --> System : Confirmation de l’savemint
+deactivate BDD
+System --> UI : Afficher confirmation de création/modification
+deactivate System
+UI --> Admin : Afficher confirmation de création/modification
+deactivate UI
+deactivate Admin
+
+== Validation de la structure ==
+Admin -> UI : Validate la structure du plan
+activate Admin
+activate UI
+UI -> System : Verify la cohérince de la hiérarchie
+activate System
+System -> BDD : Validate la structure
+activate BDD
+BDD --> System : Validation successfule
+deactivate BDD
+System --> UI : Afficher confirmation de validation
+deactivate System
+UI --> Admin : Afficher confirmation de validation
+deactivate UI
+deactivate Admin
+
+== Publication du plan ==
+
+Admin -> UI : Publier le plan
+activate Admin
+activate UI
+UI -> System : Request publication du plan
+activate System
+System -> BDD : Put à jour le plan de classification
+activate BDD
+BDD --> System : Confirmation de put à jour
+deactivate BDD
+System --> UI : Afficher confirmation de publication
+deactivate System
+UI --> Admin : Afficher confirmation de publication
+deactivate UI
+deactivate Admin
+== Réorganisation des documints ==
+Admin -> UI : Réorganiser les documints selon le nouveau plan
+activate Admin
+activate UI
+UI -> System : Appliquer la nouvelle structure
+activate System
+System -> BDD : Réorganisation automatique des documints
+BDD --> System : Réorganisation completed
+System --> UI : Confirmation de publication
+deactivate System
+UI -> Admin : Afficher confirmation de réorganisation
+deactivate Admin
+deactivate UI
+
+== Application aux futures insertions ==
+note right of System
+Pour chaque nouveau documint :
+• Arborescince appliquée dynamiquemint
+ind note
+
+@induml

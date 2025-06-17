@@ -1,0 +1,238 @@
+@startuml CasUsageOuvertureCompte
+
+!theme mars
+
+skinparam {
+  backgroundColor #F8FBFF
+  packageStyle rectangle
+  package {
+    backgroundColor #E8F5E8
+    borderColor #1976D2
+    fontColor #0D47A1
+  }
+  usecase {
+    backgroundColor #E8F5E8
+    borderColor #1976D2
+    fontColor #0D47A1
+  }
+  actor {
+    backgroundColor #E8F5E8
+    borderColor #1976D2
+    fontColor #0D47A1
+  }
+  rectangle {
+    backgroundColor #E8F5E8
+    borderColor #1976D2
+    fontColor #0D47A1
+  }
+  note {
+    backgroundColor #FFF8E1
+    borderColor #F57F17
+    fontColor #E65100
+  }
+  roundCorner 15
+  shadowing true
+}
+
+title Système d'Ouverture de Compte Bancaire - Cas d'Usage Complets
+
+' === ACTEURS ===
+actor "Client Prospect" as CLIENT
+actor "Agent Commercial" as AGENT
+actor "Responsable Agence" as RESP_AGENCE
+actor "Direction Générale" as DIRECTION_GENERALE
+actor "Agent Compliance" as COMPLIANCE
+actor "Système CBS" as CBS
+actor "Services Externes" as EXTERNES
+actor "Administrateur Système" as ADMIN
+
+' === PACKAGES DES CAS D'USAGE ===
+
+package "Gestion des Demandes" as PKG_DEMANDES {
+  usecase "Initier Demande Ouverture" as UC01
+  usecase "Saisir Informations Client" as UC02
+  usecase "Modifier Demande" as UC03
+  usecase "Consulter Statut Demande" as UC04
+  usecase "Annuler Demande" as UC05
+}
+
+package "Gestion Documentaire" as PKG_DOCUMENTS {
+  usecase "Télécharger Documents" as UC06
+  usecase "Valider Documents" as UC07
+  usecase "Demander Complément" as UC08
+  usecase "Archiver Documents" as UC09
+  usecase "Générer Attestations" as UC10
+}
+
+package "Contrôles Réglementaires" as PKG_CONTROLES {
+  usecase "Vérifier Identité" as UC11
+  usecase "Contrôle OFAC/Sanctions" as UC12
+  usecase "Détection PPE" as UC13
+  usecase "Vérification FATCA" as UC14
+  usecase "Scoring KYC" as UC15
+  usecase "Validation AML" as UC16
+}
+
+package "Workflow et Validation" as PKG_WORKFLOW {
+  usecase "Assigner Dossier" as UC17
+  usecase "Valider Étape" as UC18
+  usecase "Déléguer Validation" as UC19
+  usecase "Escalader Dossier" as UC20
+  usecase "Rejeter Demande" as UC21
+  usecase "Approuver Ouverture" as UC22
+}
+
+package "Gestion des Agents" as PKG_AGENTS {
+  usecase "Authentifier Agent" as UC23
+  usecase "Gérer Absences" as UC24
+  usecase "Transférer Dossiers" as UC25
+  usecase "Déléguer Pouvoirs" as UC26
+  usecase "Consulter Tableau Bord" as UC27
+}
+
+package "Intégrations Externes" as PKG_INTEGRATIONS {
+  usecase "Créer Compte CBS" as UC28
+  usecase "Synchroniser Données" as UC29
+  usecase "Envoyer Notifications" as UC30
+  usecase "Intégrer APIs Tierces" as UC31
+  usecase "Générer Rapports" as UC32
+}
+
+package "Signature Électronique" as PKG_SIGNATURE {
+  usecase "Préparer Documents" as UC33
+  usecase "Envoyer Signature" as UC34
+  usecase "Valider Signature" as UC35
+  usecase "Archiver Contrats" as UC36
+}
+
+package "Gestion d'Exceptions" as PKG_EXCEPTIONS {
+  usecase "Détecter Anomalies" as UC37
+  usecase "Traiter Exceptions" as UC38
+  usecase "Escalader Problèmes" as UC39
+  usecase "Résoudre Blocages" as UC40
+}
+
+package "Reporting et Audit" as PKG_REPORTING {
+  usecase "Générer Rapports KYC" as UC41
+  usecase "Audit Trail" as UC42
+  usecase "Statistiques Performance" as UC43
+  usecase "Rapports Conformité" as UC44
+}
+
+package "Clôture et Finalisation" as PKG_CLOTURE {
+  usecase "Finaliser Ouverture" as UC45
+  usecase "Activer Compte" as UC46
+  usecase "Informer Client" as UC47
+  usecase "Archiver Dossier" as UC48
+  usecase "Mise à Jour Référentiels" as UC49
+  usecase "Clôturer Processus" as UC50
+}
+
+' === RELATIONS ACTEURS - CAS D'USAGE ===
+
+' Client Prospect
+CLIENT --> UC01
+CLIENT --> UC02
+CLIENT --> UC06
+CLIENT --> UC04
+CLIENT --> UC34
+
+' Agent Commercial
+AGENT --> UC01
+AGENT --> UC02
+AGENT --> UC03
+AGENT --> UC04
+AGENT --> UC06
+AGENT --> UC07
+AGENT --> UC08
+AGENT --> UC17
+AGENT --> UC18
+AGENT --> UC23
+AGENT --> UC27
+AGENT --> UC33
+AGENT --> UC47
+
+' Responsable Agence
+RESP_AGENCE --> UC05
+RESP_AGENCE --> UC19
+RESP_AGENCE --> UC20
+RESP_AGENCE --> UC21
+RESP_AGENCE --> UC22
+RESP_AGENCE --> UC24
+RESP_AGENCE --> UC25
+RESP_AGENCE --> UC26
+RESP_AGENCE --> UC27
+RESP_AGENCE --> UC43
+
+' Direction Générale
+DIRECTION_GENERALE --> UC20
+DIRECTION_GENERALE --> UC21
+DIRECTION_GENERALE --> UC22
+DIRECTION_GENERALE --> UC26
+DIRECTION_GENERALE --> UC39
+DIRECTION_GENERALE --> UC44
+
+' Agent Compliance
+COMPLIANCE --> UC11
+COMPLIANCE --> UC12
+COMPLIANCE --> UC13
+COMPLIANCE --> UC14
+COMPLIANCE --> UC15
+COMPLIANCE --> UC16
+COMPLIANCE --> UC38
+COMPLIANCE --> UC41
+COMPLIANCE --> UC42
+COMPLIANCE --> UC44
+
+' Système CBS
+CBS --> UC28
+CBS --> UC29
+CBS --> UC46
+CBS --> UC49
+
+' Services Externes
+EXTERNES --> UC12
+EXTERNES --> UC13
+EXTERNES --> UC14
+EXTERNES --> UC30
+EXTERNES --> UC31
+EXTERNES --> UC35
+
+' Administrateur Système
+ADMIN --> UC23
+ADMIN --> UC29
+ADMIN --> UC32
+ADMIN --> UC37
+ADMIN --> UC40
+ADMIN --> UC42
+ADMIN --> UC48
+ADMIN --> UC50
+
+' === RELATIONS INCLUDE/EXTEND ===
+
+UC01 ..> UC23 : include
+UC02 ..> UC11 : include
+UC06 ..> UC07 : include
+UC18 ..> UC15 : include
+UC22 ..> UC28 : include
+UC22 ..> UC45 : include
+UC45 ..> UC46 : include
+UC46 ..> UC47 : include
+
+UC03 ..> UC02 : extend
+UC08 ..> UC07 : extend
+UC19 ..> UC18 : extend
+UC20 ..> UC18 : extend
+UC21 ..> UC18 : extend
+UC38 ..> UC37 : extend
+UC39 ..> UC38 : extend
+
+' === NOTES EXPLICATIVES ===
+
+note top of PKG_DEMANDES : Gestion du cycle de vie\ndes demandes d'ouverture
+note top of PKG_CONTROLES : Contrôles réglementaires\net conformité KYC/AML
+note top of PKG_WORKFLOW : Orchestration des processus\net validation multi-niveaux
+note bottom of PKG_INTEGRATIONS : Intégration avec systèmes\nexternes et CBS
+note bottom of PKG_CLOTURE : Finalisation et activation\ndes comptes clients
+
+@enduml

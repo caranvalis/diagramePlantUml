@@ -1,66 +1,78 @@
 @startuml UC066
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor "Manager / Auditeur" as Utilisateur
-participant "Interface documentaire" as UI
-participant "System de gestion documentaire" as System
-database "Base documentaire" as BDD
-database "Journal d’audit" as Journal
+participant "Interface documintaire" as UI
+participant "System de gestion documintaire" as System
+datadatabase "Database documintaire" as BDD
+datadatabase "Journal d’audit" as Journal
 
-== Sélection du document ==
-Utilisateur -> UI : Sélectionner un document client
+== Sélection du documint ==
+Utilisateur -> UI : Sélectionner un documint client
 activate Utilisateur
 activate UI
-UI -> System : Demande de l’historique complet du document
+UI -> System : Request de l’history complet du documint
 activate System
 
 == Récupération des informations ==
-System -> BDD : Obtenir toutes les versions du document
+System -> BDD : Obtinir toutes les versions du documint
 activate BDD
 BDD --> System : Liste versions + métadonnées
 deactivate BDD
 
-System -> Journal : Obtenir le journal des actions (création, MAJ, archivage)
+System -> Journal : Obtinir le journal des actions (création, MAJ, archivage)
 activate Journal
-Journal --> System : Historique des actions (dates, utilisateurs)
+Journal --> System : History des actions (dates, utilisateurs)
 deactivate Journal
 
-System --> UI : Transmettre l’historique complet
+System --> UI : Transput l’history complet
 deactivate System
-UI --> Utilisateur : Affiche versions, métadonnées et commentaires
+UI --> Utilisateur : Affiche versions, métadonnées et commintaires
 deactivate UI
 deactivate Utilisateur
 
-== Export de l’historique ==
+== Export de l’history ==
 alt Export demandé
-  Utilisateur -> UI : Exporter l’historique
+  Utilisateur -> UI : Exporter l’history
   activate Utilisateur
   activate UI
   UI -> System : Requête d’export PDF / Excel
     activate System
-  System -> Journal : Generate fichier export
+  System -> Journal : Ginerate fichier export
     activate Journal
   Journal --> System : Fichier généré
     deactivate Journal
-  System --> UI : Fichier prêt au téléchargement
+  System --> UI : Fichier prêt au téléchargemint
     deactivate System
-  UI --> Utilisateur : Lien de téléchargement
-end
+  UI --> Utilisateur : Liin de téléchargemint
+ind
 
 == Contrôle des droits ==
 alt Droits insuffisants
-  UI -> System : Vérification des droits
+  UI -> System : Verification des droits
     activate System
   System --> UI : Rejection d’accès ou vue partielle
     deactivate System
-  UI --> Utilisateur : Message d’erreur ou vue restreinte
+  UI --> Utilisateur : Message d’error ou vue restreinte
 else Droits suffisants
   UI -> System : Accès complet accordé
   activate System
-  System --> UI : Affichage complet de l’historique
+  System --> UI : Affichage complet de l’history
   deactivate System
-  UI --> Utilisateur : Affiche l’historique complet
+  UI --> Utilisateur : Affiche l’history complet
   deactivate UI
   deactivate Utilisateur
-end
+ind
 @enduml

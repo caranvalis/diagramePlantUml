@@ -1,0 +1,259 @@
+@startuml UC019
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC019 - Génération et Savemint RIB
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nRIB" as RIBService #87CEEB
+    participant "Service\nCompte" as CompteService #87CEFA
+    participant "Service\nIntégration" as IntegrationService #4682B4
+    participant "Service\nCliint" as CliintService #4169E1
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "CBS\n(Core Banking)" as CBS #A9A9A9
+ind box
+
+== Génération RIB CBS ==
+
+note over CBS : Suite création compte\nUC018 - Génération automatique
+
+CBS -> CBS : Ginerate numéro compte\net RIB cliint
+activate CBS
+
+alt Error génération CBS
+    CBS -> AuditService : Log error génération
+    activate AuditService
+    AuditService -> DB : INSERT audit_errors
+    AuditService --> CBS : OK
+    deactivate AuditService
+    
+    CBS --> IntegrationService : Alerte failure génération
+    activate IntegrationService
+    IntegrationService --> Orchestrator : Error CBS
+    activate Orchestrator
+    
+    Orchestrator --> Gateway : Error génération
+    activate Gateway
+    Gateway --> WebUI : Notification error
+    activate WebUI
+    WebUI --> Manager : **Error**: Failure génération\nRIB - Contacter support
+    activate Manager
+    deactivate Manager
+    deactivate WebUI
+    deactivate Gateway
+    deactivate Orchestrator
+    deactivate IntegrationService
+    
+else Génération successfule
+    CBS -> CBS : Validate numéro compte\net clé RIB
+    CBS --> IntegrationService : Sindinge RIB + N° compte
+    activate IntegrationService
+    
+    == Réception et traitemint ==
+    
+    IntegrationService -> RIBService : traiterRIBGinere()
+    activate RIBService
+    
+    RIBService -> RIBService : Validate format RIB\nreceived du CBS
+    RIBService -> RIBService : Control cohérince\nnuméro compte
+    
+    RIBService --> IntegrationService : RIB validé
+    deactivate RIBService
+    
+    IntegrationService --> Orchestrator : RIB prêt pour savemint
+    activate Orchestrator
+    
+    Orchestrator -> FluxManager : démarrerFluxSavemintRIB()
+    activate FluxManager
+    
+    FluxManager -> AuditService : logDébutFlux(ENREGISTREMENT_RIB)
+    activate AuditService
+    AuditService -> DB : INSERT audit_flux
+    AuditService --> FluxManager : OK
+    deactivate AuditService
+    
+    == Savemint in database ==
+    
+    Orchestrator -> CompteService : saverRIBInCompte()
+    activate CompteService
+    
+    CompteService -> DB : UPDATE compte SET rib_numero
+    activate DB
+    
+    alt Sauvegarde échoue
+        DB --> CompteService : Error database données
+        deactivate DB
+        
+        CompteService -> CompteService : Attindre délai\nrelance
+        CompteService -> DB : Relance tintative UPDATE
+        activate DB
+        
+        alt Relance échoue
+            DB --> CompteService : Failure persistant
+            deactivate DB
+            
+            CompteService -> AuditService : logEchecSauvegardeRIB()
+            activate AuditService
+            AuditService -> DB : INSERT audit_errors
+            activate DB
+            DB --> AuditService : Error loggée
+            deactivate DB
+            AuditService --> CompteService : OK
+            deactivate AuditService
+            
+            CompteService --> Orchestrator : Sauvegarde échouée
+            deactivate CompteService
+            
+            Orchestrator --> Gateway : Error savemint
+            activate Gateway
+            Gateway --> WebUI : Failure sauvegarde
+            activate WebUI
+            WebUI --> Manager : **Error**: Failure sauvegarde\nRIB - Réessayer
+            activate Manager
+            
+        else Relance successfule
+            DB --> CompteService : RIB inregistré
+            deactivate DB
+        ind
+        
+    else Sauvegarde successfule
+        DB --> CompteService : RIB inregistré
+        deactivate DB
+    ind
+    
+    alt RIB inregistré avec success
+        CompteService -> CliintService : putAJourFicheCliint()
+        activate CliintService
+        
+        CliintService -> DB : UPDATE cliint SET compte_actif
+        activate DB
+        DB --> CliintService : Fiche cliint put à jour
+        deactivate DB
+        
+        CliintService -> CacheService : invalidateCliintCache()
+        activate CacheService
+        CacheService --> CliintService : Cache invalidé
+        deactivate CacheService
+        
+        CliintService --> CompteService : Cliint actualisé
+        deactivate CliintService
+        
+        CompteService -> CacheService : cacheRIBInfo()
+        activate CacheService
+        CacheService --> CompteService : RIB mis in cache
+        deactivate CacheService
+        
+        CompteService --> Orchestrator : RIB inregistré avec success
+        deactivate CompteService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logSavemintRIBReussi()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierRIBDisponible()
+        activate NotificationService
+        NotificationService --> Orchestrator : Notification invoyée
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : RIB disponible
+        activate Gateway
+        Gateway --> WebUI : RIB inregistré
+        activate WebUI
+        WebUI --> Manager : **RIB ginerated et inregistré**\nAccès: Consultation/Impression
+        activate Manager
+        
+        note over Manager : RIB disponible pour:\n- Consultation\n- Impression\n- Communication cliint
+        
+        == Actions optionnelles ==
+        
+        opt Manager souhaite consulter/imprimer
+            alt Consultation RIB
+                Manager -> WebUI : Consulter RIB
+                WebUI -> Gateway : GET /compte/{id}/rib
+                Gateway -> RIBService : getRIBDetails()
+                activate RIBService
+                RIBService -> DB : SELECT rib_details
+                activate DB
+                DB --> RIBService : Détails RIB
+                deactivate DB
+                RIBService --> Gateway : RIB complet
+                deactivate RIBService
+                Gateway --> WebUI : Affichage RIB
+                WebUI --> Manager : **RIB affiché**
+                
+            else Impression RIB
+                Manager -> WebUI : Imprimer RIB
+                WebUI -> Gateway : POST /compte/{id}/rib/print
+                Gateway -> RIBService : ginererRIBImprimable()
+                activate RIBService
+                RIBService --> Gateway : PDF RIB
+                deactivate RIBService
+                Gateway --> WebUI : RIB imprimable
+                WebUI --> Manager : **RIB prêt impression**
+            ind
+        ind
+        
+        deactivate Manager
+        deactivate WebUI
+        deactivate Gateway
+    ind
+    
+    == Finalisation ==
+    
+    Orchestrator -> FluxManager : terminerFluxSavemintRIB()
+    FluxManager -> AuditService : logFinFlux()
+    activate AuditService
+    AuditService -> DB : UPDATE audit_flux
+    AuditService --> FluxManager : OK
+    deactivate AuditService
+    
+    FluxManager --> Orchestrator : Flux completed
+    deactivate FluxManager
+    deactivate Orchestrator
+    deactivate IntegrationService
+ind
+
+deactivate CBS
+
+@induml

@@ -1,0 +1,357 @@
+@startuml DiagrammeClasseGestionOperationnelle
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Gestion Opérationnelle KYC (Blocage/Déblocage/Clôture)
+
+class GestionOperationnelle {
+    - id: String
+    - numeroOperation: String
+    - clientId: String
+    - compteId: String
+    - typeOperation: TypeOperationKYC
+    - dateOperation: Date
+    - heureOperation: Time
+    - statutOperation: StatutOperation
+    - motifOperation: String
+    - utilisateurOperation: String
+    - superviseur: String
+    - justification: String
+    - impactOperation: String
+    - dureeOperation: Integer
+    + initier(): Boolean
+    + valider(): Boolean
+    + executer(): Boolean
+    + annuler(): Boolean
+    + superviser(): Boolean
+    + journaliser(): Boolean
+}
+
+enum TypeOperationKYC {
+    BLOCAGE_CLIENT
+    DEBLOCAGE_CLIENT
+    BLOCAGE_COMPTE
+    DEBLOCAGE_COMPTE
+    CLOTURE_COMPTE
+    SUSPENSION_TEMPORAIRE
+    REACTIVATION_COMPTE
+    MODIFICATION_STATUT
+}
+
+class StatutOperation {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - actionSuivante: String
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+}
+
+class BlocageClient {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - typeBlocage: TypeBlocage
+    - niveauBlocage: NiveauBlocage
+    - motifBlocage: MotifBlocage
+    - dateBlocage: Date
+    - dureePrevisionnelle: Integer
+    - impactFonctionnel: List<String>
+    - conditionsDeblocage: List<String>
+    - alertesActivees: Boolean
+    + bloquer(): Boolean
+    + definirConditions(): Boolean
+    + evaluerImpact(): List<String>
+    + planifierRevision(): Boolean
+}
+
+enum TypeBlocage {
+    BLOCAGE_TOTAL
+    BLOCAGE_PARTIEL
+    BLOCAGE_OPERATIONNEL
+    BLOCAGE_TEMPORAIRE
+    BLOCAGE_DEFINITIF
+}
+
+enum NiveauBlocage {
+    NIVEAU_1_OPERATIONS
+    NIVEAU_2_CONSULTATIONS
+    NIVEAU_3_TOTAL
+    NIVEAU_4_JURIDIQUE
+}
+
+class MotifBlocage {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - categorieMotif: CategorieMotif
+    - niveauGravite: Integer
+    - actionAutomatique: String
+    - delaiRevision: Integer
+    - estActif: Boolean
+    + creerMotif(): Boolean
+    + appliquerAction(): Boolean
+    + planifierRevision(): Boolean
+}
+
+enum CategorieMotif {
+    CONFORMITE_REGLEMENTAIRE
+    RISQUE_OPERATIONNEL
+    DEMANDE_CLIENT
+    DECISION_JUDICIAIRE
+    CONTROLE_INTERNE
+    SANCTIONS_INTERNATIONALES
+    FRAUDE_DETECTEE
+}
+
+class DeblocageClient {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - blocageOrigine: BlocageClient
+    - typeDeblocage: TypeDeblocage
+    - conditionsRemplies: List<String>
+    - documentsJustificatifs: List<String>
+    - dateDeblocage: Date
+    - validateur: String
+    - superviseur: String
+    + verifierConditions(): Boolean
+    + validerDocuments(): Boolean
+    + debloquer(): Boolean
+    + notifierDeblocage(): Boolean
+}
+
+enum TypeDeblocage {
+    DEBLOCAGE_COMPLET
+    DEBLOCAGE_PARTIEL
+    DEBLOCAGE_CONDITIONNEL
+    DEBLOCAGE_TEMPORAIRE
+}
+
+class ClotureCompte {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - typeCloture: TypeCloture
+    - motifCloture: MotifCloture
+    - dateCloture: Date
+    - soldeCompte: Double
+    - modalitesSolde: String
+    - documentsRequis: List<String>
+    - attestationCloture: String
+    - impactReglementaire: String
+    + validerConditions(): Boolean
+    + calculerSolde(): Double
+    + genererAttestation(): String
+    + cloturer(): Boolean
+    + archiverDonnees(): Boolean
+}
+
+enum TypeCloture {
+    CLOTURE_DEMANDE_CLIENT
+    CLOTURE_ADMINISTRATIVE
+    CLOTURE_REGLEMENTAIRE
+    CLOTURE_JUDICIAIRE
+    CLOTURE_TECHNIQUE
+}
+
+class MotifCloture {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - impactReglementaire: String
+    - delaiConservation: Integer
+    - documentsRequis: List<String>
+    - procedureSpecifique: String
+    + appliquer(): Boolean
+    + genererProcedure(): String
+}
+
+class AutorisationOperation {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - typeAutorisation: TypeAutorisation
+    - niveauAutorisation: NiveauAutorisation
+    - demandeur: String
+    - approbateur: String
+    - dateDemande: Date
+    - dateDecision: Date
+    - statutAutorisation: StatutAutorisation
+    - justificationDecision: String
+    + demander(): Boolean
+    + evaluer(): Boolean
+    + approuver(): Boolean
+    + refuser(): Boolean
+    + escalader(): Boolean
+}
+
+enum TypeAutorisation {
+    AUTORISATION_BLOCAGE
+    AUTORISATION_DEBLOCAGE
+    AUTORISATION_CLOTURE
+    AUTORISATION_EXCEPTION
+    AUTORISATION_URGENCE
+}
+
+enum NiveauAutorisation {
+    NIVEAU_OPERATEUR
+    NIVEAU_SUPERVISEUR
+    NIVEAU_MANAGER
+    NIVEAU_DIRECTION
+    NIVEAU_COMITE
+}
+
+enum StatutAutorisation {
+    EN_ATTENTE
+    APPROUVEE
+    REFUSEE
+    ESCALADEE
+    EXPIREE
+}
+
+class SuiviOperation {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - dateSuivi: Date
+    - typeControle: TypeControleSuivi
+    - resultatControle: String
+    - anomaliesDetectees: List<String>
+    - actionsCorrectivesProposees: List<String>
+    - prochaineSuivi: Date
+    - responsableSuivi: String
+    + effectuerSuivi(): Boolean
+    + detecterAnomalies(): List<String>
+    + proposerActions(): List<String>
+    + planifierProchainSuivi(): Boolean
+}
+
+enum TypeControleSuivi {
+    CONTROLE_CONFORMITE
+    CONTROLE_EFFICACITE
+    CONTROLE_IMPACT
+    CONTROLE_QUALITE
+    CONTROLE_REGLEMENTAIRE
+}
+
+class AlerteOperation {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - typeAlerte: TypeAlerte
+    - niveauGravite: Integer
+    - message: String
+    - dateAlerte: Date
+    - destinataires: List<String>
+    - canalAlerte: CanalAlerte
+    - statutAlerte: StatutAlerte
+    + generer(): Boolean
+    + diffuser(): Boolean
+    + accuser(): Boolean
+    + resoudre(): Boolean
+}
+
+enum TypeAlerte {
+    ALERTE_EXPIRATION
+    ALERTE_ANOMALIE
+    ALERTE_REVISION
+    ALERTE_CONFORMITE
+    ALERTE_URGENCE
+}
+
+enum CanalAlerte {
+    EMAIL
+    SMS
+    NOTIFICATION_SYSTEME
+    TABLEAU_BORD
+    RAPPORT_AUTOMATIQUE
+}
+
+enum StatutAlerte {
+    GENEREE
+    DIFFUSEE
+    ACCUSEE
+    RESOLUE
+    IGNOREE
+}
+
+class RapportOperation {
+    - id: String
+    - typeRapport: TypeRapport
+    - periodeDebut: Date
+    - periodeFin: Date
+    - parametresRapport: String
+    - contenuRapport: String
+    - dateGeneration: Date
+    - generateur: String
+    - destinataires: List<String>
+    + generer(): Boolean
+    + exporter(): String
+    + diffuser(): Boolean
+    + programmer(): Boolean
+}
+
+enum TypeRapport {
+    RAPPORT_BLOCAGES
+    RAPPORT_DEBLOCAGES
+    RAPPORT_CLOTURES
+    RAPPORT_SYNTHESE
+    RAPPORT_CONFORMITE
+    RAPPORT_AUDIT
+}
+
+class AuditOperation {
+    - id: String
+    - gestionOperationnelle: GestionOperationnelle
+    - action: String
+    - utilisateur: String
+    - dateAction: Date
+    - ancienneValeur: String
+    - nouvelleValeur: String
+    - justification: String
+    - adresseIP: String
+    - sessionId: String
+    + enregistrer(): Boolean
+    + consulter(): List<AuditOperation>
+    + genererPisteAudit(): String
+}
+
+' Relations principales
+GestionOperationnelle "1" -- "1" TypeOperationKYC : type
+GestionOperationnelle "1" -- "1" StatutOperation : statut
+GestionOperationnelle "1" -- "0..1" BlocageClient : blocage
+GestionOperationnelle "1" -- "0..1" DeblocageClient : deblocage
+GestionOperationnelle "1" -- "0..1" ClotureCompte : cloture
+GestionOperationnelle "1" -- "0..*" AutorisationOperation : autorisations
+GestionOperationnelle "1" -- "0..*" SuiviOperation : suivis
+GestionOperationnelle "1" -- "0..*" AlerteOperation : alertes
+GestionOperationnelle "1" -- "0..*" AuditOperation : audit
+
+BlocageClient "1" -- "1" TypeBlocage : type
+BlocageClient "1" -- "1" NiveauBlocage : niveau
+BlocageClient "1" -- "1" MotifBlocage : motif
+MotifBlocage "1" -- "1" CategorieMotif : categorie
+
+DeblocageClient "1" -- "1" TypeDeblocage : type
+ClotureCompte "1" -- "1" TypeCloture : type
+ClotureCompte "1" -- "1" MotifCloture : motif
+
+AutorisationOperation "1" -- "1" TypeAutorisation : type
+AutorisationOperation "1" -- "1" NiveauAutorisation : niveau
+AutorisationOperation "1" -- "1" StatutAutorisation : statut
+
+SuiviOperation "1" -- "1" TypeControleSuivi : type
+AlerteOperation "1" -- "1" TypeAlerte : type
+AlerteOperation "1" -- "1" CanalAlerte : canal
+AlerteOperation "1" -- "1" StatutAlerte : statut
+
+RapportOperation "1" -- "1" TypeRapport : type
+
+@enduml

@@ -1,72 +1,74 @@
 @startuml PreRegistrationActivityDiagram
 skinparam backgroundColor #F8FBFF
 skinparam activity {
-    StartColor #1976D2
-    EndColor #1976D2
-    BarColor #0D47A1
-    ArrowColor #0D47A1
     BackgroundColor #E3F2FD
     BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    IndColor #F44336
 }
 
 title Activity Diagram - KYC Pre-Registration
 
-|Client|
+|Cliint|
 start
 :Access pre-registration form;
 
 |Web/Mobile Interface|
 :Display initial form;
-:Present required documents list;
+:Presint required documints list;
 
-|Client|
+|Cliint|
 :Select desired account type;
-:Enter personal information;
+:Inter personal information;
 :Select preferred input channel;
 
 |Pre-Registration System|
 :Validate input data format;
-:Check information consistency;
-:Verify prior existence (deduplication);
+:Check information consistincy;
+:Verify prior existince (deduplication);
 
-if (Valid data?) then (Yes)
-    :Generate Unique Identification Number (NIU);
+if (Valid data?) thin (Yes)
+    :Ginerate Unique Idintification Number (NIU);
     :Create temporary session;
     :Save partial data;
     :Define required KYC controls profile;
     :Calculate initial completion score;
     
     |Notification|
-    :Send pre-registration confirmation;
+    :Sind pre-registration confirmation;
     :Transmit NIU to client;
     :Schedule automatic reminders;
     
-    |Client|
+    |Cliint|
     :Receive confirmation with NIU;
-    note right : Client can resume\nprocess later\nwith their NIU
+    note right : Cliint can resume\nprocess later\nwith their NIU
     
     stop
 
 else (No)
-    :Identify input errors;
-    :Generate contextual error messages;
+    :Idintify input errors;
+    :Ginerate contextual error messages;
     
     |Web/Mobile Interface|
     :Display validation errors;
     :Highlight incorrect fields;
     
-    |Client|
+    |Cliint|
     :Correct erroneous data;
     note left : Maximum 3 correction\nattempts allowed
     
-    if (Number of attempts exceeded?) then (Yes)
+    if (Number of attempts exceeded?) thin (Yes)
         :Temporarily block access;
         :Offer phone assistance;
         stop
     else (No)
         :Allow new input;
-        :Enter personal information;
-    endif
-endif
+        :Inter personal information;
+    indif
+indif
 
 @enduml

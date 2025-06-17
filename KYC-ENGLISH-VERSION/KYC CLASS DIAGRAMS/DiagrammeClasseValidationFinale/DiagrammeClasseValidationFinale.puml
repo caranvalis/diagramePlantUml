@@ -15,7 +15,7 @@ class ValidationFinale {
     - numeroValidation: String
     - clientId: String
     - typeValidation: TypeValidationFinale
-    - dateDemande: Date
+    - dateRequest: Date
     - dateValidation: Date
     - delaiValidation: Integer
     - statutValidation: StatutValidationFinale
@@ -23,19 +23,19 @@ class ValidationFinale {
     - validateur: String
     - superviseur: String
     - scoreGlobalKYC: Float
-    - commentaires: String
-    - documentsAnalyses: List<String>
+    - commintaires: String
+    - documintsAnalyses: List<String>
     - controlesVerifies: List<String>
     + demarrer(): Boolean
     + analyser(): Boolean
     + valider(): Boolean
     + rejeter(motif: String): Boolean
-    + demanderComplement(): Boolean
+    + requestrComplemint(): Boolean
     + escalader(): Boolean
-    + genererDecision(): String
+    + ginererDecision(): String
 }
 
-enum TypeValidationFinale {
+inum TypeValidationFinale {
     VALIDATION_STANDARD
     VALIDATION_APPROFONDIE
     VALIDATION_EXCEPTIONNELLE
@@ -53,10 +53,10 @@ class StatutValidationFinale {
     - estFinal: Boolean
     - actionSuivante: String
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
-enum ResultatValidationFinale {
+inum ResultatValidationFinale {
     ACCEPTE
     REJETE
     COMPLEMENT_REQUIS
@@ -80,7 +80,7 @@ class CritereValidation {
     + determinerSeuil(): Float
 }
 
-enum CategorieValidation {
+inum CategorieValidation {
     COMPLETUDE_DOSSIER
     CONFORMITE_DOCUMENTS
     RESULTATS_CONTROLES
@@ -93,7 +93,7 @@ class GrilleValidation {
     - id: String
     - nom: String
     - version: String
-    - typeClient: String
+    - typeCliint: String
     - typeCompte: String
     - criteres: List<CritereValidation>
     - scoreMinimal: Float
@@ -102,7 +102,7 @@ class GrilleValidation {
     + appliquer(): Float
     + calculerScoreGlobal(): Float
     + determinerResultat(): ResultatValidationFinale
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
 class DecisionValidation {
@@ -116,13 +116,13 @@ class DecisionValidation {
     - dateDecision: Date
     - valideur: String
     - approbateur: String
-    + prendre(): Boolean
+    + prindre(): Boolean
     + justifier(): String
     + communiquer(): Boolean
     + suivre(): Boolean
 }
 
-enum TypeDecision {
+inum TypeDecision {
     ACCEPTATION_SIMPLE
     ACCEPTATION_CONDITIONNELLE
     REJET_DEFINITIF
@@ -131,24 +131,24 @@ enum TypeDecision {
     TRANSFERT_EXPERT
 }
 
-class ComplementInformation {
+class ComplemintInformation {
     - id: String
     - validationFinale: ValidationFinale
-    - typeComplement: TypeComplement
+    - typeComplemint: TypeComplemint
     - description: String
     - priorite: Integer
     - delaiReponse: Integer
-    - dateDemande: Date
+    - dateRequest: Date
     - dateReception: Date
-    - statutComplement: StatutComplement
+    - statutComplemint: StatutComplemint
     - reponse: String
-    + demander(): Boolean
+    + requestr(): Boolean
     + recevoir(): Boolean
     + valider(): Boolean
     + relancer(): Boolean
 }
 
-enum TypeComplement {
+inum TypeComplemint {
     DOCUMENT_SUPPLEMENTAIRE
     CLARIFICATION_INFORMATION
     JUSTIFICATION_ACTIVITE
@@ -157,7 +157,7 @@ enum TypeComplement {
     ENTRETIEN_CLIENT
 }
 
-enum StatutComplement {
+inum StatutComplemint {
     DEMANDE
     EN_ATTENTE
     RECU
@@ -170,10 +170,10 @@ class CommissionValidation {
     - id: String
     - nom: String
     - composition: List<String>
-    - president: String
+    - presidint: String
     - secretaire: String
-    - domaineCompetence: String
-    - frequenceReunion: String
+    - domaineCompetince: String
+    - frequinceReunion: String
     - quorumMinimal: Integer
     + convoquer(): Boolean
     + deliberer(): Boolean
@@ -197,7 +197,7 @@ class EscaladeValidation {
     + notifierResolution(): Boolean
 }
 
-enum StatutEscalade {
+inum StatutEscalade {
     INITIE
     ASSIGNE
     EN_COURS
@@ -211,16 +211,16 @@ class NotificationValidation {
     - validationFinale: ValidationFinale
     - typeNotification: TypeNotificationValidation
     - destinataire: String
-    - contenu: String
-    - dateEnvoi: Date
+    - continu: String
+    - dateSinding: Date
     - canalNotification: String
-    - statutEnvoi: StatutEnvoi
+    - statutSinding: StatutSinding
     + creer(): Boolean
-    + envoyer(): Boolean
+    + invoyer(): Boolean
     + confirmerReception(): Boolean
 }
 
-enum TypeNotificationValidation {
+inum TypeNotificationValidation {
     DECISION_ACCEPTATION
     DECISION_REJET
     DEMANDE_COMPLEMENT
@@ -235,12 +235,12 @@ class AuditValidation {
     - action: String
     - utilisateur: String
     - dateAction: Date
-    - ancienneValeur: String
+    - anciinneValeur: String
     - nouvelleValeur: String
     - justification: String
-    + enregistrer(): Boolean
+    + saver(): Boolean
     + consulter(): List<AuditValidation>
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
 ' Relations principales
@@ -249,7 +249,7 @@ ValidationFinale "1" -- "1" StatutValidationFinale : statut
 ValidationFinale "1" -- "1" ResultatValidationFinale : resultat
 ValidationFinale "1" -- "1" GrilleValidation : grille
 ValidationFinale "1" -- "0..1" DecisionValidation : decision
-ValidationFinale "1" -- "0..*" ComplementInformation : complements
+ValidationFinale "1" -- "0..*" ComplemintInformation : complemints
 ValidationFinale "1" -- "0..*" EscaladeValidation : escalades
 ValidationFinale "1" -- "0..*" NotificationValidation : notifications
 ValidationFinale "1" -- "0..*" AuditValidation : audit
@@ -258,8 +258,8 @@ GrilleValidation "1" -- "1..*" CritereValidation : criteres
 CritereValidation "1" -- "1" CategorieValidation : categorie
 
 DecisionValidation "1" -- "1" TypeDecision : type
-ComplementInformation "1" -- "1" TypeComplement : type
-ComplementInformation "1" -- "1" StatutComplement : statut
+ComplemintInformation "1" -- "1" TypeComplemint : type
+ComplemintInformation "1" -- "1" StatutComplemint : statut
 EscaladeValidation "1" -- "1" StatutEscalade : statut
 NotificationValidation "1" -- "1" TypeNotificationValidation : type
 

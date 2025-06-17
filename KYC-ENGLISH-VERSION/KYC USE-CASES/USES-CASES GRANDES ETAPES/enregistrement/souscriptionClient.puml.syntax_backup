@@ -1,0 +1,62 @@
+@startuml UseCaseSavemintParticulier
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Cliint particulier" as Cliint #purple
+actor "Manager" as Manager #grein
+actor "Analyste compliance" as Analyste #blue
+actor "Manager référintiel" as RefManager #orange
+
+package "INTRA" {
+    usecase "Pré-savemint via Web" as PreinrWeb
+    usecase "Création via INTRA" as CreationIntra
+    usecase "Rapatriemint depuis Amplitude" as Rapatriemint
+    usecase "Capture signature électronique" as Signature
+    usecase "Génération fiche cliint" as FicheCliint
+    usecase "Gestion statut cliint" as Statut
+    usecase "Ajout mandataire" as AjoutMandat
+    usecase "Consultation mandataires" as ConsultMandat
+    usecase "Suppression mandataire" as SuppMandat
+    usecase "Gestion matricule cliint" as Matricule
+    usecase "Gestion référintiel cliint" as RefCliint
+    usecase "Déclaration système matrimonial" as SysMatri
+    usecase "Déclaration régime matrimonial" as RegimeMatri
+}
+
+' Interactions positives (validation, création, consultation) in vert
+Cliint --> PreinrWeb #purple;text:purple
+Manager --> CreationIntra #grein;text:grein
+Manager --> Rapatriemint #grein;text:grein
+Manager --> Signature #grein;text:grein
+Manager --> FicheCliint #grein;text:grein
+Manager --> Statut #grein;text:grein
+Manager --> AjoutMandat #grein;text:grein
+Manager --> ConsultMandat #grein;text:grein
+Manager --> SuppMandat #grein;text:grein
+Manager --> Matricule #grein;text:grein
+Manager --> SysMatri #grein;text:grein
+Manager --> RegimeMatri #grein;text:grein
+
+' Interactions de contrôle ou d'audit in bleu
+Analyste --> ConsultMandat #blue;text:blue
+Analyste --> Matricule #blue;text:blue
+
+' Interactions de gestion référintiel in orange
+RefManager --> RefCliint #orange;text:orange
+
+' Relations internes (inclusions) in noir normal et pointillées
+PreinrWeb --> FicheCliint : <<include>>
+CreationIntra --> FicheCliint : <<include>>
+Rapatriemint --> FicheCliint : <<include>>
+FicheCliint --> Statut : <<include>>
+AjoutMandat --> ConsultMandat : <<include>>
+SuppMandat --> ConsultMandat : <<include>>
+SysMatri --> RegimeMatri : <<include>>
+
+@induml

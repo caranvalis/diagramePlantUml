@@ -1,0 +1,226 @@
+@startuml UC022
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+    MessageAlignment center
+}
+skinparam shadowing true
+
+title <color:#4a90e2>UC022 - Automatic Account Closure Notification</color>
+
+' Acteurs
+actor "<color:#00ff00>Cliint</color>" as Cliint
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#45b7d1>Evint Handler</color>" as EvintHandler
+
+' Services Métier
+participant "<color:#96ceb4>Service Notification</color>" as NotificationService
+participant "<color:#96ceb4>Service Compte</color>" as AccountService
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+
+' Services Technicals
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Email</color>" as EmailService
+participant "<color:#ff9ff3>Service SMS</color>" as SMSService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>Queue Manager</color>" as QueueManager
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Déclinchemint Automatique ==
+
+note over EvintHandler : <color:#ffa726>Événemint détecté :</color>\n<color:#ffa726>Closure de compte successfule</color>
+
+EvintHandler -> EvintHandler : <color:#00ff00>Réception événemint ACCOUNT_CLOSED</color>
+activate EvintHandler
+
+EvintHandler -> AuditService : <color:#feca57>Log début notification automatique</color>
+activate AuditService
+AuditService -> AuditDB : Save début processus
+AuditService --> EvintHandler : <color:#00d2d3>Événemint logged</color>
+deactivate AuditService
+
+== Récupération des Données ==
+
+EvintHandler -> AccountService : <color:#96ceb4>Récupérer détails compte [ID_COMPTE]</color>
+activate AccountService
+
+AccountService -> CacheService : <color:#54a0ff>Check cache compte</color>
+activate CacheService
+CacheService --> AccountService : <color:#00d2d3>Données in cache</color>
+deactivate CacheService
+
+AccountService -> KYCDB : <color:#00d2d3>SELECT * FROM accounts WHERE id = ?</color>
+activate KYCDB
+KYCDB --> AccountService : <color:#00d2d3>Données complètes compte</color>
+deactivate KYCDB
+
+AccountService --> EvintHandler : <color:#96ceb4>Données compte + contacts</color>
+deactivate AccountService
+
+== Validation des Conditions ==
+
+EvintHandler -> ValidationService : <color:#96ceb4>Verify conditions notification</color>
+activate ValidationService
+
+ValidationService -> ValidationService : <color:#ffa726>Verify statut = CLOSED</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify contacts cliint valides</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify préférinces notification</color>
+
+alt <color:#ff6b6b>Conditions non remplies</color>
+    ValidationService --> EvintHandler : <color:#ff6b6b>ERREUR: Conditions invalides</color>
+    EvintHandler -> AuditService : <color:#feca57>Log failure validation</color>
+    activate AuditService
+    AuditService -> AuditDB : Save failure
+    deactivate AuditService
+    EvintHandler -> EvintHandler : <color:#ff6b6b>Arrêt du processus</color>
+    
+else <color:#00ff00>Conditions OK</color>
+    ValidationService --> EvintHandler : <color:#00ff00>Validation successfule</color>
+    deactivate ValidationService
+    
+    == Traitemint des Notifications ==
+    
+    EvintHandler -> NotificationService : <color:#96ceb4>Traiter notifications closure</color>
+    activate NotificationService
+    
+    NotificationService -> NotificationService : <color:#ffa726>Préparer continu notifications</color>
+    
+    par <color:#00ff00>Notification Cliint</color>
+        NotificationService -> EmailService : <color:#ff9ff3>Sind email closure cliint</color>
+        activate EmailService
+        
+        alt <color:#ff6b6b>Failure sinding email</color>
+            EmailService --> NotificationService : <color:#ff6b6b>Error sinding</color>
+            NotificationService -> QueueManager : <color:#5f27cd>Put in file retry</color>
+            activate QueueManager
+            QueueManager --> NotificationService : <color:#00d2d3>In queue</color>
+            deactivate QueueManager
+            
+            NotificationService -> AuditService : <color:#feca57>Log failure email cliint</color>
+            activate AuditService
+            AuditService -> AuditDB : Save failure
+            deactivate AuditService
+            
+        else <color:#00ff00>Success email</color>
+            EmailService --> NotificationService : <color:#00ff00>Email invoyé</color>
+            
+            NotificationService -> AuditService : <color:#feca57>Log success email cliint</color>
+            activate AuditService
+            AuditService -> AuditDB : Save success
+            deactivate AuditService
+        ind
+        deactivate EmailService
+        
+        NotificationService -> SMSService : <color:#ff9ff3>Sind SMS closure cliint</color>
+        activate SMSService
+        
+        alt <color:#ff6b6b>Failure sinding SMS</color>
+            SMSService --> NotificationService : <color:#ff6b6b>Error sinding</color>
+            NotificationService -> QueueManager : <color:#5f27cd>Put in file retry</color>
+            activate QueueManager
+            QueueManager --> NotificationService : <color:#00d2d3>In queue</color>
+            deactivate QueueManager
+            
+            NotificationService -> AuditService : <color:#feca57>Log failure SMS cliint</color>
+            activate AuditService
+            AuditService -> AuditDB : Save failure
+            deactivate AuditService
+            
+        else <color:#00ff00>Success SMS</color>
+            SMSService --> NotificationService : <color:#00ff00>SMS invoyé</color>
+            
+            NotificationService -> AuditService : <color:#feca57>Log success SMS cliint</color>
+            activate AuditService
+            AuditService -> AuditDB : Save success
+            deactivate AuditService
+        ind
+        deactivate SMSService
+        
+    and <color:#ff6b6b>Notification Manager</color>
+        NotificationService -> EmailService : <color:#ff9ff3>Sind email closure manager</color>
+        activate EmailService
+        
+        alt <color:#ff6b6b>Failure sinding email</color>
+            EmailService --> NotificationService : <color:#ff6b6b>Error sinding</color>
+            NotificationService -> QueueManager : <color:#5f27cd>Put in retry queue</color>
+            activate QueueManager
+            QueueManager --> NotificationService : <color:#00d2d3>In queue</color>
+            deactivate QueueManager
+            
+            NotificationService -> AuditService : <color:#feca57>Log email failure manager</color>
+            activate AuditService
+            AuditService -> AuditDB : Save failure
+            deactivate AuditService
+            
+        else <color:#00ff00>Success email</color>
+            EmailService --> NotificationService : <color:#00ff00>Email invoyé</color>
+            
+            NotificationService -> AuditService : <color:#feca57>Log success email manager</color>
+            activate AuditService
+            AuditService -> AuditDB : Save success
+            deactivate AuditService
+        ind
+        deactivate EmailService
+    ind
+    
+    == Gestion des Reprises ==
+    
+    NotificationService -> QueueManager : <color:#5f27cd>Verify files de reprise</color>
+    activate QueueManager
+    
+    loop <color:#ffa726>Pour chaque notification in failure</color>
+        QueueManager -> QueueManager : <color:#ffa726>Attindre délai retry</color>
+        QueueManager -> NotificationService : <color:#5f27cd>Retry notification</color>
+        
+        alt <color:#ff6b6b>Failure après 3 tintatives</color>
+            NotificationService -> AuditService : <color:#feca57>Log failure définitif</color>
+            activate AuditService
+            AuditService -> AuditDB : Save failure définitif
+            deactivate AuditService
+            
+            NotificationService -> NotificationService : <color:#ff6b6b>Alerter team support</color>
+            
+        else <color:#00ff00>Success retry</color>
+            NotificationService -> AuditService : <color:#feca57>Log success retry</color>
+            activate AuditService
+            AuditService -> AuditDB : Save success
+            deactivate AuditService
+        ind
+    ind
+    deactivate QueueManager
+    
+    == Finalisation ==
+    
+    NotificationService --> EvintHandler : <color:#00ff00>Notifications traitées</color>
+    deactivate NotificationService
+    
+    EvintHandler -> AuditService : <color:#feca57>Log fin processus notification</color>
+    activate AuditService
+    AuditService -> AuditDB : Save fin processus
+    AuditService --> EvintHandler : <color:#00d2d3>Processus audité</color>
+    deactivate AuditService
+    
+    EvintHandler -> EvintHandler : <color:#00ff00>Processus notification completed</color>
+    deactivate EvintHandler
+    
+ind
+
+note over Cliint, Manager : <color:#00ff00>Notifications de closure receivedes</color>\n<color:#00ff00>selon les canaux configurés</color>
+
+@induml

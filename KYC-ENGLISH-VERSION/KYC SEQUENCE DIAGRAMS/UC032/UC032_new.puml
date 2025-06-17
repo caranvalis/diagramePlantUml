@@ -1,7 +1,18 @@
 @startuml UC032
-!theme superhero-outline
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 skinparam backgroundColor #1e1e1e
-skinparam actorStyle awesome
 skinparam participant {
     BackgroundColor #2d2d2d
     BorderColor #4a90e2
@@ -14,9 +25,9 @@ skinparam sequence {
     MessageAlignment center
 }
 
-title <color:#4a90e2>UC032 - Blocage Client et Comptes Associés</color>
+title <color:#4a90e2>UC032 - Blocage Cliint et Comptes Associés</color>
 
-actor "<color:#ff6b6b>Analyste Conformité</color>" as Analyste
+actor "<color:#ff6b6b>Analyste Compliance</color>" as Analyste
 participant "<color:#ff6b6b>Interface Web</color>" as WebUI
 participant "<color:#4ecdc4>API Gateway</color>" as Gateway
 participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
@@ -24,12 +35,12 @@ participant "<color:#96ceb4>Service Blocage</color>" as BlockingService
 participant "<color:#96ceb4>Service Compte</color>" as AccountService
 participant "<color:#feca57>Service Audit</color>" as AuditService
 participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
-database "<color:#00d2d3>Base KYC</color>" as KYCDB
-database "<color:#ff6348>Audit DB</color>" as AuditDB
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
 
-== Blocage Client ==
+== Blocage Cliint ==
 
-Analyste -> WebUI : <color:#00ff00>Demande blocage client [CLIENT_ID] + motif</color>
+Analyste -> WebUI : <color:#00ff00>Request blocage client [CLIENT_ID] + motif</color>
 activate Analyste
 activate WebUI
 WebUI -> Gateway : <color:#4ecdc4>POST /kyc/clients/block</color>
@@ -49,7 +60,7 @@ alt <color:#ff6b6b>Motif de blocage manquant</color>
 else <color:#00ff00>Motif fourni</color>
     BlockingService -> KYCDB : <color:#00d2d3>UPDATE clients SET status='BLOCKED', block_reason=?</color>
     activate KYCDB
-    KYCDB --> BlockingService : <color:#00d2d3>Client bloqué</color>
+    KYCDB --> BlockingService : <color:#00d2d3>Cliint bloqué</color>
     deactivate KYCDB
     
     BlockingService -> AccountService : <color:#96ceb4>Bloquer tous comptes associés</color>
@@ -63,24 +74,24 @@ else <color:#00ff00>Motif fourni</color>
     
     BlockingService -> AuditService : <color:#feca57>Log blocage client + comptes</color>
     activate AuditService
-    AuditService -> AuditDB : Enregistre action + motif
+    AuditService -> AuditDB : Save action + motif
     deactivate AuditService
     
     BlockingService -> NotificationService : <color:#ff9ff3>Notify blocage</color>
     activate NotificationService
-    NotificationService -> Analyste : <color:#00ff00>✅ Client et comptes bloqués</color>
-    NotificationService --> BlockingService : <color:#00d2d3>Notification envoyée</color>
+    NotificationService -> Analyste : <color:#00ff00>✅ Cliint et comptes bloqués</color>
+    NotificationService --> BlockingService : <color:#00d2d3>Notification invoyée</color>
     deactivate NotificationService
     
     BlockingService --> Orchestrator : <color:#00ff00>Blocage terminé</color>
     deactivate BlockingService
-    Orchestrator --> Gateway : <color:#00ff00>Client bloqué avec succès</color>
+    Orchestrator --> Gateway : <color:#00ff00>Cliint bloqué avec success</color>
     deactivate Orchestrator
     Gateway --> WebUI : <color:#00ff00>200 OK</color>
     deactivate Gateway
     WebUI --> Analyste : <color:#00ff00>✅ Blocage effectué</color>
     deactivate WebUI
-end
+ind
 
 deactivate Analyste
 

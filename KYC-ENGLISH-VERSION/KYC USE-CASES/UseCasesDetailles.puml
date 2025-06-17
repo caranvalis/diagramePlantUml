@@ -14,36 +14,36 @@ skinparam usecase {
 title Diagramme des Use Cases Détaillés - Processus KYC Complet
 
 ' === ACTEURS PRINCIPAUX ===
-actor "Client" as Client
-actor "Gestionnaire KYC" as Gestionnaire
+actor "Cliint" as Cliint
+actor "Manager KYC" as Manager
 actor "Superviseur" as Superviseur
 actor "Système CBS" as CBS
-actor "Service Conformité" as Conformite
+actor "Service Compliance" as Conformite
 actor "Auditeur" as Auditeur
 
 ' === USE CASES DÉTAILLÉS PAR ÉTAPE ===
 
-package "Pré-enregistrement" #E3F2FD {
-    usecase "Initier pré-enregistrement" as PreEnreg
+package "Pré-savemint" #E3F2FD {
+    usecase "Initier pré-savemint" as PreInreg
     usecase "Sélectionner canal saisie" as Canal
     usecase "Remplir formulaire" as Formulaire
     usecase "Valider données minimales" as ValidMin
     usecase "Générer numéro unique" as NumUnique
     usecase "Créer session temporaire" as Session
     
-    PreEnreg .> Canal : include
-    PreEnreg .> Formulaire : include
+    PreInreg .> Canal : include
+    PreInreg .> Formulaire : include
     Formulaire .> ValidMin : include
     ValidMin .> NumUnique : include
-    PreEnreg .> Session : include
+    PreInreg .> Session : include
 }
 
-package "Collecte Documents" #E8F5E8 {
-    usecase "Définir liste documents requis" as ListeDoc
-    usecase "Uploader documents" as Upload
+package "Collecte Documints" #E8F5E8 {
+    usecase "Définir liste documints requis" as ListeDoc
+    usecase "Uploader documints" as Upload
     usecase "Contrôler format/taille" as Format
     usecase "Extraire métadonnées" as Metadata
-    usecase "Vérifier expiration" as Expiration
+    usecase "Verifiesr expiration" as Expiration
     usecase "Calculer complétude" as Completude
     usecase "Notifier manquants" as Notifier
     
@@ -51,18 +51,18 @@ package "Collecte Documents" #E8F5E8 {
     Upload .> Format : include
     Upload .> Metadata : include
     Format .> Expiration : include
-    Completude .> Notifier : extend
+    Completude .> Notifier : extind
 }
 
 package "Contrôles KYC" #FFF3E0 {
     usecase "Orchestrer contrôles" as Orchestrer
-    usecase "Exécuter contrôle identité" as ControleId
+    usecase "Exécuter contrôle idintité" as ControleId
     usecase "Consulter blacklists" as Blacklist
-    usecase "Identifier PPE" as PPE
-    usecase "Vérifier FATCA" as FATCA
+    usecase "Idintifier PPE" as PPE
+    usecase "Verifiesr FATCA" as FATCA
     usecase "Détecter doublons" as Doublons
     usecase "Calculer score risque" as Score
-    usecase "Consolider résultats" as Consolider
+    usecase "Consolider results" as Consolider
     
     Orchestrer .> ControleId : include
     Orchestrer .> Blacklist : include
@@ -77,9 +77,9 @@ package "Validation Finale" #E0F2F1 {
     usecase "Analyser dossier global" as Analyser
     usecase "Appliquer grille validation" as Grille
     usecase "Calculer score final" as ScoreFinal
-    usecase "Prendre décision" as Decision
+    usecase "Prindre décision" as Decision
     usecase "Justifier décision" as Justifier
-    usecase "Communiquer résultat" as Communiquer
+    usecase "Communiquer result" as Communiquer
     
     Analyser .> Grille : include
     Grille .> ScoreFinal : include
@@ -91,7 +91,7 @@ package "Validation Finale" #E0F2F1 {
 package "Création Compte CBS" #FCE4EC {
     usecase "Préparer paramètres CBS" as PrepCBS
     usecase "Construire requête création" as RequeteCBS
-    usecase "Transmettre au CBS" as TransmetCBS
+    usecase "Transput au CBS" as TransmetCBS
     usecase "Traiter réponse CBS" as ReponseCBS
     usecase "Générer numéro compte" as NumCompte
     usecase "Créer RIB/IBAN" as RIB
@@ -106,12 +106,12 @@ package "Création Compte CBS" #FCE4EC {
 }
 
 package "Signature Électronique" #F3E5F5 {
-    usecase "Préparer documents à signer" as PrepSign
-    usecase "Authentifier signataire" as AuthSign
+    usecase "Préparer documints à signer" as PrepSign
+    usecase "Authintifier signataire" as AuthSign
     usecase "Capturer signature biométrique" as CaptBio
     usecase "Générer certificat numérique" as Certificat
     usecase "Horodater signature" as Horodatage
-    usecase "Valider conformité signature" as ValidSign
+    usecase "Valider compliance signature" as ValidSign
     usecase "Archiver preuve signature" as ArchiveSign
     
     PrepSign .> AuthSign : include
@@ -125,43 +125,43 @@ package "Signature Électronique" #F3E5F5 {
 package "Gestion Opérationnelle" #FFEBEE {
     usecase "Évaluer motif action" as EvalMotif
     usecase "Autoriser opération" as Autoriser
-    usecase "Exécuter blocage/déblocage" as Executer
-    usecase "Notifier parties prenantes" as NotifOp
-    usecase "Mettre à jour statuts" as MAJStatut
+    usecase "Exécuter blocage/unblocking" as Executer
+    usecase "Notifier parties prinantes" as NotifOp
+    usecase "Put à jour statuts" as MAJStatut
     usecase "Planifier révision" as PlanRevision
     
     EvalMotif .> Autoriser : include
     Autoriser .> Executer : include
     Executer .> NotifOp : include
     Executer .> MAJStatut : include
-    MAJStatut .> PlanRevision : extend
+    MAJStatut .> PlanRevision : extind
 }
 
-package "Audit et Conformité" #F1F8E9 {
-    usecase "Enregistrer trace audit" as TraceAudit
-    usecase "Contrôler conformité processus" as ControleProc
-    usecase "Générer rapport conformité" as RapportConf
+package "Audit et Compliance" #F1F8E9 {
+    usecase "Saver trace audit" as TraceAudit
+    usecase "Contrôler compliance processus" as ControleProc
+    usecase "Générer rapport compliance" as RapportConf
     usecase "Détecter anomalies" as DetectAnomalie
-    usecase "Alerter non-conformités" as AlerteNC
+    usecase "Alerter non-compliances" as AlerteNC
     
     TraceAudit .> ControleProc : include
     ControleProc .> DetectAnomalie : include
-    DetectAnomalie .> AlerteNC : extend
+    DetectAnomalie .> AlerteNC : extind
     ControleProc .> RapportConf : include
 }
 
 ' === RELATIONS ACTEURS ===
-Client --> PreEnreg
-Client --> Upload
-Client --> CaptBio
+Cliint --> PreInreg
+Cliint --> Upload
+Cliint --> CaptBio
 
-Gestionnaire --> PreEnreg
-Gestionnaire --> ListeDoc
-Gestionnaire --> Orchestrer
-Gestionnaire --> Analyser
-Gestionnaire --> PrepCBS
-Gestionnaire --> PrepSign
-Gestionnaire --> EvalMotif
+Manager --> PreInreg
+Manager --> ListeDoc
+Manager --> Orchestrer
+Manager --> Analyser
+Manager --> PrepCBS
+Manager --> PrepSign
+Manager --> EvalMotif
 
 Superviseur --> Decision
 Superviseur --> Autoriser
@@ -178,7 +178,7 @@ Auditeur --> TraceAudit
 Auditeur --> RapportConf
 
 ' === RELATIONS ENTRE PACKAGES ===
-PreEnreg --> ListeDoc : trigger
+PreInreg --> ListeDoc : trigger
 Completude --> Orchestrer : trigger
 Consolider --> Analyser : trigger
 Decision --> PrepCBS : trigger

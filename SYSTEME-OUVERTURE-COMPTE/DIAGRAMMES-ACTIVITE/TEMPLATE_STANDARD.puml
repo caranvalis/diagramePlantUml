@@ -1,0 +1,47 @@
+@startuml TemplateStandardActivite
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
+    StartColor #4CAF50
+    EndColor #F44336
+}
+skinparam swimlane {
+    BorderColor #1976D2
+    TitleBackgroundColor #E3F2FD
+    TitleFontColor #0D47A1
+}
+skinparam shadowing true
+
+title Diagramme d'Activité - [TITRE DU PROCESSUS]
+
+|Acteur Principal|
+start
+:Première activité;
+
+|Système|
+:Activité système;
+
+partition "Phase Importante" {
+    :Activité dans partition;
+    
+    if (Condition de décision?) then (oui)
+        :Action si oui;
+    else (non)
+        :Action si non;
+    endif
+}
+
+|Autre Acteur|
+:Activité d'un autre acteur;
+
+|Acteur Principal|
+:Retour vers acteur principal;
+
+stop
+
+@enduml

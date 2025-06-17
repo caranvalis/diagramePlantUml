@@ -1,0 +1,330 @@
+@startuml UC007
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title UC007 - Pre-registration Intreprise
+
+' Acteurs externes
+actor "Représintant\nIntreprise" as Represintant #LightGrein
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface Web\nPublique" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nIntreprise" as IntrepriseService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocumint" as DocumintService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+    participant "Service\nIdintifiant" as IdintService #6495ED
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
+
+== Accès interface pré-savemint ==
+
+Represintant -> WebUI : Accéder interface\npré-savemint intreprise
+activate Represintant
+activate WebUI
+
+WebUI -> Gateway : GET /preregistration/intreprise/form
+activate Gateway
+
+Gateway -> Orchestrator : initierPreSavemintIntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxPreSavemint()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(PRE_ENREG_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Récupération formulaire depuis cache
+FluxManager -> CacheService : getFormulaireIntreprise()
+activate CacheService
+
+alt Formulaire in cache
+    CacheService --> FluxManager : Formulaire trouvé
+    deactivate CacheService
+    
+else Formulaire pas in cache
+    CacheService --> FluxManager : Non trouvé
+    deactivate CacheService
+    
+    FluxManager -> IntrepriseService : chargerFormulaireIntreprise()
+    activate IntrepriseService
+    
+    IntrepriseService -> IntrepriseService : Ginerate formulaire\navec champs requis
+    IntrepriseService -> IntrepriseService : Ajouter validations\nJS côté cliint
+    
+    IntrepriseService -> CacheService : cacheFormulaire()
+    activate CacheService
+    CacheService --> IntrepriseService : Mis in cache
+    deactivate CacheService
+    
+    IntrepriseService --> FluxManager : Formulaire préparé
+    deactivate IntrepriseService
+ind
+
+FluxManager --> Orchestrator : Formulaire prêt
+Orchestrator --> Gateway : Interface initialisée
+Gateway --> WebUI : Formulaire intreprise
+WebUI --> Represintant : **Formulaire pré-savemint**\nChamps intreprise + documints
+
+note over Represintant : Formulaire affiché\navec champs obligatoires:\n- Raison sociale\n- SIRET\n- Adresse\n- Documints légaux
+
+== Saisie et soumission données ==
+
+Represintant -> WebUI : Saisir données intreprise\n(SIRET, raison sociale, etc.)
+Represintant -> WebUI : Téléverser documints\n(K-bis, statuts, etc.)
+Represintant -> WebUI : Souput formulaire
+
+WebUI -> Gateway : POST /preregistration/intreprise/submit
+note over Gateway : Données intreprise +\ndocumints joints
+
+Gateway -> Orchestrator : souputPreSavemint()
+
+' Validation des données
+Orchestrator -> ValidationService : validerDonneesIntreprise()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format SIRET
+ValidationService -> ValidationService : Validate raison sociale
+ValidationService -> ValidationService : Verify adresse
+ValidationService -> ValidationService : Control cohérince données
+
+alt Données valides
+    ValidationService --> Orchestrator : Validation OK
+    deactivate ValidationService
+    
+    ' Validation des documints
+    Orchestrator -> DocumintService : validerDocumintsIntreprise()
+    activate DocumintService
+    
+    DocumintService -> DocumintService : Verify présince\ndocumints obligatoires
+    DocumintService -> DocumintService : Control formats\n(PDF, images)
+    DocumintService -> DocumintService : Validate taille fichiers
+    
+    alt Documints valides
+        DocumintService --> Orchestrator : Documints conformes
+        deactivate DocumintService
+        
+        ' Verification doublons
+        Orchestrator -> DoublonService : searchrDoublonIntreprise()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT intreprises SIRET
+        activate DB
+        DB --> DoublonService : Results search
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze similitudes\n(SIRET, raison sociale)
+        
+        alt Aucun doublon
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            alt Infrastructure disponible
+                ' Génération idintifiant unique
+                Orchestrator -> IdintService : ginererIdintifiantUnique()
+                activate IdintService
+                
+                IdintService -> IdintService : Ginerate ID unique\nformat: ENT-{timestamp}-{random}
+                IdintService -> DB : Verify unicité ID
+                activate DB
+                DB --> IdintService : ID unique confirmé
+                deactivate DB
+                
+                IdintService --> Orchestrator : ID ginerated: ${idintifiant}
+                deactivate IdintService
+                
+                ' Sauvegarde pré-savemint
+                Orchestrator -> IntrepriseService : saverPreSavemint()
+                activate IntrepriseService
+                
+                IntrepriseService -> DB : INSERT pre_savemint_intreprise
+                activate DB
+                DB --> IntrepriseService : Pre-registration created
+                deactivate DB
+                
+                IntrepriseService -> DocumintService : sauvegarderDocumints()
+                activate DocumintService
+                
+                DocumintService -> Storage : Save documints
+                activate Storage
+                Storage --> DocumintService : Documints stockés
+                deactivate Storage
+                
+                DocumintService -> DB : INSERT documints_intreprise
+                activate DB
+                DB --> DocumintService : Référinces createdes
+                deactivate DB
+                
+                DocumintService --> IntrepriseService : Documints associés
+                deactivate DocumintService
+                
+                IntrepriseService --> Orchestrator : Savemint finalisé
+                deactivate IntrepriseService
+                
+                ' Audit et notification
+                Orchestrator -> AuditService : logPreSavemintReussi()
+                activate AuditService
+                AuditService -> DB : INSERT audit_actions
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator -> NotificationService : notifierPreSavemint()
+                activate NotificationService
+                NotificationService -> NotificationService : Préparer confirmation\nemail
+                NotificationService -> NotificationService : Sind notification\nau représintant
+                NotificationService --> Orchestrator : Notification invoyée
+                deactivate NotificationService
+                
+                Orchestrator --> Gateway : Pre-registration successful
+                Gateway --> WebUI : Confirmation avec idintifiant
+                WebUI --> Represintant : **Success**\nIdintifiant: ${idintifiant}\nConfirmation invoyée par email
+                
+                note over Represintant : Pre-registration successful\nIdintifiant unique ginerated\nSuivi possible avec cet ID
+                
+                == Options post-savemint ==
+                
+                opt Actions optionnelles
+                    alt Impression confirmation
+                        Represintant -> WebUI : Imprimer confirmation
+                        WebUI -> Gateway : GET /preregistration/{id}/print
+                        Gateway -> IntrepriseService : ginererRecapitulatif()
+                        activate IntrepriseService
+                        IntrepriseService --> Gateway : PDF récapitulatif
+                        deactivate IntrepriseService
+                        Gateway --> WebUI : PDF ginerated
+                        WebUI --> Represintant : **Documint imprimable**
+                        
+                    else Suivi dossier
+                        Represintant -> WebUI : Suivre dossier
+                        WebUI -> Gateway : GET /preregistration/{id}/status
+                        Gateway -> IntrepriseService : getStatutDossier()
+                        activate IntrepriseService
+                        IntrepriseService -> DB : SELECT statut_dossier
+                        activate DB
+                        DB --> IntrepriseService : Statut actuel
+                        deactivate DB
+                        IntrepriseService --> Gateway : Statut dossier
+                        deactivate IntrepriseService
+                        Gateway --> WebUI : Informations statut
+                        WebUI --> Represintant : **Statut**: In Progress d'instruction
+                    ind
+                ind
+                
+            else Infrastructure unavailable
+                Orchestrator -> AuditService : logErrorInfrastructure()
+                activate AuditService
+                AuditService -> DB : INSERT audit_errors
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator --> Gateway : Error technical
+                Gateway --> WebUI : Service temporairemint unavailable
+                WebUI --> Represintant : **Error technical**\nService temporairemint unavailable\nVeuillez réessayer plus tard
+                
+                note over Represintant : Problème technical\nRéessayer ultérieuremint
+            ind
+            
+        else Doublon détecté
+            DoublonService --> Orchestrator : Intreprise existe
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logTintativeDoublon()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Doublon détecté
+            Gateway --> WebUI : Intreprise déjà inregistrée
+            WebUI --> Represintant : **Attintion**: Intreprise déjà\npré-inregistrée avec ce SIRET
+        ind
+        
+    else Documints invalides
+        DocumintService --> Orchestrator : Documints non conformes
+        deactivate DocumintService
+        
+        Orchestrator --> Gateway : Error documints
+        Gateway --> WebUI : Documints incorrects
+        WebUI --> Represintant : **Error**: Documints invalides\nCorrections requises
+    ind
+    
+else Données invalides
+    ValidationService --> Orchestrator : Données incorrectes
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Données non conformes
+    WebUI --> Represintant : **Error**: Données incorrectes\nVerify saisie
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxPreSavemint()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Represintant
+
+note over DB : Pre-registration intreprise\ntracé et audité pour\ncompliance réglemintaire
+
+@induml

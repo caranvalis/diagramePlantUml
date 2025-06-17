@@ -1,0 +1,261 @@
+@startuml UC018
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC018 - Création Compte CBS Client
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nCompte" as CompteService #87CEEB
+    participant "Service\nClient" as ClientService #87CEFA
+    participant "Service\nIntégration" as IntegrationService #4682B4
+    participant "Service\nValidation" as ValidationService #4169E1
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "CBS\n(Core Banking)" as CBS #A9A9A9
+end box
+
+== Ouverture fiche client ==
+
+Manager -> WebUI : Ouvrir fiche client\npour création compte
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /client/{id}/compte/create
+activate Gateway
+
+Gateway -> Orchestrator : initierCreationCompteCBS()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxCreationCompte()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(CREATION_COMPTE_CBS)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Chargement données client
+Orchestrator -> ClientService : chargerDonneesClient()
+activate ClientService
+
+ClientService -> CacheService : getClientInfo()
+activate CacheService
+
+alt Client en cache
+    CacheService --> ClientService : Données trouvées
+    deactivate CacheService
+    
+else Pas en cache
+    CacheService --> ClientService : Non trouvé
+    deactivate CacheService
+    
+    ClientService -> DB : SELECT client_details
+    activate DB
+    DB --> ClientService : Données client
+    deactivate DB
+    
+    ClientService -> CacheService : cacheClientInfo()
+    activate CacheService
+    CacheService --> ClientService : Mis en cache
+    deactivate CacheService
+end
+
+ClientService --> Orchestrator : Données client chargées
+deactivate ClientService
+
+Orchestrator --> Gateway : Client disponible
+Gateway --> WebUI : Données client
+WebUI --> Manager : **Fiche client**\nPrêt pour création compte
+
+== Déclenchement création compte ==
+
+Manager -> WebUI : Déclencher création\ncompte CBS
+WebUI -> Gateway : POST /client/{id}/compte/create-cbs
+
+Gateway -> Orchestrator : creerCompteCBS()
+
+' Validation préalable
+Orchestrator -> ValidationService : validerEligibiliteCreationCompte()
+activate ValidationService
+
+ValidationService -> DB : SELECT comptes_existants
+activate DB
+DB --> ValidationService : Comptes actuels
+deactivate DB
+
+ValidationService -> ValidationService : Verify éligibilité\ncréation compte
+ValidationService -> ValidationService : Control limites\ncomptes par client
+
+ValidationService --> Orchestrator : Client éligible
+deactivate ValidationService
+
+' Intégration avec CBS
+Orchestrator -> IntegrationService : integrerAvecCBS()
+activate IntegrationService
+
+IntegrationService -> IntegrationService : Préparer requête\nSOAP/REST
+IntegrationService -> IntegrationService : Formatter données\nclient pour CBS
+
+IntegrationService -> CBS : Envoi requête création compte
+activate CBS
+
+alt CBS ne répond pas
+    CBS --> IntegrationService : Timeout/Error connexion
+    
+    IntegrationService -> IntegrationService : Attendre délai\nrelance
+    IntegrationService -> CBS : Relance requête
+    
+    alt CBS toujours indisponible
+        CBS --> IntegrationService : Failure connexion
+        deactivate CBS
+        
+        IntegrationService -> AuditService : logErrorConnexionCBS()
+        activate AuditService
+        AuditService -> DB : INSERT audit_erreurs
+        AuditService --> IntegrationService : OK
+        deactivate AuditService
+        
+        IntegrationService --> Orchestrator : CBS indisponible
+        deactivate IntegrationService
+        
+        Orchestrator --> Gateway : Error système
+        Gateway --> WebUI : CBS indisponible
+        WebUI --> Manager : **Error**: CBS indisponible\nRéessayer plus tard
+        
+    else CBS répond après relance
+        CBS --> IntegrationService : Traitement en cours
+        activate CBS
+    end
+    
+else CBS répond immédiatement
+    note over CBS : Traitement demande\ncréation compte
+end
+
+alt CBS traite la demande
+    CBS -> CBS : Validation données\ncôté CBS
+    CBS -> CBS : Création compte\ninterne
+    
+    alt Error validation côté CBS
+        CBS --> IntegrationService : Message erreur validation
+        deactivate CBS
+        
+        IntegrationService -> AuditService : logErrorValidationCBS()
+        activate AuditService
+        AuditService -> DB : INSERT audit_erreurs
+        AuditService --> IntegrationService : OK
+        deactivate AuditService
+        
+        IntegrationService --> Orchestrator : Validation CBS échouée
+        deactivate IntegrationService
+        
+        Orchestrator --> Gateway : Error validation
+        Gateway --> WebUI : Failure création
+        WebUI --> Manager : **Error**: Validation CBS\néchec création compte
+        
+    else Création réussie
+        CBS --> IntegrationService : Identifiant client + N° compte + RIB
+        deactivate CBS
+        
+        IntegrationService --> Orchestrator : Compte créé avec succès
+        deactivate IntegrationService
+        
+        == Enregistrement données compte ==
+        
+        Orchestrator -> CompteService : enregistrerCompteCreé()
+        activate CompteService
+        
+        CompteService -> DB : INSERT INTO comptes
+        activate DB
+        DB --> CompteService : Compte enregistré
+        deactivate DB
+        
+        CompteService -> DB : INSERT historique_creation_compte
+        activate DB
+        DB --> CompteService : Historique créé
+        deactivate DB
+        
+        CompteService -> CacheService : cacheCompteInfo()
+        activate CacheService
+        CacheService --> CompteService : Compte mis en cache
+        deactivate CacheService
+        
+        CompteService --> Orchestrator : Données compte sauvegardées
+        deactivate CompteService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logCreationCompteReussie()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierCreationCompte()
+        activate NotificationService
+        NotificationService -> NotificationService : Préparer notification\nclient + équipes
+        NotificationService --> Orchestrator : Notifications envoyées
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : Création compte réussie
+        Gateway --> WebUI : Confirmation création
+        WebUI --> Manager : **Success**: Compte créé\nN° Compte: ${numeroCompte}\nRIB disponible
+        
+        note over Manager : Compte CBS créé\navec succès\nRIB généré
+    end
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxCreationCompte()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@enduml

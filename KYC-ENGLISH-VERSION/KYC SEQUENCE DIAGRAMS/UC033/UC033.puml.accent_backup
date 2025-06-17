@@ -1,0 +1,103 @@
+@startuml UC033
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC033 - Déblocage Client et Restauration des Comptes</color>
+
+actor "<color:#ff6b6b>Analyste Conformité</color>" as Analyste
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#96ceb4>Service Déblocage</color>" as UnblockingService
+participant "<color:#96ceb4>Service Compte</color>" as AccountService
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Déblocage Client ==
+
+Analyste -> WebUI : <color:#00ff00>Demande déblocage client [CLIENT_ID] + justification</color>
+activate Analyste
+activate WebUI
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/clients/unblock</color>
+activate Gateway
+Gateway -> Orchestrator : <color:#45b7d1>Débloquer client avec justification</color>
+activate Orchestrator
+
+Orchestrator -> UnblockingService : <color:#96ceb4>Traiter déblocage client</color>
+activate UnblockingService
+
+UnblockingService -> KYCDB : <color:#00d2d3>SELECT status, block_reason FROM clients WHERE id=?</color>
+activate KYCDB
+KYCDB --> UnblockingService : <color:#00d2d3>Statut actuel client</color>
+deactivate KYCDB
+
+alt <color:#ff6b6b>Client non bloqué</color>
+    UnblockingService --> Orchestrator : <color:#ff6b6b>ERREUR: Client déjà actif</color>
+    Orchestrator --> Gateway : <color:#ff6b6b>Client non bloqué</color>
+    Gateway --> WebUI : <color:#ff6b6b>400 Bad Request</color>
+    WebUI --> Analyste : <color:#ff6b6b>❌ Client déjà actif</color>
+    
+else <color:#00ff00>Client bloqué - Déblocage autorisé</color>
+    UnblockingService -> KYCDB : <color:#00d2d3>UPDATE clients SET status='ACTIVE', unblock_reason=?</color>
+    activate KYCDB
+    KYCDB --> UnblockingService : <color:#00d2d3>Client débloqué</color>
+    deactivate KYCDB
+    
+    UnblockingService -> AccountService : <color:#96ceb4>Restaurer comptes associés</color>
+    activate AccountService
+    AccountService -> KYCDB : <color:#00d2d3>UPDATE accounts SET status='ACTIVE' WHERE client_id=?</color>
+    activate KYCDB
+    KYCDB --> AccountService : <color:#00d2d3>Comptes restaurés</color>
+    deactivate KYCDB
+    AccountService --> UnblockingService : <color:#00d2d3>Comptes associés restaurés</color>
+    deactivate AccountService
+    
+    UnblockingService -> AuditService : <color:#feca57>Log déblocage client + comptes</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre action + justification
+    deactivate AuditService
+    
+    UnblockingService -> NotificationService : <color:#ff9ff3>Notify déblocage</color>
+    activate NotificationService
+    NotificationService -> Analyste : <color:#00ff00>✅ Client et comptes débloqués</color>
+    NotificationService --> UnblockingService : <color:#00d2d3>Notification envoyée</color>
+    deactivate NotificationService
+    
+    UnblockingService --> Orchestrator : <color:#00ff00>Déblocage terminé</color>
+    deactivate UnblockingService
+    Orchestrator --> Gateway : <color:#00ff00>Client débloqué avec succès</color>
+    deactivate Orchestrator
+    Gateway --> WebUI : <color:#00ff00>200 OK</color>
+    deactivate Gateway
+    WebUI --> Analyste : <color:#00ff00>✅ Déblocage effectué</color>
+    deactivate WebUI
+end
+
+deactivate Analyste
+
+@enduml

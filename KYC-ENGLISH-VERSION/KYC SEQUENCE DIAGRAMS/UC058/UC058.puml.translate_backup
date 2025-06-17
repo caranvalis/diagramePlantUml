@@ -1,0 +1,68 @@
+@startuml UC058
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Responsable conformité / DSI" as Utilisateur
+participant "Interface métriques" as UI
+participant "System d’analyse" as Systeme
+database "Base de données" as BDD
+database "Moteur de statistiques" as Statistiques
+
+== Ouverture de l’espace métriques ==
+Utilisateur -> UI : Accède à la page "Métriques de performance"
+activate Utilisateur
+activate UI
+UI -> Systeme : Initialiser les filtres (période, type de processus)
+deactivate UI
+
+== Saisie et soumission des filtres ==
+Utilisateur -> UI : Saisit période et type de processus
+activate UI
+UI -> Systeme : Transmettre les filtres
+activate Systeme
+
+Systeme -> BDD : Requête sur les données KYC (dossiers, étapes, rejets)
+activate BDD
+BDD --> Systeme : Données brutes
+deactivate BDD
+
+== Traitement des indicateurs ==
+Systeme -> Statistiques : Calculate les indicateurs :
+activate Statistiques
+Statistiques --> Systeme : Résultats agrégés
+deactivate Statistiques
+
+alt Certaines données sont manquantes
+    Systeme -> UI : Afficher "N/A" pour les métriques concernées
+else Toutes les métriques disponibles
+    Systeme -> UI : Send les résultats complets
+end
+deactivate Systeme
+
+UI --> Utilisateur : Affiche le tableau de bord (graphes + tableaux)
+deactivate UI
+
+== Export (optionnel) ==
+opt Si export demandé
+    Utilisateur -> UI : Clique sur "Exporter"
+    activate UI
+    UI -> Systeme : Generate fichier (Excel/CSV)
+    activate Systeme
+    Systeme --> UI : Fichier exporté
+    UI --> Utilisateur : Téléchargement du fichier
+    deactivate Systeme
+    deactivate UI
+end
+
+@enduml

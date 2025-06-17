@@ -1,15 +1,27 @@
 @startuml
-!theme aws-orange
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 title Évaluation risque client
 
 ' === ACTEURS ===
-actor "Client" as client #lightblue
-actor "Agent Bancaire" as agent #lightgreen
+actor "Cliint" as client #lightblue
+actor "Agint Bancaire" as agint #lightgrein
 actor "Administrateur KYC" as admin #orange
 
 ' === INTERFACES ===
-participant "Interface Client" as ui_client #lightblue
-participant "Interface Agent" as ui_agent #lightgreen
+participant "Interface Cliint" as ui_client #lightblue
+participant "Interface Agint" as ui_agint #lightgrein
 participant "Interface Admin" as ui_admin #orange
 
 ' === API GATEWAY ===
@@ -19,9 +31,9 @@ participant "API Gateway KYC" as gateway #gold
 participant "Orchestrateur KYC" as orchestrator #red
 
 ' === SERVICES MÉTIER ===
-participant "Service Client" as svc_client #lightblue
-participant "Service Compte" as svc_compte #lightgreen
-participant "Service Document" as svc_document #lightyellow
+participant "Service Cliint" as svc_client #lightblue
+participant "Service Compte" as svc_compte #lightgrein
+participant "Service Documint" as svc_documint #lightyellow
 participant "Service Contrôle" as svc_controle #orange
 participant "Service Validation" as svc_validation #lightcoral
 
@@ -29,13 +41,13 @@ participant "Service Validation" as svc_validation #lightcoral
 participant "Service Auth" as svc_auth #lightgray
 participant "Service Notification" as svc_notification #lightcyan
 participant "Service Audit" as svc_audit #lightpink
-participant "Service Cache" as svc_cache #lavender
+participant "Service Cache" as svc_cache #lavinder
 
 ' === INFRASTRUCTURE ===
-database "Base KYC" as db_kyc #yellow
-database "Base Audit" as db_audit #lightyellow
-database "Cache Redis" as cache_redis #lightcyan
-queue "Queue Events" as queue #lightgray
+datadatabase "Database KYC" as db_kyc #yellow
+datadatabase "Database Audit" as db_audit #lightyellow
+datadatabase "Cache Redis" as cache_redis #lightcyan
+queue "Queue Evints" as queue #lightgray
 
 ' === SÉQUENCE PRINCIPALE ===
 activate client
@@ -45,10 +57,10 @@ activate ui_client
 ui_client -> gateway : Requête Évaluation risque client
 activate gateway
 
-gateway -> svc_auth : Verify authentification
+gateway -> svc_auth : Verify authintification
 activate svc_auth
-svc_auth -> db_kyc : Validate token
-svc_auth --> gateway : Token valide
+svc_auth -> db_kyc : Validate tokin
+svc_auth --> gateway : Tokin valide
 deactivate svc_auth
 
 gateway -> orchestrator : Orchestrer Évaluation risque client
@@ -59,63 +71,63 @@ orchestrator -> svc_cache : Verify cache
 activate svc_cache
 svc_cache -> cache_redis : Get données
 alt Cache hit
-    cache_redis --> svc_cache : Données en cache
+    cache_redis --> svc_cache : Données in cache
     svc_cache --> orchestrator : Données disponibles
 else Cache miss
     svc_cache --> orchestrator : Cache vide
     deactivate svc_cache
     
     ' === LOGIQUE MÉTIER ===
-    orchestrator -> svc_client : Traiter demande client
+    orchestrator -> svc_client : Traiter request client
     activate svc_client
     svc_client -> db_kyc : Lire/Écrire données client
-    svc_client --> orchestrator : Résultat Évaluation risque client
+    svc_client --> orchestrator : Result Évaluation risque client
     deactivate svc_client
     
-    orchestrator -> svc_compte : Mise à jour compte
+    orchestrator -> svc_compte : Put à jour compte
     activate svc_compte
-    svc_compte -> db_kyc : Mettre à jour statut
+    svc_compte -> db_kyc : Put à jour statut
     svc_compte --> orchestrator : Compte mis à jour
     deactivate svc_compte
     
-    orchestrator -> svc_document : Gestion documents
-    activate svc_document
-    svc_document -> db_kyc : Save documents
-    svc_document --> orchestrator : Documents traités
-    deactivate svc_document
+    orchestrator -> svc_documint : Gestion documints
+    activate svc_documint
+    svc_documint -> db_kyc : Save documints
+    svc_documint --> orchestrator : Documints traités
+    deactivate svc_documint
     
     orchestrator -> svc_controle : KYC Controls
     activate svc_controle
-    svc_controle -> db_kyc : Verify conformité
+    svc_controle -> db_kyc : Verify compliance
     svc_controle --> orchestrator : Contrôles effectués
     deactivate svc_controle
     
     orchestrator -> svc_validation : Validation finale
     activate svc_validation
     svc_validation -> db_kyc : Finaliser processus
-    svc_validation --> orchestrator : Validation terminée
+    svc_validation --> orchestrator : Validation completed
     deactivate svc_validation
     
     ' === MISE À JOUR DU CACHE ===
-    orchestrator -> svc_cache : Mettre à jour cache
+    orchestrator -> svc_cache : Put à jour cache
     activate svc_cache
     svc_cache -> cache_redis : Set nouvelles données
     deactivate svc_cache
-end
+ind
 
 ' === AUDIT ET NOTIFICATION ===
-orchestrator -> svc_audit : Enregistrer audit
+orchestrator -> svc_audit : Saver audit
 activate svc_audit
 svc_audit -> db_audit : Log opération
-svc_audit -> queue : Publier événement
+svc_audit -> queue : Publier événemint
 deactivate svc_audit
 
-orchestrator -> svc_notification : Send notification
+orchestrator -> svc_notification : Sind notification
 activate svc_notification
 svc_notification -> queue : Publier notification
 deactivate svc_notification
 
-orchestrator --> gateway : Résultat Évaluation risque client
+orchestrator --> gateway : Result Évaluation risque client
 deactivate orchestrator
 
 gateway --> ui_client : Réponse Évaluation risque client
@@ -127,10 +139,10 @@ deactivate client
 
 ' === GESTION D'ERREURS ===
 note over orchestrator, svc_validation
-  Gestion d'erreurs standardisée :
+  Gestion d'errors standardisée :
   - Timeout : 30s par service
-  - Retry : 3 tentatives avec backoff
-  - Circuit breaker sur échecs
+  - Retry : 3 tintatives avec backoff
+  - Circuit breaker sur failures
   - Logs détaillés pour debugging
 end note
 
@@ -138,10 +150,10 @@ end note
 note over svc_audit, db_audit
   Traçabilité complète :
   - Horodatage précis
-  - Identification utilisateur
+  - Idintification utilisateur
   - Actions effectuées
   - Données modifiées
-  - Conformité RGPD/AML
+  - Compliance RGPD/AML
 end note
 
 @enduml

@@ -1,7 +1,18 @@
 @startuml UC024
-!theme superhero-outline
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 skinparam backgroundColor #1e1e1e
-skinparam actorStyle awesome
 skinparam participant {
     BackgroundColor #2d2d2d
     BorderColor #4a90e2
@@ -14,7 +25,7 @@ skinparam sequence {
     MessageAlignment center
 }
 
-title <color:#4a90e2>UC024 - Vérification Automatique des Dates d'Expiration</color>
+title <color:#4a90e2>UC024 - Verification Automatique des Dates d'Expiration</color>
 
 ' Acteurs
 actor "<color:#ff6b6b>Manager KYC</color>" as Manager
@@ -28,56 +39,56 @@ participant "<color:#45b7d1>Scheduler</color>" as Scheduler
 
 ' Services Métier
 participant "<color:#96ceb4>Service Validation</color>" as ValidationService
-participant "<color:#96ceb4>Service Document</color>" as DocumentService
+participant "<color:#96ceb4>Service Documint</color>" as DocumintService
 participant "<color:#96ceb4>Service OCR</color>" as OCRService
 participant "<color:#96ceb4>Service Date</color>" as DateService
 
-' Services Techniques
+' Services Technicals
 participant "<color:#feca57>Service Audit</color>" as AuditService
 participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
 participant "<color:#ff9ff3>Service Alerte</color>" as AlertService
 participant "<color:#54a0ff>Service Cache</color>" as CacheService
 
 ' Infrastructure
-database "<color:#00d2d3>Base KYC</color>" as KYCDB
-database "<color:#ff6348>Audit DB</color>" as AuditDB
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
 
-== Déclenchement Automatique ==
+== Déclinchemint Automatique ==
 
-note over Scheduler : <color:#ffa726>Tâche planifiée :</color>\n<color:#ffa726>Vérification quotidienne des dates</color>
+note over Scheduler : <color:#ffa726>Tâche planifiée :</color>\n<color:#ffa726>Verification quotidiinne des dates</color>
 
-Scheduler -> Scheduler : <color:#00ff00>Déclenchement tâche périodique</color>
+Scheduler -> Scheduler : <color:#00ff00>Déclinchemint tâche périodique</color>
 activate Scheduler
 
-Scheduler -> Orchestrator : <color:#45b7d1>Lancer vérification dates expiration</color>
+Scheduler -> Orchestrator : <color:#45b7d1>Lancer verification dates expiration</color>
 activate Orchestrator
 
-Orchestrator -> AuditService : <color:#feca57>Log début vérification dates</color>
+Orchestrator -> AuditService : <color:#feca57>Log début verification dates</color>
 activate AuditService
-AuditService -> AuditDB : Enregistre début processus
-AuditService --> Orchestrator : <color:#00d2d3>Événement logged</color>
+AuditService -> AuditDB : Save début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événemint logged</color>
 deactivate AuditService
 
-== Récupération des Documents ==
+== Récupération des Documints ==
 
-Orchestrator -> DocumentService : <color:#96ceb4>Récupérer documents actifs</color>
-activate DocumentService
+Orchestrator -> DocumintService : <color:#96ceb4>Récupérer documints actifs</color>
+activate DocumintService
 
-DocumentService -> KYCDB : <color:#00d2d3>SELECT * FROM documents WHERE status='ACTIVE'</color>
+DocumintService -> KYCDB : <color:#00d2d3>SELECT * FROM documints WHERE status='ACTIVE'</color>
 activate KYCDB
-KYCDB --> DocumentService : <color:#00d2d3>Liste documents actifs</color>
+KYCDB --> DocumintService : <color:#00d2d3>Liste documints actifs</color>
 deactivate KYCDB
 
-DocumentService --> Orchestrator : <color:#96ceb4>Documents à vérifier</color>
-deactivate DocumentService
+DocumintService --> Orchestrator : <color:#96ceb4>Documints à verifiesr</color>
+deactivate DocumintService
 
-== Traitement des Documents ==
+== Traitemint des Documints ==
 
-loop <color:#ffa726>Pour chaque document</color>
-    Orchestrator -> DateService : <color:#96ceb4>Analyze dates document [DOC_ID]</color>
+loop <color:#ffa726>Pour chaque documint</color>
+    Orchestrator -> DateService : <color:#96ceb4>Analyze dates documint [DOC_ID]</color>
     activate DateService
     
-    DateService -> OCRService : <color:#96ceb4>Extraire dates du document</color>
+    DateService -> OCRService : <color:#96ceb4>Extraire dates du documint</color>
     activate OCRService
     
     OCRService -> OCRService : <color:#ffa726>Analyse OCR spécialisée dates</color>
@@ -87,146 +98,146 @@ loop <color:#ffa726>Pour chaque document</color>
         OCRService --> DateService : <color:#ff6b6b>Aucune date trouvée</color>
         DateService --> Orchestrator : <color:#ff6b6b>Dates non détectables</color>
         
-        Orchestrator -> DocumentService : <color:#96ceb4>Marquer document NON_CONFORME</color>
-        activate DocumentService
-        DocumentService -> KYCDB : <color:#00d2d3>UPDATE status='NON_COMPLIANT'</color>
+        Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint NON_CONFORME</color>
+        activate DocumintService
+        DocumintService -> KYCDB : <color:#00d2d3>UPDATE status='NON_COMPLIANT'</color>
         activate KYCDB
-        KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+        KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
         deactivate KYCDB
-        DocumentService --> Orchestrator : <color:#00d2d3>Document marqué</color>
-        deactivate DocumentService
+        DocumintService --> Orchestrator : <color:#00d2d3>Documint marqué</color>
+        deactivate DocumintService
         
         Orchestrator -> AlertService : <color:#ff9ff3>Create alerte dates manquantes</color>
         activate AlertService
         AlertService -> AlertService : <color:#ff6b6b>Préparer alerte critique</color>
-        AlertService --> Orchestrator : <color:#00d2d3>Alerte créée</color>
+        AlertService --> Orchestrator : <color:#00d2d3>Alerte createde</color>
         deactivate AlertService
         
         Orchestrator -> AuditService : <color:#feca57>Log dates non détectées</color>
         activate AuditService
-        AuditService -> AuditDB : Enregistre anomalie
+        AuditService -> AuditDB : Save anomalie
         deactivate AuditService
         
     else <color:#00ff00>Dates extraites</color>
-        OCRService --> DateService : <color:#00ff00>Dates identifiées</color>
+        OCRService --> DateService : <color:#00ff00>Dates idintifiées</color>
         deactivate OCRService
         
         == Validation des Dates ==
         
         DateService -> DateService : <color:#ffa726>Parser dates extraites</color>
         DateService -> DateService : <color:#ffa726>Validate format dates</color>
-        DateService -> DateService : <color:#ffa726>Identifier date expiration</color>
+        DateService -> DateService : <color:#ffa726>Idintifier date expiration</color>
         
         alt <color:#ff6b6b>Format de date invalide</color>
             DateService --> Orchestrator : <color:#ff6b6b>Format date invalide</color>
             
-            Orchestrator -> DocumentService : <color:#96ceb4>Marquer document NON_CONFORME</color>
-            activate DocumentService
-            DocumentService -> KYCDB : <color:#00d2d3>UPDATE status='NON_COMPLIANT'</color>
+            Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint NON_CONFORME</color>
+            activate DocumintService
+            DocumintService -> KYCDB : <color:#00d2d3>UPDATE status='NON_COMPLIANT'</color>
             activate KYCDB
-            KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+            KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
             deactivate KYCDB
-            DocumentService --> Orchestrator : <color:#00d2d3>Document marqué</color>
-            deactivate DocumentService
+            DocumintService --> Orchestrator : <color:#00d2d3>Documint marqué</color>
+            deactivate DocumintService
             
             Orchestrator -> AlertService : <color:#ff9ff3>Create alerte format invalide</color>
             activate AlertService
-            AlertService -> AlertService : <color:#ff6b6b>Préparer alerte erreur</color>
-            AlertService --> Orchestrator : <color:#00d2d3>Alerte créée</color>
+            AlertService -> AlertService : <color:#ff6b6b>Préparer alerte error</color>
+            AlertService --> Orchestrator : <color:#00d2d3>Alerte createde</color>
             deactivate AlertService
             
             Orchestrator -> AuditService : <color:#feca57>Log format invalide</color>
             activate AuditService
-            AuditService -> AuditDB : Enregistre erreur format
+            AuditService -> AuditDB : Save error format
             deactivate AuditService
             
         else <color:#00ff00>Dates valides</color>
             DateService -> DateService : <color:#ffa726>Comparer avec date actuelle</color>
             DateService -> DateService : <color:#ffa726>Calculate nombre jours restants</color>
             
-            alt <color:#ff6b6b>Document expiré</color>
+            alt <color:#ff6b6b>Documint expiré</color>
                 DateService --> Orchestrator : <color:#ff6b6b>EXPIRÉ depuis X jours</color>
                 
-                Orchestrator -> DocumentService : <color:#96ceb4>Marquer document EXPIRÉ</color>
-                activate DocumentService
-                DocumentService -> KYCDB : <color:#00d2d3>UPDATE status='EXPIRED'</color>
+                Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint EXPIRÉ</color>
+                activate DocumintService
+                DocumintService -> KYCDB : <color:#00d2d3>UPDATE status='EXPIRED'</color>
                 activate KYCDB
-                KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+                KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
                 deactivate KYCDB
-                DocumentService --> Orchestrator : <color:#00d2d3>Document expiré</color>
-                deactivate DocumentService
+                DocumintService --> Orchestrator : <color:#00d2d3>Documint expiré</color>
+                deactivate DocumintService
                 
-                Orchestrator -> AlertService : <color:#ff9ff3>Create alerte document expiré</color>
+                Orchestrator -> AlertService : <color:#ff9ff3>Create alerte documint expiré</color>
                 activate AlertService
-                AlertService -> AlertService : <color:#ff6b6b>Préparer alerte urgente</color>
-                AlertService --> Orchestrator : <color:#00d2d3>Alerte urgente créée</color>
+                AlertService -> AlertService : <color:#ff6b6b>Préparer alerte urginte</color>
+                AlertService --> Orchestrator : <color:#00d2d3>Alerte urginte createde</color>
                 deactivate AlertService
                 
                 Orchestrator -> NotificationService : <color:#ff9ff3>Notify expiration</color>
                 activate NotificationService
-                NotificationService -> NotificationService : <color:#ff6b6b>Email + SMS gestionnaire</color>
-                NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+                NotificationService -> NotificationService : <color:#ff6b6b>Email + SMS manager</color>
+                NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
                 deactivate NotificationService
                 
             else <color:#ffa726>Expiration proche (< 30 jours)</color>
                 DateService --> Orchestrator : <color:#ffa726>BIENTÔT EXPIRÉ: X jours restants</color>
                 
-                Orchestrator -> DocumentService : <color:#96ceb4>Marquer document EXPIRING_SOON</color>
-                activate DocumentService
-                DocumentService -> KYCDB : <color:#00d2d3>UPDATE status='EXPIRING_SOON'</color>
+                Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint EXPIRING_SOON</color>
+                activate DocumintService
+                DocumintService -> KYCDB : <color:#00d2d3>UPDATE status='EXPIRING_SOON'</color>
                 activate KYCDB
-                KYCDB --> DocumentService : <color:#00d2d3>Statut mis à jour</color>
+                KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
                 deactivate KYCDB
-                DocumentService --> Orchestrator : <color:#00d2d3>Document marqué</color>
-                deactivate DocumentService
+                DocumintService --> Orchestrator : <color:#00d2d3>Documint marqué</color>
+                deactivate DocumintService
                 
-                Orchestrator -> AlertService : <color:#ff9ff3>Create alerte préventive</color>
+                Orchestrator -> AlertService : <color:#ff9ff3>Create alerte prévintive</color>
                 activate AlertService
-                AlertService -> AlertService : <color:#ffa726>Préparer alerte préventive</color>
-                AlertService --> Orchestrator : <color:#00d2d3>Alerte préventive créée</color>
+                AlertService -> AlertService : <color:#ffa726>Préparer alerte prévintive</color>
+                AlertService --> Orchestrator : <color:#00d2d3>Alerte prévintive createde</color>
                 deactivate AlertService
                 
                 Orchestrator -> NotificationService : <color:#ff9ff3>Notify expiration proche</color>
                 activate NotificationService
-                NotificationService -> NotificationService : <color:#ffa726>Email gestionnaire</color>
-                NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+                NotificationService -> NotificationService : <color:#ffa726>Email manager</color>
+                NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
                 deactivate NotificationService
                 
-            else <color:#00ff00>Document valide</color>
-                DateService --> Orchestrator : <color:#00ff00>VALIDE: Expire dans X jours</color>
+            else <color:#00ff00>Documint valide</color>
+                DateService --> Orchestrator : <color:#00ff00>VALIDE: Expire in X jours</color>
                 
-                Orchestrator -> DocumentService : <color:#96ceb4>Confirmer statut VALIDE</color>
-                activate DocumentService
-                DocumentService -> KYCDB : <color:#00d2d3>UPDATE last_date_check=NOW()</color>
+                Orchestrator -> DocumintService : <color:#96ceb4>Confirmer statut VALIDE</color>
+                activate DocumintService
+                DocumintService -> KYCDB : <color:#00d2d3>UPDATE last_date_check=NOW()</color>
                 activate KYCDB
-                KYCDB --> DocumentService : <color:#00d2d3>Vérification enregistrée</color>
+                KYCDB --> DocumintService : <color:#00d2d3>Verification inregistrée</color>
                 deactivate KYCDB
-                DocumentService --> Orchestrator : <color:#00d2d3>Vérification OK</color>
-                deactivate DocumentService
-            end
+                DocumintService --> Orchestrator : <color:#00d2d3>Verification OK</color>
+                deactivate DocumintService
+            ind
             
-            Orchestrator -> AuditService : <color:#feca57>Log vérification date</color>
+            Orchestrator -> AuditService : <color:#feca57>Log verification date</color>
             activate AuditService
-            AuditService -> AuditDB : Enregistre résultat vérification
+            AuditService -> AuditDB : Save result verification
             deactivate AuditService
-        end
-    end
+        ind
+    ind
     deactivate DateService
-end
+ind
 
-== Envoi des Alertes Groupées ==
+== Sinding des Alertes Groupées ==
 
-Orchestrator -> AlertService : <color:#ff9ff3>Consolider et envoyer alertes</color>
+Orchestrator -> AlertService : <color:#ff9ff3>Consolider et invoyer alertes</color>
 activate AlertService
 
 AlertService -> AlertService : <color:#ffa726>Grouper alertes par priorité</color>
 AlertService -> AlertService : <color:#ffa726>Préparer rapport synthèse</color>
 
-AlertService -> NotificationService : <color:#ff9ff3>Send rapport quotidien</color>
+AlertService -> NotificationService : <color:#ff9ff3>Sind rapport quotidiin</color>
 activate NotificationService
 NotificationService -> Manager : <color:#ff9ff3>Email rapport dates expiration</color>
 activate Manager
-NotificationService --> AlertService : <color:#00d2d3>Rapport envoyé</color>
+NotificationService --> AlertService : <color:#00d2d3>Rapport invoyé</color>
 deactivate NotificationService
 
 AlertService --> Orchestrator : <color:#00ff00>Alertes traitées</color>
@@ -234,24 +245,24 @@ deactivate AlertService
 
 == Finalisation ==
 
-Orchestrator -> CacheService : <color:#54a0ff>Invalider cache documents</color>
+Orchestrator -> CacheService : <color:#54a0ff>Invalider cache documints</color>
 activate CacheService
 CacheService --> Orchestrator : <color:#00d2d3>Cache invalidé</color>
 deactivate CacheService
 
-Orchestrator -> AuditService : <color:#feca57>Log fin vérification globale</color>
+Orchestrator -> AuditService : <color:#feca57>Log fin verification globale</color>
 activate AuditService
-AuditService -> AuditDB : Enregistre fin processus
+AuditService -> AuditDB : Save fin processus
 AuditService --> Orchestrator : <color:#00d2d3>Processus audité</color>
 deactivate AuditService
 
-Orchestrator --> Scheduler : <color:#00ff00>Vérification terminée</color>
+Orchestrator --> Scheduler : <color:#00ff00>Verification completed</color>
 deactivate Orchestrator
 
 Scheduler -> Scheduler : <color:#00ff00>Planifier prochaine exécution</color>
 deactivate Scheduler
 
-note over Manager : <color:#00ff00>Rapport de vérification</color>\n<color:#00ff00>des dates d'expiration reçu</color>
+note over Manager : <color:#00ff00>Rapport de verification</color>\n<color:#00ff00>des dates d'expiration received</color>
 deactivate Manager
 
 @enduml

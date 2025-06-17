@@ -1,5 +1,17 @@
 @startuml UC068
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor Manager
 participant "Interface KYC" as UI
@@ -18,18 +30,18 @@ S --> UI : Monogamie / Polygamie
 deactivate S
 UI --> Manager : Afficher options matrimoniales
 Manager -> UI : Sélectionner système matrimonial
-UI -> S : Validate et enregistrer le choix
+UI -> S : Validate et saver le choix
 activate S
 alt Choix = Polygamie
 S -> UI : Activer section ajout conjoints
 else Choix = Monogamie
-S -> UI : Continuer sans changement
-end
+S -> UI : Continuer sans changemint
+ind
 S -> S : Journaliser l’action
 S --> UI : Confirmation du choix
 deactivate S
 
-UI --> Manager : Confirmation enregistrée
+UI --> Manager : Confirmation inregistrée
 deactivate UI
 deactivate Manager
 
@@ -54,23 +66,23 @@ UI -> S : Validate les informations
 S -> S : Verify les données
 S --> UI : Confirmation ajout conjoint
 
-UI --> Manager : Conjoint ajouté avec succès
+UI --> Manager : Conjoint ajouté avec success
 
-Manager -> UI : Enregistrer les modifications
-UI -> S : Enregistrer les conjoints
+Manager -> UI : Saver les modifications
+UI -> S : Saver les conjoints
 
-S -> S : Mettre à jour la base de données
-S --> UI : Confirmation de l’enregistrement
+S -> S : Put à jour la database de données
+S --> UI : Confirmation de l’savemint
 
-UI --> Manager : Modifications enregistrées
+UI --> Manager : Modifications inregistrées
 
 Manager -> UI : Terminer la session
 UI -> S : Terminer la session
 
 S -> S : Journaliser la session
-S --> UI : Session terminée
+S --> UI : Session completed
 deactivate S
-UI --> Manager : Session terminée
+UI --> Manager : Session completed
 deactivate Manager
 deactivate UI
 @enduml

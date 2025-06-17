@@ -14,45 +14,45 @@ skinparam usecase {
 title Diagramme des Use Cases - Processus KYC par Grandes Étapes
 
 ' === ACTEURS PRINCIPAUX ===
-actor "Client Particulier" as ClientP
-actor "Client Entreprise" as ClientE
-actor "Gestionnaire KYC" as Gestionnaire
+actor "Cliint Particulier" as CliintP
+actor "Cliint Intreprise" as CliintE
+actor "Manager KYC" as Manager
 actor "Superviseur KYC" as Superviseur
 actor "Auditeur" as Auditeur
 actor "Système CBS" as CBS
 actor "Autorité de Certification" as AC
 
 ' === PACKAGE 1: PRÉ-ENREGISTREMENT ===
-package "1. Pré-enregistrement" #LightBlue {
-    usecase "UC001: Pré-enregistrer via Web" as UC001
+package "1. Pré-savemint" #LightBlue {
+    usecase "UC001: Pré-saver via Web" as UC001
     usecase "UC002: Saisir données via INTRA" as UC002
     usecase "UC003: Importer depuis Amplitude" as UC003
     usecase "UC004: Valider données saisies" as UC004
-    usecase "UC005: Générer identifiant unique" as UC005
+    usecase "UC005: Générer idintifiant unique" as UC005
     usecase "UC006: Sauvegarder brouillon" as UC006
-    usecase "UC007: Reprendre saisie" as UC007
+    usecase "UC007: Reprindre saisie" as UC007
 }
 
 ' === PACKAGE 2: COLLECTE DOCUMENTS ===
-package "2. Collecte des Documents" #LightGreen {
-    usecase "UC010: Uploader documents" as UC010
+package "2. Collecte des Documints" #LightGrein {
+    usecase "UC010: Uploader documints" as UC010
     usecase "UC011: Valider format fichiers" as UC011
     usecase "UC012: Vérifier complétude" as UC012
     usecase "UC013: Contrôler expiration" as UC013
     usecase "UC014: Générer liste manquants" as UC014
     usecase "UC015: Relancer client" as UC015
-    usecase "UC016: Archiver documents" as UC016
-    usecase "UC017: Versioner documents" as UC017
+    usecase "UC016: Archiver documints" as UC016
+    usecase "UC017: Versioner documints" as UC017
 }
 
 ' === PACKAGE 3: CONTRÔLES KYC ===
 package "3. Contrôles KYC" #LightYellow {
-    usecase "UC020: Contrôler identité" as UC020
+    usecase "UC020: Contrôler idintité" as UC020
     usecase "UC021: Vérifier blacklist" as UC021
-    usecase "UC022: Identifier PPE" as UC022
+    usecase "UC022: Idintifier PPE" as UC022
     usecase "UC023: Contrôler FATCA" as UC023
     usecase "UC024: Détecter doublons" as UC024
-    usecase "UC025: Contrôler conformité" as UC025
+    usecase "UC025: Contrôler compliance" as UC025
     usecase "UC026: Escalader contrôles" as UC026
     usecase "UC027: Générer rapport contrôles" as UC027
 }
@@ -61,8 +61,8 @@ package "3. Contrôles KYC" #LightYellow {
 package "4. Validation Finale" #LightCyan {
     usecase "UC030: Analyser dossier complet" as UC030
     usecase "UC031: Appliquer grille validation" as UC031
-    usecase "UC032: Prendre décision finale" as UC032
-    usecase "UC033: Demander compléments" as UC033
+    usecase "UC032: Prindre décision finale" as UC032
+    usecase "UC033: Requestr complémints" as UC033
     usecase "UC034: Rejeter dossier" as UC034
     usecase "UC035: Valider dossier" as UC035
     usecase "UC036: Escalader validation" as UC036
@@ -71,20 +71,20 @@ package "4. Validation Finale" #LightCyan {
 ' === PACKAGE 5: CRÉATION COMPTE CBS ===
 package "5. Création Compte CBS" #LightPink {
     usecase "UC040: Paramétrer compte CBS" as UC040
-    usecase "UC041: Créer compte dans CBS" as UC041
+    usecase "UC041: Créer compte in CBS" as UC041
     usecase "UC042: Générer RIB" as UC042
     usecase "UC043: Vérifier création" as UC043
     usecase "UC044: Synchroniser données" as UC044
-    usecase "UC045: Gérer erreurs CBS" as UC045
+    usecase "UC045: Gérer errors CBS" as UC045
 }
 
 ' === PACKAGE 6: SIGNATURE ÉLECTRONIQUE ===
 package "6. Signature Électronique" #LightGray {
-    usecase "UC050: Préparer documents signature" as UC050
+    usecase "UC050: Préparer documints signature" as UC050
     usecase "UC051: Capturer signature" as UC051
     usecase "UC052: Valider signature" as UC052
     usecase "UC053: Certifier signature" as UC053
-    usecase "UC054: Horodater documents" as UC054
+    usecase "UC054: Horodater documints" as UC054
     usecase "UC055: Archiver signatures" as UC055
 }
 
@@ -100,72 +100,72 @@ package "7. Gestion Opérationnelle" #LightSalmon {
 }
 
 ' === PACKAGE 8: AUDIT ET REPORTING ===
-package "8. Audit et Reporting" #Lavender {
+package "8. Audit et Reporting" #Lavinder {
     usecase "UC070: Journaliser actions" as UC070
     usecase "UC071: Consulter audit" as UC071
     usecase "UC072: Générer rapports" as UC072
     usecase "UC073: Tracer modifications" as UC073
-    usecase "UC074: Contrôler conformité" as UC074
+    usecase "UC074: Contrôler compliance" as UC074
 }
 
 ' === RELATIONS ACTEURS - USE CASES ===
 
-' Pré-enregistrement
-ClientP --> UC001
-ClientE --> UC001
-Gestionnaire --> UC002
-Gestionnaire --> UC003
-Gestionnaire --> UC004
-Gestionnaire --> UC005
-ClientP --> UC006
-ClientP --> UC007
+' Pré-savemint
+CliintP --> UC001
+CliintE --> UC001
+Manager --> UC002
+Manager --> UC003
+Manager --> UC004
+Manager --> UC005
+CliintP --> UC006
+CliintP --> UC007
 
-' Collecte Documents
-ClientP --> UC010
-ClientE --> UC010
-Gestionnaire --> UC011
-Gestionnaire --> UC012
-Gestionnaire --> UC013
-Gestionnaire --> UC014
-Gestionnaire --> UC015
-Gestionnaire --> UC016
-Gestionnaire --> UC017
+' Collecte Documints
+CliintP --> UC010
+CliintE --> UC010
+Manager --> UC011
+Manager --> UC012
+Manager --> UC013
+Manager --> UC014
+Manager --> UC015
+Manager --> UC016
+Manager --> UC017
 
 ' Contrôles KYC
-Gestionnaire --> UC020
-Gestionnaire --> UC021
-Gestionnaire --> UC022
-Gestionnaire --> UC023
-Gestionnaire --> UC024
-Gestionnaire --> UC025
+Manager --> UC020
+Manager --> UC021
+Manager --> UC022
+Manager --> UC023
+Manager --> UC024
+Manager --> UC025
 Superviseur --> UC026
-Gestionnaire --> UC027
+Manager --> UC027
 
 ' Validation Finale
-Gestionnaire --> UC030
-Gestionnaire --> UC031
+Manager --> UC030
+Manager --> UC031
 Superviseur --> UC032
-Gestionnaire --> UC033
+Manager --> UC033
 Superviseur --> UC034
 Superviseur --> UC035
 Superviseur --> UC036
 
 ' Création Compte CBS
-Gestionnaire --> UC040
+Manager --> UC040
 CBS --> UC041
 CBS --> UC042
-Gestionnaire --> UC043
-Gestionnaire --> UC044
-Gestionnaire --> UC045
+Manager --> UC043
+Manager --> UC044
+Manager --> UC045
 
 ' Signature Électronique
-Gestionnaire --> UC050
-ClientP --> UC051
-ClientE --> UC051
+Manager --> UC050
+CliintP --> UC051
+CliintE --> UC051
 AC --> UC052
 AC --> UC053
 AC --> UC054
-Gestionnaire --> UC055
+Manager --> UC055
 
 ' Gestion Opérationnelle
 Superviseur --> UC060
@@ -173,11 +173,11 @@ Superviseur --> UC061
 Superviseur --> UC062
 Superviseur --> UC063
 Superviseur --> UC064
-Gestionnaire --> UC065
+Manager --> UC065
 Superviseur --> UC066
 
 ' Audit et Reporting
-Gestionnaire --> UC070
+Manager --> UC070
 Auditeur --> UC071
 Auditeur --> UC072
 Auditeur --> UC073
@@ -195,9 +195,9 @@ UC051 ..> UC052 : include
 UC060 ..> UC070 : include
 UC061 ..> UC070 : include
 
-UC033 ..> UC030 : extend
-UC026 ..> UC020 : extend
-UC036 ..> UC032 : extend
-UC045 ..> UC041 : extend
+UC033 ..> UC030 : extind
+UC026 ..> UC020 : extind
+UC036 ..> UC032 : extind
+UC045 ..> UC041 : extind
 
 @enduml

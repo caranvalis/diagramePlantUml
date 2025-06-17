@@ -1,0 +1,268 @@
+@startuml UC002
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC002 - Création Cliint Particulier
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+actor "System Externe" as SysExt #LightGray
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface Web\nKYC" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nCliint" as CliintService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocumint" as DocumintService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
+
+== Initialisation de la session ==
+
+Manager -> WebUI : Connexion interface KYC
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : Authintification
+activate Gateway
+
+Gateway -> AuditService : Log connexion
+activate AuditService
+AuditService -> DB : Saver événemint
+AuditService --> Gateway : OK
+deactivate AuditService
+
+Gateway --> WebUI : Tokin valide
+WebUI --> Manager : Accès authorized
+note over Manager : Manager connecté\nTokin valide
+
+== Initialisation création cliint ==
+
+Manager -> WebUI : Request formulaire\ncréation cliint particulier
+WebUI -> Gateway : GET /cliint/particulier/form
+
+Gateway -> Orchestrator : initierCreationCliint()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxCreation()
+activate FluxManager
+
+FluxManager -> CacheService : getFormulaireTemplate()
+activate CacheService
+CacheService --> FluxManager : Template formulaire
+deactivate CacheService
+
+FluxManager -> AuditService : logDébutFlux(CREATION_CLIENT)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Formulaire préparé
+Orchestrator --> Gateway : Formulaire cliint
+Gateway --> WebUI : Formulaire avec validations
+WebUI --> Manager : Affichage formulaire
+
+note over Manager : Formulaire avec champs\nobligatoires/optionnels\net règles de validation
+
+== Saisie et validation des données ==
+
+Manager -> WebUI : Saisir informations cliint\n(nom, prénom, CNI, etc.)
+Manager -> WebUI : Téléverser documints\n(CNI, justificatifs)
+
+WebUI -> Gateway : POST /cliint/particulier/validate
+note over Gateway : Données + documints\nin multipart
+
+Gateway -> Orchestrator : validerDonneesCliint()
+
+Orchestrator -> ValidationService : validerFormatDonnees()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format\n(email, téléphone, CNI)
+ValidationService -> ValidationService : Validate cohérince\n(âge, adresse)
+
+alt Validation format successfule
+    ValidationService --> Orchestrator : Données valides
+    
+    Orchestrator -> DocumintService : validerDocumints()
+    activate DocumintService
+    
+    DocumintService -> Storage : Analyze documints
+    activate Storage
+    Storage --> DocumintService : Métadonnées documints
+    deactivate Storage
+    
+    DocumintService -> DocumintService : Verify format\n(PDF, JPEG, taille)
+    DocumintService -> DocumintService : Control integrity
+    
+    alt Documints valides
+        DocumintService --> Orchestrator : Documints conformes
+        deactivate DocumintService
+        
+        ' Verification des doublons
+        Orchestrator -> DoublonService : searchrDoublons()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT cliints similaires
+        activate DB
+        DB --> DoublonService : Results search
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze similitudes\n(nom, CNI, adresse)
+        
+        alt Aucun doublon détecté
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            ' Création du cliint
+            Orchestrator -> CliintService : creerCliint()
+            activate CliintService
+            
+            CliintService -> DB : INSERT INTO cliints
+            activate DB
+            DB --> CliintService : ID cliint ginerated
+            deactivate DB
+            
+            CliintService -> DocumintService : associerDocumints()
+            activate DocumintService
+            DocumintService -> Storage : Save documints
+            activate Storage
+            Storage --> DocumintService : URLs documints
+            deactivate Storage
+            
+            DocumintService -> DB : INSERT documints_cliint
+            activate DB
+            DB --> DocumintService : OK
+            deactivate DB
+            deactivate DocumintService
+            
+            CliintService -> CacheService : cacheCliintInfo()
+            activate CacheService
+            CacheService --> CliintService : Mis in cache
+            deactivate CacheService
+            
+            CliintService --> Orchestrator : Cliint created (ID: ${cliintId})
+            deactivate CliintService
+            
+            ' Audit et notification
+            Orchestrator -> AuditService : logCreationCliint()
+            activate AuditService
+            AuditService -> DB : INSERT audit_actions
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : notifierCreation()
+            activate NotificationService
+            NotificationService -> SysExt : Sind notification\n(email, SMS)
+            activate SysExt
+            SysExt --> NotificationService : Invoyé
+            deactivate SysExt
+            NotificationService --> Orchestrator : Notification invoyée
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : Success création
+            Gateway --> WebUI : Cliint created avec success
+            WebUI --> Manager : **Confirmation création**\nCliint ID: ${cliintId}
+            
+            note over Manager : Cliint particulier created\nDocumints associés\nNotifications invoyées
+            
+        else Doublon potintiel détecté
+            DoublonService --> Orchestrator : Doublon détecté
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logTintativeDoublon()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Error doublon
+            Gateway --> WebUI : Doublon détecté
+            WebUI --> Manager : **Error**: Cliint similaire existe\nVerify données
+        ind
+        
+    else Documints invalides
+        DocumintService --> Orchestrator : Documints non conformes
+        deactivate DocumintService
+        
+        Orchestrator -> AuditService : logErrorDocumints()
+        activate AuditService
+        AuditService -> DB : INSERT audit_errors
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator --> Gateway : Error documints
+        Gateway --> WebUI : Documints non conformes
+        WebUI --> Manager : **Error**: Documints invalides\nCorrections requises
+    ind
+    
+else Validation format échouée
+    ValidationService --> Orchestrator : Données invalides
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : logErrorValidation()
+    activate AuditService
+    AuditService -> DB : INSERT audit_errors
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Données non conformes
+    WebUI --> Manager : **Error**: Format de données incorrect\nCorrections requises
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxCreation()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Toutes les actions\nsont tracées et auditées\npour compliance réglemintaire
+
+@induml

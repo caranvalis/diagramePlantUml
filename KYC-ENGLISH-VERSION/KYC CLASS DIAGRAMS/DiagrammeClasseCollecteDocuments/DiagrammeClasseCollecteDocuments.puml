@@ -1,4 +1,4 @@
-@startuml DiagrammeClasseCollecteDocuments
+@startuml DiagrammeClasseCollecteDocumints
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
 skinparam classBackgroundColor #E3F2FD
@@ -8,33 +8,33 @@ skinparam classFontSize 13
 skinparam roundCorner 15
 left to right direction
 
-title Diagramme de Classes - Collecte des Documents KYC
+title Diagramme de Classes - Collecte des Documints KYC
 
-class CollecteDocuments {
+class CollecteDocumints {
     - id: String
     - numeroCollecte: String
     - clientId: String
     - dateDebut: Date
     - dateFin: Date
     - statutCollecte: StatutCollecte
-    - typeClient: TypeClient
-    - listeDocumentsRequis: List<TypeDocument>
-    - pourcentageCompletude: Float
-    - commentaires: String
+    - typeCliint: TypeCliint
+    - listeDocumintsRequis: List<TypeDocumint>
+    - pourcintageCompletude: Float
+    - commintaires: String
     + demarrerCollecte(): Boolean
-    + ajouterDocument(): Boolean
+    + ajouterDocumint(): Boolean
     + validerCompletude(): Boolean
-    + genererListeManquants(): List<TypeDocument>
+    + ginererListeManquants(): List<TypeDocumint>
     + relancer(): Boolean
     + terminer(): Boolean
 }
 
-class Document {
+class Documint {
     - id: String
     - nom: String
-    - typeDocument: TypeDocument
-    - categorieDocument: CategorieDocument
-    - format: FormatDocument
+    - typeDocumint: TypeDocumint
+    - categorieDocumint: CategorieDocumint
+    - format: FormatDocumint
     - taille: Long
     - cheminFichier: String
     - dateUpload: Date
@@ -43,35 +43,35 @@ class Document {
     - checksum: String
     - estObligatoire: Boolean
     - estValide: Boolean
-    - statutDocument: StatutDocument
+    - statutDocumint: StatutDocumint
     - utilisateurUpload: String
-    - commentaireVersion: String
+    - commintaireVersion: String
     + uploader(): Boolean
     + validerFormat(): Boolean
     + verifierExpiration(): Boolean
-    + versioner(): Document
-    + genererThumbnail(): Boolean
+    + versioner(): Documint
+    + ginererThumbnail(): Boolean
     + extraireTexte(): String
 }
 
-class TypeDocument {
+class TypeDocumint {
     - id: String
     - code: String
     - libelle: String
     - description: String
-    - categorieDocument: CategorieDocument
-    - formatsAutorises: List<FormatDocument>
+    - categorieDocumint: CategorieDocumint
+    - formatsAutorises: List<FormatDocumint>
     - tailleMaximale: Long
     - estObligatoire: Boolean
     - dureeValidite: Integer
     - regexValidation: String
     - templateNommage: String
     + creerType(): Boolean
-    + validerDocument(): Boolean
-    + genererNom(): String
+    + validerDocumint(): Boolean
+    + ginererNom(): String
 }
 
-enum CategorieDocument {
+inum CategorieDocumint {
     IDENTITE
     DOMICILE
     REVENUS
@@ -81,7 +81,7 @@ enum CategorieDocument {
     SIGNATURES
 }
 
-enum FormatDocument {
+inum FormatDocumint {
     PDF
     JPEG
     PNG
@@ -91,7 +91,7 @@ enum FormatDocument {
     XML
 }
 
-class StatutDocument {
+class StatutDocumint {
     - id: String
     - code: String
     - libelle: String
@@ -101,25 +101,25 @@ class StatutDocument {
     - estFinal: Boolean
     - actionSuivante: String
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
-class ValidationDocument {
+class ValidationDocumint {
     - id: String
-    - document: Document
-    - typeValidation: TypeValidationDocument
+    - documint: Documint
+    - typeValidation: TypeValidationDocumint
     - resultat: Boolean
     - scoreConfiance: Float
-    - messageErreur: String
+    - messageError: String
     - dateValidation: Date
     - validateur: String
     - dureeValidation: Integer
     + executer(): Boolean
-    + genererRapport(): String
+    + ginererRapport(): String
     + revalider(): Boolean
 }
 
-enum TypeValidationDocument {
+inum TypeValidationDocumint {
     FORMAT_FICHIER
     TAILLE_FICHIER
     LISIBILITE
@@ -130,9 +130,9 @@ enum TypeValidationDocument {
     OCR_EXTRACTION
 }
 
-class ArchivageDocument {
+class ArchivageDocumint {
     - id: String
-    - document: Document
+    - documint: Documint
     - cheminArchivage: String
     - codeClassification: String
     - dureeConservation: Integer
@@ -146,28 +146,28 @@ class ArchivageDocument {
     + verifierIntegrite(): Boolean
 }
 
-enum TypeArchivage {
+inum TypeArchivage {
     STOCKAGE_LOCAL
     STOCKAGE_CLOUD
     STOCKAGE_PHYSIQUE
     ARCHIVAGE_LEGAL
 }
 
-class NotificationDocument {
+class NotificationDocumint {
     - id: String
-    - collecteDocuments: CollecteDocuments
-    - typeNotification: TypeNotificationDocument
+    - collecteDocumints: CollecteDocumints
+    - typeNotification: TypeNotificationDocumint
     - destinataire: String
-    - contenu: String
-    - dateEnvoi: Date
-    - estatutEnvoi: StatutEnvoi
+    - continu: String
+    - dateSinding: Date
+    - estatutSinding: StatutSinding
     - canalNotification: CanalNotification
     + creer(): Boolean
-    + envoyer(): Boolean
+    + invoyer(): Boolean
     + programmer(): Boolean
 }
 
-enum TypeNotificationDocument {
+inum TypeNotificationDocumint {
     DOCUMENT_MANQUANT
     DOCUMENT_EXPIRE
     DOCUMENT_REJETE
@@ -175,7 +175,7 @@ enum TypeNotificationDocument {
     RELANCE_COLLECTE
 }
 
-enum StatutEnvoi {
+inum StatutSinding {
     EN_ATTENTE
     ENVOYE
     RECU
@@ -183,7 +183,7 @@ enum StatutEnvoi {
     ANNULE
 }
 
-enum CanalNotification {
+inum CanalNotification {
     EMAIL
     SMS
     COURRIER
@@ -194,33 +194,33 @@ enum CanalNotification {
 class RegleCollecte {
     - id: String
     - nom: String
-    - typeClient: TypeClient
+    - typeCliint: TypeCliint
     - typeCompte: TypeCompte
-    - documentsObligatoires: List<TypeDocument>
-    - documentsOptionnels: List<TypeDocument>
+    - documintsObligatoires: List<TypeDocumint>
+    - documintsOptionnels: List<TypeDocumint>
     - delaiCollecte: Integer
     - nombreRelances: Integer
     - estActive: Boolean
-    + appliquer(): List<TypeDocument>
+    + appliquer(): List<TypeDocumint>
     + verifierCompletude(): Boolean
     + calculerDelai(): Integer
 }
 
 ' Relations principales
-CollecteDocuments "1" -- "0..*" Document : documents
-CollecteDocuments "1" -- "1" StatutCollecte : statut
-CollecteDocuments "1" -- "0..*" NotificationDocument : notifications
-CollecteDocuments "1" -- "1" RegleCollecte : regle
+CollecteDocumints "1" -- "0..*" Documint : documints
+CollecteDocumints "1" -- "1" StatutCollecte : statut
+CollecteDocumints "1" -- "0..*" NotificationDocumint : notifications
+CollecteDocumints "1" -- "1" RegleCollecte : regle
 
-Document "1" -- "1" TypeDocument : type
-Document "1" -- "1" StatutDocument : statut
-Document "1" -- "0..*" ValidationDocument : validations
-Document "1" -- "0..1" ArchivageDocument : archivage
+Documint "1" -- "1" TypeDocumint : type
+Documint "1" -- "1" StatutDocumint : statut
+Documint "1" -- "0..*" ValidationDocumint : validations
+Documint "1" -- "0..1" ArchivageDocumint : archivage
 
-TypeDocument "1" -- "1" CategorieDocument : categorie
-ValidationDocument "1" -- "1" TypeValidationDocument : type
-ArchivageDocument "1" -- "1" TypeArchivage : type
-NotificationDocument "1" -- "1" TypeNotificationDocument : type
-NotificationDocument "1" -- "1" CanalNotification : canal
+TypeDocumint "1" -- "1" CategorieDocumint : categorie
+ValidationDocumint "1" -- "1" TypeValidationDocumint : type
+ArchivageDocumint "1" -- "1" TypeArchivage : type
+NotificationDocumint "1" -- "1" TypeNotificationDocumint : type
+NotificationDocumint "1" -- "1" CanalNotification : canal
 
 @enduml

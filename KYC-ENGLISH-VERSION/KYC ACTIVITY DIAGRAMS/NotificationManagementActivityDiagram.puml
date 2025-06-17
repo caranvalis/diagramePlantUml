@@ -1,12 +1,16 @@
 @startuml NotificationManagementActivityDiagram
 skinparam backgroundColor #F8FBFF
 skinparam activity {
-    StartColor #1976D2
-    EndColor #1976D2
+    StartColor #4CAF50
+    EndColor #F44336
     BarColor #0D47A1
     ArrowColor #0D47A1
     BackgroundColor #E3F2FD
     BorderColor #1976D2
+    FontColor #0D47A1
+    DiamondBackgroundColor #E8F5E8
+    DiamondBorderColor #4CAF50
+    DiamondFontColor #2E7D32
 }
 
 title Activity Diagram - Notification Management with Acknowledgment Receipt

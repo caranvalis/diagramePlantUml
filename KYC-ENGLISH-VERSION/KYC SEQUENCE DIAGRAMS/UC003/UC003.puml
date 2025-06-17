@@ -1,51 +1,57 @@
 @startuml UC003
-!theme cerulean
-
-title UC003 - Importation Client depuis Amplitude
-skinparam actorStyle awesome
-skinparam sequenceBoxBorderColor #1E88E5
-skinparam participantBackgroundColor #E3F2FD
-skinparam lifeline {
-    BackgroundColor #BBDEFB
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
 }
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC003 - Importation Cliint depuis Amplitude
 
 ' Acteurs externes
 actor "Manager KYC" as Manager #LightBlue
 actor "System Amplitude" as Amplitude #LightGray
 
-' Couche présentation
+' Couche présintation
 box "Interface Utilisateur" #E8F5E8
     participant "Interface Web\nKYC" as WebUI #90EE90
     participant "API Gateway" as Gateway #98FB98
-end box
+ind box
 
 ' Couche orchestration
 box "Couche Orchestration" #FFF8DC
     participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
     participant "Manager\nFlux Métier" as FluxManager #F0E68C
-end box
+ind box
 
 ' Services métier
 box "Services Métier KYC" #F0F8FF
-    participant "Service\nClient" as ClientService #87CEEB
+    participant "Service\nCliint" as CliintService #87CEEB
     participant "Service\nValidation" as ValidationService #87CEFA
     participant "Service\nIntégration" as IntegrationService #4682B4
     participant "Service\nDoublon" as DoublonService #4169E1
     participant "Service\nMapping" as MappingService #6495ED
-end box
+ind box
 
-' Services techniques
-box "Services Techniques" #FDF5E6
+' Services technicals
+box "Services Technicals" #FDF5E6
     participant "Service\nAudit" as AuditService #DEB887
     participant "Service\nNotification" as NotificationService #D2B48C
     participant "Cache\nRedis" as CacheService #CD853F
-end box
+ind box
 
 ' Infrastructure
 box "Infrastructure" #F5F5F5
-    participant "Base de Données\nKYC" as DB #C0C0C0
-    participant "Stockage\nDocuments" as Storage #A9A9A9
-end box
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
 
 == Initialisation importation ==
 
@@ -71,38 +77,38 @@ deactivate AuditService
 FluxManager --> Orchestrator : Flux initialisé
 Orchestrator --> Gateway : Formulaire import
 Gateway --> WebUI : Interface saisie
-WebUI --> Manager : Affichage champ identifiant
+WebUI --> Manager : Affichage champ idintifiant
 
-note over Manager : Interface prête pour\nsaisie identifiant client
+note over Manager : Interface prête pour\nsaisie idintifiant client
 
-== Saisie et vérification identifiant ==
+== Saisie et verification idintifiant ==
 
-Manager -> WebUI : Saisir identifiant client Amplitude
+Manager -> WebUI : Saisir idintifiant client Amplitude
 WebUI -> Gateway : POST /import/amplitude/validate-id
-note over Gateway : Identifiant client\nÀ valider
+note over Gateway : Idintifiant client\nÀ valider
 
-Gateway -> Orchestrator : validerIdentifiantAmplitude()
+Gateway -> Orchestrator : validerIdintifiantAmplitude()
 
-Orchestrator -> ValidationService : validerFormatIdentifiant()
+Orchestrator -> ValidationService : validerFormatIdintifiant()
 activate ValidationService
 
-ValidationService -> ValidationService : Control format\nidentifiant Amplitude
+ValidationService -> ValidationService : Control format\nidintifiant Amplitude
 ValidationService -> ValidationService : Validate structure
 
-alt Format identifiant valide
-    ValidationService --> Orchestrator : Identifiant valide
+alt Format idintifiant valide
+    ValidationService --> Orchestrator : Idintifiant valide
     deactivate ValidationService
     
-    ' Vérification existence dans cache
-    Orchestrator -> CacheService : getClientAmplitude()
+    ' Verification existince in cache
+    Orchestrator -> CacheService : getCliintAmplitude()
     activate CacheService
     
-    alt Données en cache
+    alt Données in cache
         CacheService --> Orchestrator : Données client trouvées
         deactivate CacheService
         note over Orchestrator : Données récupérées\ndepuis le cache
         
-    else Pas en cache
+    else Pas in cache
         CacheService --> Orchestrator : Non trouvé
         deactivate CacheService
         
@@ -127,46 +133,46 @@ alt Format identifiant valide
             MappingService --> IntegrationService : Données mappées
             deactivate MappingService
             
-            IntegrationService -> CacheService : cacheClientAmplitude()
+            IntegrationService -> CacheService : cacheCliintAmplitude()
             activate CacheService
-            CacheService --> IntegrationService : Mis en cache
+            CacheService --> IntegrationService : Mis in cache
             deactivate CacheService
             
             IntegrationService --> Orchestrator : Données client mappées
             deactivate IntegrationService
             
-        else Amplitude indisponible
+        else Amplitude unavailable
             Amplitude --> IntegrationService : Error connexion
             deactivate Amplitude
             
             IntegrationService -> AuditService : logErrorConnexion()
             activate AuditService
-            AuditService -> DB : INSERT audit_erreurs
+            AuditService -> DB : INSERT audit_errors
             AuditService --> IntegrationService : OK
             deactivate AuditService
             
             IntegrationService --> Orchestrator : Error connexion
             deactivate IntegrationService
             
-            Orchestrator --> Gateway : Service indisponible
+            Orchestrator --> Gateway : Service unavailable
             Gateway --> WebUI : Error connexion Amplitude
-            WebUI --> Manager : **Error**: Service Amplitude\nindisponible
+            WebUI --> Manager : **Error**: Service Amplitude\nunavailable
             
-            note over Manager : Connexion Amplitude\néchec - Réessayer plus tard
-        end
-    end
+            note over Manager : Connexion Amplitude\nfailure - Réessayer plus tard
+        ind
+    ind
     
-    alt Données récupérées avec succès
-        ' Vérification doublons
-        Orchestrator -> DoublonService : rechercherDoublonAmplitude()
+    alt Données récupérées avec success
+        ' Verification doublons
+        Orchestrator -> DoublonService : searchrDoublonAmplitude()
         activate DoublonService
         
         DoublonService -> DB : SELECT clients existants
         activate DB
-        DB --> DoublonService : Résultats recherche
+        DB --> DoublonService : Results search
         deactivate DB
         
-        DoublonService -> DoublonService : Analyze doublons\npotentiels
+        DoublonService -> DoublonService : Analyze doublons\npotintiels
         
         alt Aucun doublon
             DoublonService --> Orchestrator : Pas de doublon
@@ -174,7 +180,7 @@ alt Format identifiant valide
             
             Orchestrator --> Gateway : Données prêtes
             Gateway --> WebUI : Affichage données récupérées
-            WebUI --> Manager : **Données Amplitude**\nVisualization et vérification
+            WebUI --> Manager : **Données Amplitude**\nVisualization et verification
             
             note over Manager : Données importées\naffichées pour validation
             
@@ -189,28 +195,28 @@ alt Format identifiant valide
             activate ValidationService
             
             ValidationService -> ValidationService : Verify complétude\ndes données
-            ValidationService -> ValidationService : Control cohérence
+            ValidationService -> ValidationService : Control cohérince
             
             alt Données complètes et valides
                 ValidationService --> Orchestrator : Validation OK
                 deactivate ValidationService
                 
                 ' Création du client
-                Orchestrator -> ClientService : creerClientDepuisAmplitude()
-                activate ClientService
+                Orchestrator -> CliintService : creerCliintDepuisAmplitude()
+                activate CliintService
                 
-                ClientService -> DB : INSERT INTO clients
+                CliintService -> DB : INSERT INTO clients
                 activate DB
-                DB --> ClientService : ID client généré
+                DB --> CliintService : ID client ginerated
                 deactivate DB
                 
-                ClientService -> DB : INSERT historique_import
+                CliintService -> DB : INSERT history_import
                 activate DB
-                DB --> ClientService : Historique créé
+                DB --> CliintService : History created
                 deactivate DB
                 
-                ClientService --> Orchestrator : Client créé (ID: ${clientId})
-                deactivate ClientService
+                CliintService --> Orchestrator : Cliint created (ID: ${clientId})
+                deactivate CliintService
                 
                 ' Audit et notification
                 Orchestrator -> AuditService : logImportReussi()
@@ -221,14 +227,14 @@ alt Format identifiant valide
                 
                 Orchestrator -> NotificationService : notifierImport()
                 activate NotificationService
-                NotificationService --> Orchestrator : Notification envoyée
+                NotificationService --> Orchestrator : Notification invoyée
                 deactivate NotificationService
                 
-                Orchestrator --> Gateway : Import réussi
+                Orchestrator --> Gateway : Import successful
                 Gateway --> WebUI : Confirmation intégration
-                WebUI --> Manager : **Success**: Client importé\nID: ${clientId}
+                WebUI --> Manager : **Success**: Cliint importé\nID: ${clientId}
                 
-                note over Manager : Import Amplitude réussi\nClient intégré en base
+                note over Manager : Import Amplitude successful\nCliint intégré in database
                 
             else Données incomplètes
                 ValidationService --> Orchestrator : Données incomplètes
@@ -239,7 +245,7 @@ alt Format identifiant valide
                 WebUI --> Manager : **Action requise**\nCompléter données manquantes
                 
                 note over Manager : Complétion manuelle\nrequise
-            end
+            ind
             
         else Doublon détecté
             DoublonService --> Orchestrator : Doublon trouvé
@@ -252,25 +258,25 @@ alt Format identifiant valide
             deactivate AuditService
             
             Orchestrator --> Gateway : Doublon détecté
-            Gateway --> WebUI : Client existe déjà
-            WebUI --> Manager : **Attention**: Client déjà\nexistant en base
-        end
-    end
+            Gateway --> WebUI : Cliint existe déjà
+            WebUI --> Manager : **Attintion**: Cliint déjà\nexistant in database
+        ind
+    ind
     
-else Format identifiant invalide
+else Format idintifiant invalide
     ValidationService --> Orchestrator : Format invalide
     deactivate ValidationService
     
     Orchestrator -> AuditService : logErrorFormat()
     activate AuditService
-    AuditService -> DB : INSERT audit_erreurs
+    AuditService -> DB : INSERT audit_errors
     AuditService --> Orchestrator : OK
     deactivate AuditService
     
-    Orchestrator --> Gateway : Identifiant invalide
+    Orchestrator --> Gateway : Idintifiant invalide
     Gateway --> WebUI : Format incorrect
-    WebUI --> Manager : **Error**: Format identifiant\nincorrect
-end
+    WebUI --> Manager : **Error**: Format idintifiant\nincorrect
+ind
 
 == Finalisation ==
 
@@ -281,7 +287,7 @@ AuditService -> DB : UPDATE audit_flux
 AuditService --> FluxManager : OK
 deactivate AuditService
 
-FluxManager --> Orchestrator : Flux terminé
+FluxManager --> Orchestrator : Flux completed
 deactivate FluxManager
 deactivate Orchestrator
 
@@ -289,6 +295,6 @@ deactivate Gateway
 deactivate WebUI
 deactivate Manager
 
-note over DB : Import Amplitude tracé\net audité pour conformité
+note over DB : Import Amplitude tracé\net audité pour compliance
 
 @enduml

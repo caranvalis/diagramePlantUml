@@ -1,4 +1,4 @@
-@startuml BlocageClientCompte
+@startuml BlocageCliintCompte
 skinparam actorStyle awesome
 skinparam usecase {
     BackgroundColor #E0F7FA
@@ -8,30 +8,30 @@ skinparam usecase {
 skinparam packageStyle rectangle
 skinparam linetype ortho
 
-actor "Analyste conformité" as Analyste #blue
+actor "Analyste compliance" as Analyste #blue
 
 package "Système INTRA" as INTRA {
-    usecase "Bloquer client (particulier/entreprise)" as BlocClient
-    usecase "Identifier comptes liés au client" as IdComptes
-    usecase "Bloquer compte (particulier/entreprise)" as BlocCompte
-    usecase "Notifier parties prenantes" as Notif
-    usecase "Débloquer client (particulier/entreprise)" as DeblocClient
-    usecase "Débloquer compte (particulier/entreprise)" as DeblocCompte
-    usecase "Clôturer compte (particulier/entreprise)" as ClotureCompte
+    usecase "Bloquer client (particulier/intreprise)" as BlocCliint
+    usecase "Idintifier comptes liés au client" as IdComptes
+    usecase "Bloquer compte (particulier/intreprise)" as BlocCompte
+    usecase "Notifier parties prinantes" as Notif
+    usecase "Débloquer client (particulier/intreprise)" as DeblocCliint
+    usecase "Débloquer compte (particulier/intreprise)" as DeblocCompte
+    usecase "Closurer compte (particulier/intreprise)" as ClotureCompte
 }
 
-' Blocage et déblocage
-Analyste -right-> BlocClient #blue;text:blue
+' Blocage et unblocking
+Analyste -right-> BlocCliint #blue;text:blue
 Analyste -right-> BlocCompte #blue;text:blue
-Analyste -right-> DeblocClient #blue;text:blue
+Analyste -right-> DeblocCliint #blue;text:blue
 Analyste -right-> DeblocCompte #blue;text:blue
 Analyste -right-> ClotureCompte #blue;text:blue
 
-BlocClient ..> IdComptes : <<include>>  
+BlocCliint ..> IdComptes : <<include>>  
 IdComptes ..> BlocCompte : <<include>>
-BlocClient ..> Notif : <<include>>
+BlocCliint ..> Notif : <<include>>
 BlocCompte ..> Notif : <<include>>
-DeblocClient ..> Notif : <<include>>
+DeblocCliint ..> Notif : <<include>>
 DeblocCompte ..> Notif : <<include>>
 ClotureCompte ..> Notif : <<include>>
 

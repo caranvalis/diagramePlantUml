@@ -1,0 +1,151 @@
+@startuml RequestInitiation
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+    MessageAlignment center
+}
+skinparam shadowing true
+
+title Account Opening Request Initiation Process
+
+' Actors
+participant "<color:#00ff00>Client</color>" as Client
+participant "<color:#4a90e2>Agent</color>" as Agent
+participant "<color:#ff6b6b>System</color>" as System
+
+' Services
+participant "<color:#96ceb4>Workflow Service</color>" as WorkflowService
+participant "<color:#feca57>Document Service</color>" as DocumentService
+participant "<color:#ff9ff3>Notification Service</color>" as NotificationService
+
+' Infrastructure
+database "<color:#00d2d3>Database</color>" as DB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Request Initiation ==
+
+Client -> Agent : <color:#00ff00>Express interest in account opening</color>
+activate Agent
+
+Agent -> Agent : <color:#4a90e2>Assess client eligibility</color>
+
+Agent -> System : <color:#45b7d1>Access account opening module</color>
+activate System
+
+System -> WorkflowService : <color:#96ceb4>Initialize new request</color>
+activate WorkflowService
+
+WorkflowService -> DB : <color:#00d2d3>Create request record</color>
+activate DB
+DB --> WorkflowService : <color:#00d2d3>Request ID generated</color>
+deactivate DB
+
+WorkflowService -> AuditDB : <color:#feca57>Log request initiation</color>
+activate AuditDB
+AuditDB --> WorkflowService : <color:#feca57>Audit logged</color>
+deactivate AuditDB
+
+WorkflowService --> System : <color:#96ceb4>Request initialized</color>
+deactivate WorkflowService
+
+== Client Information Collection ==
+
+System -> Agent : <color:#45b7d1>Display client information form</color>
+deactivate System
+
+Agent -> Client : <color:#4a90e2>Request personal information</color>
+
+loop <color:#feca57>For each required field</color>
+    Client -> Agent : <color:#00ff00>Provide information</color>
+    Agent -> System : <color:#4a90e2>Enter client data</color>
+    activate System
+    
+    System -> WorkflowService : <color:#96ceb4>Validate data format</color>
+    activate WorkflowService
+    
+    alt <color:#ff6b6b>Validation fails</color>
+        WorkflowService --> System : <color:#ff6b6b>Validation error</color>
+        System --> Agent : <color:#ff6b6b>Display error message</color>
+        deactivate System
+        Agent -> Client : <color:#4a90e2>Request correction</color>
+    else <color:#00ff00>Validation passes</color>
+        WorkflowService -> DB : <color:#00d2d3>Update request data</color>
+        activate DB
+        DB --> WorkflowService : <color:#00d2d3>Data saved</color>
+        deactivate DB
+        WorkflowService --> System : <color:#96ceb4>Data accepted</color>
+        deactivate WorkflowService
+        System --> Agent : <color:#45b7d1>Field validated</color>
+        deactivate System
+    end
+end
+
+== Document Requirements ==
+
+Agent -> System : <color:#4a90e2>Request document checklist</color>
+activate System
+
+System -> DocumentService : <color:#96ceb4>Get required documents</color>
+activate DocumentService
+
+DocumentService -> DB : <color:#00d2d3>Query document requirements</color>
+activate DB
+DB --> DocumentService : <color:#00d2d3>Document list</color>
+deactivate DB
+
+DocumentService --> System : <color:#96ceb4>Required documents list</color>
+deactivate DocumentService
+
+System --> Agent : <color:#45b7d1>Display document checklist</color>
+deactivate System
+
+Agent -> Client : <color:#4a90e2>Explain required documents</color>
+
+Client -> Agent : <color:#00ff00>Confirm understanding</color>
+
+== Request Submission ==
+
+Agent -> System : <color:#4a90e2>Submit initial request</color>
+activate System
+
+System -> WorkflowService : <color:#96ceb4>Process submission</color>
+activate WorkflowService
+
+WorkflowService -> DB : <color:#00d2d3>Update request status</color>
+activate DB
+DB --> WorkflowService : <color:#00d2d3>Status updated</color>
+deactivate DB
+
+WorkflowService -> NotificationService : <color:#ff9ff3>Send confirmation</color>
+activate NotificationService
+
+NotificationService -> Client : <color:#ff9ff3>SMS/Email confirmation</color>
+NotificationService -> Agent : <color:#ff9ff3>Task assignment notification</color>
+
+deactivate NotificationService
+
+WorkflowService -> AuditDB : <color:#feca57>Log submission</color>
+activate AuditDB
+AuditDB --> WorkflowService : <color:#feca57>Submission logged</color>
+deactivate AuditDB
+
+WorkflowService --> System : <color:#96ceb4>Submission completed</color>
+deactivate WorkflowService
+
+System --> Agent : <color:#45b7d1>Display next steps</color>
+deactivate System
+
+Agent -> Client : <color:#4a90e2>Provide reference number and next steps</color>
+
+deactivate Agent
+
+note over Client, AuditDB : <color:#00ff00>Request successfully initiated</color>\n<color:#00ff00>Client has reference number</color>\n<color:#00ff00>Agent has task assignment</color>
+
+@enduml

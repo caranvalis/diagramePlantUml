@@ -1,0 +1,333 @@
+@startuml DiagrammeClasseGeneralKYC
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam shadowing true
+skinparam linetype ortho
+
+' --- Exemples de styles de paquets pour organiser le modèle KYC ---
+
+package "Entités principales" <<Node>> {
+    class Client {
+        -id : String
+        +nom : String
+        +prenom : String
+        #dateNaissance : Date
+        +type : String // particulier ou entreprise
+        +statut : String
+        +ouvrirCompte() : Compte
+        +ajouterDocument(doc : Document) : void
+        +changerStatut(nouveauStatut : StatutClient) : void
+    }
+
+    note right of Client::ouvrirCompte
+        Crée et associe un nouveau compte au client
+    end note
+
+    note right of Client::ajouterDocument
+        Ajoute un document justificatif au dossier du client
+    end note
+
+    note right of Client::changerStatut
+        Change le statut du client (ex : validé, bloqué, archivé)
+    end note
+
+    class Compte {
+        -numero : String
+        +rib : String
+        +statut : String
+        +dateOuverture : Date
+        +dateCloture : Date
+        +type : String
+        +solde : Float
+        +crediter(montant : Float) : void
+        +debiter(montant : Float) : void
+        +cloturer() : void
+    }
+
+    note right of Compte::crediter
+        Ajoute un montant au solde du compte
+    end note
+
+    note right of Compte::debiter
+        Retire un montant du solde du compte
+    end note
+
+    note right of Compte::cloturer
+        Clôture le compte et met à jour la date de clôture
+    end note
+
+    class Document {
+        +id : String
+        +type : String
+        +dateDepot : Date
+        +statut : String
+    }
+
+    class Actionnaire {
+        +id : String
+        +nom : String
+        +pourcentage : Float
+        +type : String // personne physique ou morale
+    }
+}
+
+package "Utilisateurs & Rôles" <<Rectangle>> {
+    class User {
+        -id : String
+        +login : String
+        -motDePasse : String
+        +email : String
+    }
+
+    class Role {
+        +id : String
+        +nom : String
+        +description : String
+    }
+
+    class Profile {
+        +id : String
+        +nom : String
+        +description : String
+    }
+
+    User "1" -- "1..*" Role : appartient 
+    Role "1" -- "0..*" Profile : définit 
+    User "1" -- "0..*" Client : gère 
+    User "1" -- "0..*" Parametre : paramètre 
+}
+
+package "Paramétrage" <<Folder>> {
+    class Parametre {
+        +id : String
+        +nom : String
+        +valeur : String
+        +categorie : String
+    }
+
+    class ParametreDynamique {
+        +id : String
+        +entite : String
+        +cle : String
+        +valeur : String
+    }
+
+    class TypeDocument {
+        +code : String
+        +libelle : String
+    }
+
+    class StatutClient {
+        +id : String
+        +nom : String
+        +description : String
+    }
+
+    class TypeCompte {
+        +id : String
+        +nom : String
+        +description : String
+    }
+
+    class TypeClient {
+        +id : String
+        +nom : String
+        +description : String
+    }
+}
+
+package "Contrôles & Parcours" <<Frame>> {
+    class Controle {
+        +id : String
+        +type : String // identité, conformité, etc.
+        +statut : String
+        +dateControle : Date
+        +details : String
+        +demarrer() : void
+        +valider() : void
+        +rejeter(raison : String) : void
+    }
+
+    note right of Controle::demarrer
+        Démarre le contrôle KYC
+    end note
+
+    note right of Controle::valider
+        Valide le contrôle après vérification
+    end note
+
+    note right of Controle::rejeter
+        Rejette le contrôle avec une raison
+    end note
+
+    class ControleType {
+        +id : String
+        +nom : String
+        +description : String
+    }
+
+    class ControleEtape {
+        +id : String
+        +nom : String 
+        +ordre : int
+        +controleTypeId : String
+        +parametres : String
+    }
+
+    class ControleEtapeInstance {
+        +id : String
+        +controleId : String
+        +controleEtapeId : String
+        +statut : String
+        +dateDebut : Date
+        +dateFin : Date
+        +resultat : String
+        +userId : String // Who
+        +canal : String  // Where/How
+    }
+
+    class Parcours {
+        +id : String
+        +nom : String
+        +description : String
+        +actif : Boolean
+    }
+
+    class ParcoursEtape {
+        +id : String
+        +nom : String
+        +ordre : int
+        +typeEtape : String // contrôle, saisie, validation, etc.
+        +parametres : String
+    }
+
+    Controle "1" -- "1" ControleType : type 
+    ControleType *-- ControleEtape : étapes 
+    Controle o-- ControleEtapeInstance : exécution étape 
+    ControleEtape o-- ControleEtapeInstance : exécution 
+    ControleEtape ..> Parametre : paramètre 
+}
+
+package "Gestion documentaire" <<Cloud>> {
+    class Documentation {
+        +id : String
+        +titre : String
+        +description : String
+        +type : String // procédure, guide, politique, etc.
+        +dateCreation : Date
+        +auteur : String
+        +url : String
+    }
+}
+
+package "Workflow & Règles" <<Database>> {
+    class Workflow {
+        +id : String
+        +nom : String
+    }
+
+    class Etape {
+        +id : String
+        +nom : String
+        +ordre : int
+        +workflowId : String
+    }
+
+    class RegleControle {
+        +id : String
+        +type : String
+        +actif : Boolean
+        +parametres : String
+    }
+
+    Workflow *-- Etape : contient 
+    Etape o-- RegleControle : contrôle 
+}
+
+' --- Lien entre Documentation et les entités concernées ---
+Documentation "0..*" -- "0..*" Client : concerne 
+Documentation "0..*" -- "0..*" Compte : concerne 
+Documentation "0..*" -- "0..*" ControleType : concerne 
+
+' --- Relations principales (avec types UML) ---
+Client *-- Compte : possède                 
+Client o-- Actionnaire : possède          
+Compte o-- TypeCompte : type               
+Client o-- TypeClient : type 
+Compte o-- Document : justificatif 
+Client o-- Document : fournit 
+Compte o-- Controle : contrôle 
+Client o-- Controle : contrôle 
+
+' --- Héritage (exemple) ---
+Document <|-- TypeDocument : type
+
+' --- Dépendances (faibles) ---
+Client ..> ParametreDynamique : attribut dynamique 
+Compte ..> ParametreDynamique : attribut dynamique 
+
+' --- Dépendances fortes (utilisation) ---
+Client --> Preenregistrement : pré-enregistre 
+Client --> Enregistrement : enregistre 
+Client --> Modification : modifie 
+Client --> ActionBlocage : action blocage 
+Compte --> Modification : modifie 
+Compte --> ActionBlocage : action blocage 
+
+' --- Contrôle paramétrable ---
+Controle "1" -- "1" ControleType : type 
+ControleType *-- ControleEtape : étapes 
+Controle o-- ControleEtapeInstance : exécution étape 
+ControleEtape o-- ControleEtapeInstance : exécution 
+ControleEtape ..> Parametre : paramètre 
+
+' --- Notifications ---
+Controle o-- Notification : notification 
+ControleEtapeInstance o-- Notification : notification étape 
+
+' --- Statut du client ---
+Client o-- StatutClient : statut            
+
+' Exemple : notification lors d'un changement de statut, d'une étape validée, etc.
+
+abstract class AbstractControle {
+    +id : String
+    +dateCreation : Date
+}
+
+interface INotifiable {
+    +notifier() : void
+}
+
+enum TypeNotification {
+    EMAIL
+    SMS
+    INTERNE
+}
+
+annotation DocumentationMetier
+
+Controle <|-- AbstractControle
+Notification ..|> INotifiable
+Notification -- TypeNotification
+Controle .. DocumentationMetier
+
+' --- Parcours KYC ---
+
+
+Parcours *-- ParcoursEtape : contient 
+
+' Optionnel : relier Parcours à Client, Compte ou Controle selon le contexte
+Client o-- Parcours : parcours en cours 
+
+class ControleKYC extends AbstractControle
+class Notification implements INotifiable
+
+' Affichage de toutes les propriétés des classes (annulation du hide)
+show members
+
+@enduml

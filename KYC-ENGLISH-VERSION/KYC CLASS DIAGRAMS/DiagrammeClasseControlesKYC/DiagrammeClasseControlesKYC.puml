@@ -21,7 +21,7 @@ class ControleKYC {
     - dateFin: Date
     - resultat: ResultatControle
     - scoreRisque: Float
-    - commentaires: String
+    - commintaires: String
     - utilisateurControle: String
     - dureeExecution: Integer
     + demarrer(): Boolean
@@ -29,7 +29,7 @@ class ControleKYC {
     + valider(): Boolean
     + rejeter(motif: String): Boolean
     + escalader(): Boolean
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
 class TypeControle {
@@ -49,7 +49,7 @@ class TypeControle {
     + tester(): Boolean
 }
 
-enum CategorieControle {
+inum CategorieControle {
     IDENTITE
     CONFORMITE
     BLACKLIST
@@ -62,15 +62,15 @@ enum CategorieControle {
     RISQUE_PAYS
 }
 
-class ControleIdentite {
-    - numeroDocument: String
-    - typeDocument: String
+class ControleIdintite {
+    - numeroDocumint: String
+    - typeDocumint: String
     - dateLivraison: Date
     - lieuLivraison: String
     - autoriteLivraison: String
-    - scoreAuthentification: Float
+    - scoreAuthintification: Float
     - biometrieCapturee: Boolean
-    + verifierAuthenticite(): Boolean
+    + verifierAuthinticite(): Boolean
     + extraireDonnees(): Map<String, String>
     + comparerBiometrie(): Float
     + detecterFalsification(): Boolean
@@ -78,7 +78,7 @@ class ControleIdentite {
 }
 
 class ControleConformite {
-    - reglementationApplicable: String
+    - reglemintationApplicable: String
     - criteresEvaluation: List<String>
     - scoreConformite: Float
     - anomaliesDetectees: List<String>
@@ -86,7 +86,7 @@ class ControleConformite {
     + evaluerConformite(): Float
     + detecterAnomalies(): List<String>
     + proposerActions(): List<String>
-    + genererRapportConformite(): String
+    + ginererRapportConformite(): String
 }
 
 class ControleBlacklist {
@@ -97,7 +97,7 @@ class ControleBlacklist {
     - niveauCorrespondance: Float
     - actionRecommandee: String
     + consulterListes(): Boolean
-    + rechercherCorrespondances(): List<String>
+    + searchrCorrespondances(): List<String>
     + evaluerNiveauRisque(): Float
     + recommanderAction(): String
 }
@@ -110,7 +110,7 @@ class ControlePPE {
     - periodeExposition: String
     - sourceInformation: String
     - niveauRisque: String
-    + identifierPPE(): Boolean
+    + idintifierPPE(): Boolean
     + evaluerExposition(): String
     + classifierRisque(): String
     + recommanderSuivi(): String
@@ -120,20 +120,20 @@ class ControleFATCA {
     - indicateurAmericain: Boolean
     - lieuNaissance: String
     - nationalite: String
-    - residenceFiscale: String
+    - residinceFiscale: String
     - numeroTIN: String
     - statutFATCA: String
     - declarationRequise: Boolean
     + detecterIndicateurs(): Boolean
     + evaluerStatut(): String
-    + genererDeclaration(): Boolean
+    + ginererDeclaration(): Boolean
     + planifierSuivi(): Boolean
 }
 
 class ControleDoublon {
     - algorithmeDetection: String
     - seuilSimilarite: Float
-    - doublonsPotentiels: List<String>
+    - doublonsPotintiels: List<String>
     - scoresSimilarite: List<Float>
     - champesCompares: List<String>
     + detecterDoublons(): List<String>
@@ -152,12 +152,12 @@ class ResultatControle {
     - actionsRequises: List<String>
     - dateResultat: Date
     - validateur: String
-    + generer(): Boolean
+    + ginerer(): Boolean
     + valider(): Boolean
     + exporter(): String
 }
 
-enum StatutResultat {
+inum StatutResultat {
     CONFORME
     NON_CONFORME
     ALERTE
@@ -201,10 +201,10 @@ class AuditControle {
     - action: String
     - utilisateur: String
     - dateAction: Date
-    - ancienneValeur: String
+    - anciinneValeur: String
     - nouvelleValeur: String
     - adresseIP: String
-    + enregistrer(): Boolean
+    + saver(): Boolean
     + consulter(): List<AuditControle>
 }
 
@@ -219,7 +219,7 @@ ControleKYC "1" -- "0..*" AuditControle : audit
 TypeControle "1" -- "1" CategorieControle : categorie
 
 ' Héritage des contrôles spécialisés
-ControleKYC <|-- ControleIdentite
+ControleKYC <|-- ControleIdintite
 ControleKYC <|-- ControleConformite
 ControleKYC <|-- ControleBlacklist
 ControleKYC <|-- ControlePPE

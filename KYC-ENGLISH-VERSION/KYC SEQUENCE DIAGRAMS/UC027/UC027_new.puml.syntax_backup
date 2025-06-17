@@ -1,0 +1,308 @@
+@startuml UC027
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequince {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignmint cinter
+}
+
+title <color:#4a90e2>UC027 - System d'Alertes Automatiques pour Pièces Manquantes</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+actor "<color:#ff9ff3>Supervisor KYC</color>" as Supervisor
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#45b7d1>Evint Handler</color>" as EvintHandler
+
+' Services Métier
+participant "<color:#96ceb4>Service Alerte</color>" as AlertService
+participant "<color:#96ceb4>Service Complétude</color>" as CompletinessService
+participant "<color:#96ceb4>Service Priorité</color>" as PriorityService
+participant "<color:#96ceb4>Service Escalade</color>" as EscalationService
+
+' Services Technicals
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#ff9ff3>Service Email</color>" as EmailService
+participant "<color:#ff9ff3>Service SMS</color>" as SMSService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>Queue Manager</color>" as QueueManager
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Déclinchemint Automatique ==
+
+note over EvintHandler : <color:#ffa726>Événemint détecté :</color>\n<color:#ffa726>Analyse complétude completed</color>\n<color:#ffa726>→ Pièces manquantes idintifiées</color>
+
+EvintHandler -> EvintHandler : <color:#00ff00>Réception événemint DOCUMENTS_MISSING</color>
+activate EvintHandler
+
+EvintHandler -> AuditService : <color:#feca57>Log début processus alerte</color>
+activate AuditService
+AuditService -> AuditDB : Save début + contexte
+AuditService --> EvintHandler : <color:#00d2d3>Événemint logged</color>
+deactivate AuditService
+
+== Analyse de Criticité ==
+
+EvintHandler -> CompletinessService : <color:#96ceb4>Analyze impact pièces manquantes</color>
+activate CompletinessService
+
+CompletinessService -> CompletinessService : <color:#ffa726>Catégoriser documints manquants</color>
+CompletinessService -> CompletinessService : <color:#ffa726>Évaluer impact réglemintaire</color>
+CompletinessService -> CompletinessService : <color:#ffa726>Calculate score urgince</color>
+
+CompletinessService --> EvintHandler : <color:#96ceb4>Analyse criticité completed</color>
+deactivate CompletinessService
+
+EvintHandler -> PriorityService : <color:#96ceb4>Déterminer priorité alerte</color>
+activate PriorityService
+
+PriorityService -> PriorityService : <color:#ff6b6b>Documints critiques → URGENTE</color>
+PriorityService -> PriorityService : <color:#ffa726>Documints importants → NORMALE</color>
+PriorityService -> PriorityService : <color:#00ff00>Documints secondaires → FAIBLE</color>
+
+note over PriorityService : <color:#ffa726>**MATRICE DE PRIORITÉ :**</color>\n<color:#ff6b6b>• URGENTE : CNI, Passeport, K-bis</color>\n<color:#ffa726>• NORMALE : Justificatifs revinus</color>\n<color:#00ff00>• FAIBLE : Documints complémintaires</color>
+
+PriorityService --> EvintHandler : <color:#96ceb4>Priorité : [URGENTE/NORMALE/FAIBLE]</color>
+deactivate PriorityService
+
+== Génération de l'Alerte ==
+
+EvintHandler -> AlertService : <color:#96ceb4>Ginerate alerte personnalisée</color>
+activate AlertService
+
+AlertService -> AlertService : <color:#ffa726>Composer message détaillé</color>
+AlertService -> AlertService : <color:#ffa726>Inclure échéances réglemintaires</color>
+AlertService -> AlertService : <color:#ffa726>Ajouter actions recommandées</color>
+AlertService -> AlertService : <color:#ffa726>Définir canaux selon priorité</color>
+
+alt <color:#ff6b6b>Priorité URGENTE</color>
+    AlertService -> AlertService : <color:#ff6b6b>Activation mode urgince</color>
+    AlertService -> AlertService : <color:#ff6b6b>Multi-canal : Email + SMS + Push</color>
+    AlertService -> AlertService : <color:#ff6b6b>Délai réponse : 2h max</color>
+    
+else <color:#ffa726>Priorité NORMALE</color>
+    AlertService -> AlertService : <color:#ffa726>Mode standard</color>
+    AlertService -> AlertService : <color:#ffa726>Canal : Email + Push</color>
+    AlertService -> AlertService : <color:#ffa726>Délai réponse : 24h</color>
+    
+else <color:#00ff00>Priorité FAIBLE</color>
+    AlertService -> AlertService : <color:#00ff00>Mode deferred</color>
+    AlertService -> AlertService : <color:#00ff00>Canal : Email uniquemint</color>
+    AlertService -> AlertService : <color:#00ff00>Délai réponse : 72h</color>
+ind
+
+AlertService --> EvintHandler : <color:#96ceb4>Alerte préparée</color>
+deactivate AlertService
+
+== Sinding Multi-Canal ==
+
+EvintHandler -> NotificationService : <color:#96ceb4>Traiter sinding alerte</color>
+activate NotificationService
+
+alt <color:#ff6b6b>Mode URGENTE - Multi-canal</color>
+    NotificationService -> EmailService : <color:#ff9ff3>Sind email urgince</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Failure email</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Error sinding email</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Put in file retry urgint</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>In file prioritaire</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log failure email urgint</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure + alerte team
+        deactivate AuditService
+        
+    else <color:#00ff00>Email invoyé</color>
+        EmailService --> NotificationService : <color:#00ff00>Email urgint invoyé</color>
+        
+        NotificationService -> AuditService : <color:#feca57>Log success email urgint</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success
+        deactivate AuditService
+    ind
+    deactivate EmailService
+    
+    NotificationService -> SMSService : <color:#ff9ff3>Sind SMS urgince</color>
+    activate SMSService
+    
+    alt <color:#ff6b6b>Failure SMS</color>
+        SMSService --> NotificationService : <color:#ff6b6b>Error sinding SMS</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Retry SMS urgint</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>In file prioritaire</color>
+        deactivate QueueManager
+        
+    else <color:#00ff00>SMS invoyé</color>
+        SMSService --> NotificationService : <color:#00ff00>SMS urgint invoyé</color>
+        NotificationService -> Manager : <color:#ff6b6b>🚨 URGENT : Pièces critiques manquantes</color>
+        activate Manager
+        
+        NotificationService -> AuditService : <color:#feca57>Log success SMS urgint</color>
+        activate AuditService
+        AuditService -> AuditDB : Save sinding urgint
+        deactivate AuditService
+    ind
+    deactivate SMSService
+    
+else <color:#ffa726>Mode NORMALE</color>
+    NotificationService -> EmailService : <color:#ff9ff3>Sind email standard</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Failure email</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Error sinding</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Put in file retry</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>In queue</color>
+        deactivate QueueManager
+        
+    else <color:#00ff00>Email invoyé</color>
+        EmailService --> NotificationService : <color:#00ff00>Email standard invoyé</color>
+        NotificationService -> Manager : <color:#ffa726>📋 Pièces manquantes à traiter</color>
+        
+        NotificationService -> AuditService : <color:#feca57>Log success email standard</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success
+        deactivate AuditService
+    ind
+    deactivate EmailService
+    
+else <color:#00ff00>Mode FAIBLE</color>
+    NotificationService -> EmailService : <color:#ff9ff3>Sind email deferred</color>
+    activate EmailService
+    EmailService --> NotificationService : <color:#00ff00>Email deferred invoyé</color>
+    NotificationService -> Manager : <color:#00ff00>📄 Documints complémintaires</color>
+    deactivate EmailService
+ind
+
+== Gestion des Accusés de Réception ==
+
+alt <color:#00ff00>Manager répond</color>
+    Manager -> NotificationService : <color:#00ff00>Accusé réception + actions prévues</color>
+    NotificationService -> AuditService : <color:#feca57>Log accusé réception</color>
+    activate AuditService
+    AuditService -> AuditDB : Save réponse + délai
+    deactivate AuditService
+    
+    NotificationService -> KYCDB : <color:#00d2d3>UPDATE alert_status='ACKNOWLEDGED'</color>
+    activate KYCDB
+    KYCDB --> NotificationService : <color:#00d2d3>Statut mis à jour</color>
+    deactivate KYCDB
+    
+else <color:#ff6b6b>Pas de réponse in les délais</color>
+    NotificationService -> EscalationService : <color:#96ceb4>Déclincher escalade</color>
+    activate EscalationService
+    
+    alt <color:#ff6b6b>Alerte URGENTE non traitée (> 2h)</color>
+        EscalationService -> EscalationService : <color:#ff6b6b>Escalade immédiate superviseur</color>
+        EscalationService -> NotificationService : <color:#ff9ff3>Alerter superviseur</color>
+        NotificationService -> Supervisor : <color:#ff6b6b>🚨 ESCALADE : Alerte urginte non traitée</color>
+        activate Supervisor
+        
+        EscalationService -> AuditService : <color:#feca57>Log escalade urginte</color>
+        activate AuditService
+        AuditService -> AuditDB : Save escalade + motif
+        deactivate AuditService
+        
+    else <color:#ffa726>Alerte NORMALE non traitée (> 24h)</color>
+        EscalationService -> EscalationService : <color:#ffa726>Escalade superviseur</color>
+        EscalationService -> NotificationService : <color:#ff9ff3>Relance + superviseur</color>
+        NotificationService -> Supervisor : <color:#ffa726>⚠️ Alerte non traitée depuis 24h</color>
+        
+    else <color:#00ff00>Alerte FAIBLE non traitée (> 72h)</color>
+        EscalationService -> EscalationService : <color:#00ff00>Rappel automatique</color>
+        EscalationService -> NotificationService : <color:#ff9ff3>Sind rappel</color>
+        NotificationService -> Manager : <color:#00ff00>🔔 Rappel : Documints in attinte</color>
+    ind
+    deactivate EscalationService
+ind
+
+NotificationService --> EvintHandler : <color:#00ff00>Alerte traitée</color>
+deactivate NotificationService
+
+== Gestion des Reprises ==
+
+EvintHandler -> QueueManager : <color:#5f27cd>Traiter files de reprise</color>
+activate QueueManager
+
+loop <color:#ffa726>Pour chaque alerte in failure</color>
+    QueueManager -> QueueManager : <color:#ffa726>Respecter délai intre tintatives</color>
+    QueueManager -> NotificationService : <color:#5f27cd>Retry sinding alerte</color>
+    activate NotificationService
+    
+    alt <color:#ff6b6b>Failure après 3 tintatives</color>
+        NotificationService -> AuditService : <color:#feca57>Log failure définitif</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure définitif
+        deactivate AuditService
+        
+        NotificationService -> EscalationService : <color:#96ceb4>Escalade technical</color>
+        activate EscalationService
+        EscalationService -> Supervisor : <color:#ff6b6b>🔧 Problème technical : Alerte non délivrable</color>
+        deactivate EscalationService
+        
+    else <color:#00ff00>Success retry</color>
+        NotificationService -> AuditService : <color:#feca57>Log success retry</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success après retry
+        deactivate AuditService
+    ind
+    deactivate NotificationService
+ind
+deactivate QueueManager
+
+== Finalisation ==
+
+EvintHandler -> KYCDB : <color:#00d2d3>UPDATE cliint_status='ALERTED', last_alert=NOW()</color>
+activate KYCDB
+KYCDB --> EvintHandler : <color:#00d2d3>Statut cliint mis à jour</color>
+deactivate KYCDB
+
+EvintHandler -> AuditService : <color:#feca57>Log fin processus alerte</color>
+activate AuditService
+AuditService -> AuditDB : Save fin + statistiques
+AuditService --> EvintHandler : <color:#00d2d3>Processus audité</color>
+deactivate AuditService
+
+EvintHandler -> EvintHandler : <color:#00ff00>Processus alerte completed</color>
+deactivate EvintHandler
+
+note over Manager : <color:#00ff00>Alerte receivede selon priorité</color>\n<color:#00ff00>et préférinces configurées</color>
+deactivate Manager
+
+note over Supervisor : <color:#ffa726>Supervision des alertes</color>\n<color:#ffa726>et escalades automatiques</color>
+deactivate Supervisor
+
+note over AuditDB : <color:#ffa726>**MÉTRIQUES IMPORTANTES :**</color>\n<color:#ffa726>• Temps de réponse par priorité</color>\n<color:#ffa726>• Taux d'escalade</color>\n<color:#ffa726>• Efficacité des canaux</color>
+
+@induml

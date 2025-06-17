@@ -1,0 +1,88 @@
+@startuml UC068
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor Manager
+participant "Interface KYC" as UI
+participant "System" as S
+
+== Déclaration du système matrimonial ==
+
+Manager -> UI : Accéder au formulaire état civil
+activate UI
+activate Manager
+UI -> S : Récupérer les options matrimoniales
+activate S
+S -> S : Load les options disponibles
+S --> UI : Options matrimoniales (Monogamie, Polygamie)
+S --> UI : Monogamie / Polygamie
+deactivate S
+UI --> Manager : Afficher options matrimoniales
+Manager -> UI : Sélectionner système matrimonial
+UI -> S : Validate et saver le choix
+activate S
+alt Choix = Polygamie
+S -> UI : Activer section ajout conjoints
+else Choix = Monogamie
+S -> UI : Continuer sans changemint
+ind
+S -> S : Journaliser l’action
+S --> UI : Confirmation du choix
+deactivate S
+
+UI --> Manager : Confirmation inregistrée
+deactivate UI
+deactivate Manager
+
+== Ajout de conjoints (si Polygamie) ==
+
+Manager -> UI : Accéder à la section conjoints
+activate Manager
+activate UI
+UI -> S : Récupérer la liste des conjoints
+activate S
+S -> S : Load les conjoints existants
+S --> UI : Liste des conjoints
+UI --> Manager : Afficher la liste des conjoints
+Manager -> UI : Ajouter un conjoint
+UI -> S : Afficher formulaire ajout conjoint
+
+S -> S : Préparer formulaire
+S --> UI : Formulaire conjoint
+Manager -> UI : Saisir informations conjoint
+UI -> S : Validate les informations
+
+S -> S : Verify les données
+S --> UI : Confirmation ajout conjoint
+
+UI --> Manager : Conjoint ajouté avec success
+
+Manager -> UI : Saver les modifications
+UI -> S : Saver les conjoints
+
+S -> S : Put à jour la database de données
+S --> UI : Confirmation de l’savemint
+
+UI --> Manager : Modifications inregistrées
+
+Manager -> UI : Terminer la session
+UI -> S : Terminer la session
+
+S -> S : Journaliser la session
+S --> UI : Session completed
+deactivate S
+UI --> Manager : Session completed
+deactivate Manager
+deactivate UI
+@induml

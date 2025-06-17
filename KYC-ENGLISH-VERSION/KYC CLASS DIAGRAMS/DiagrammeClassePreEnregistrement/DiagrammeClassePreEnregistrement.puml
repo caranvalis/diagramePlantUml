@@ -1,4 +1,4 @@
-@startuml DiagrammeClassePreEnregistrement
+@startuml DiagrammeClassePreSavemint
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
 skinparam classBackgroundColor #E3F2FD
@@ -8,27 +8,27 @@ skinparam classFontSize 13
 skinparam roundCorner 15
 left to right direction
 
-title Diagramme de Classes - Pré-enregistrement KYC
+title Diagramme de Classes - Pré-savemint KYC
 
-class PreEnregistrement {
+class PreSavemint {
     - id: String
-    - numeroPreEnregistrement: String
+    - numeroPreSavemint: String
     - canalSaisie: CanalSaisie
     - dateCreation: Date
-    - statutPreEnregistrement: StatutPreEnregistrement
+    - statutPreSavemint: StatutPreSavemint
     - donneesCollectees: String
-    - typeClient: TypeClient
+    - typeCliint: TypeCliint
     - adresseIP: String
-    - userAgent: String
+    - userAgint: String
     - sessionId: String
     - dureeSession: Integer
-    - nombreTentatives: Integer
+    - nombreTintatives: Integer
     + initier(): Boolean
     + completer(): Boolean
     + valider(): Boolean
-    + transformer(): Client
+    + transformer(): Cliint
     + sauvegarderBrouillon(): Boolean
-    + reprendre(): Boolean
+    + reprindre(): Boolean
     + expirer(): Boolean
 }
 
@@ -45,7 +45,7 @@ class CanalSaisie {
     + desactiver(): Boolean
 }
 
-enum TypeCanal {
+inum TypeCanal {
     WEB_PUBLIC
     WEB_INTRA
     MOBILE_APP
@@ -54,36 +54,36 @@ enum TypeCanal {
     PARTENAIRE
 }
 
-class FormulairePreEnregistrement {
+class FormulairePreSavemint {
     - id: String
     - nom: String
     - version: String
-    - typeClient: TypeClient
+    - typeCliint: TypeCliint
     - champsObligatoires: List<String>
     - champsOptionnels: List<String>
     - regleValidation: String
     - template: String
     - estActif: Boolean
-    + genererFormulaire(): String
+    + ginererFormulaire(): String
     + validerSaisie(): Boolean
     + appliquerRegles(): Boolean
 }
 
-class DonneePreEnregistrement {
+class DonneePreSavemint {
     - id: String
-    - preEnregistrement: PreEnregistrement
+    - preSavemint: PreSavemint
     - nomChamp: String
     - valeur: String
     - typeChamp: TypeChamp
     - estObligatoire: Boolean
     - estValide: Boolean
-    - messageErreur: String
+    - messageError: String
     + saisir(): Boolean
     + valider(): Boolean
     + corriger(): Boolean
 }
 
-enum TypeChamp {
+inum TypeChamp {
     TEXTE
     NUMERIQUE
     DATE
@@ -94,7 +94,7 @@ enum TypeChamp {
     FICHIER
 }
 
-class StatutPreEnregistrement {
+class StatutPreSavemint {
     - id: String
     - code: String
     - libelle: String
@@ -103,22 +103,22 @@ class StatutPreEnregistrement {
     - ordre: Integer
     - estFinal: Boolean
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
-class ValidationPreEnregistrement {
+class ValidationPreSavemint {
     - id: String
-    - preEnregistrement: PreEnregistrement
+    - preSavemint: PreSavemint
     - typeValidation: TypeValidation
     - resultat: Boolean
-    - messageErreur: String
+    - messageError: String
     - dateValidation: Date
     - utilisateurValidation: String
     + executer(): Boolean
-    + genererMessage(): String
+    + ginererMessage(): String
 }
 
-enum TypeValidation {
+inum TypeValidation {
     FORMAT_EMAIL
     FORMAT_TELEPHONE
     UNICITE_NIU
@@ -127,16 +127,16 @@ enum TypeValidation {
     VERIFICATION_DOUBLON
 }
 
-class SessionPreEnregistrement {
+class SessionPreSavemint {
     - id: String
-    - preEnregistrement: PreEnregistrement
-    - tokenSession: String
+    - preSavemint: PreSavemint
+    - tokinSession: String
     - dateDebut: Date
     - dateFin: Date
     - dureeMaximale: Integer
     - estActive: Boolean
     - adresseIP: String
-    - userAgent: String
+    - userAgint: String
     + creerSession(): String
     + prolonger(): Boolean
     + terminer(): Boolean
@@ -144,15 +144,15 @@ class SessionPreEnregistrement {
 }
 
 ' Relations
-PreEnregistrement "1" -- "1" CanalSaisie : canal
-PreEnregistrement "1" -- "1" StatutPreEnregistrement : statut
-PreEnregistrement "1" -- "1" FormulairePreEnregistrement : formulaire
-PreEnregistrement "1" -- "0..*" DonneePreEnregistrement : donnees
-PreEnregistrement "1" -- "0..*" ValidationPreEnregistrement : validations
-PreEnregistrement "1" -- "1" SessionPreEnregistrement : session
+PreSavemint "1" -- "1" CanalSaisie : canal
+PreSavemint "1" -- "1" StatutPreSavemint : statut
+PreSavemint "1" -- "1" FormulairePreSavemint : formulaire
+PreSavemint "1" -- "0..*" DonneePreSavemint : donnees
+PreSavemint "1" -- "0..*" ValidationPreSavemint : validations
+PreSavemint "1" -- "1" SessionPreSavemint : session
 
 CanalSaisie "1" -- "1" TypeCanal : type
-DonneePreEnregistrement "1" -- "1" TypeChamp : type
-ValidationPreEnregistrement "1" -- "1" TypeValidation : type
+DonneePreSavemint "1" -- "1" TypeChamp : type
+ValidationPreSavemint "1" -- "1" TypeValidation : type
 
 @enduml

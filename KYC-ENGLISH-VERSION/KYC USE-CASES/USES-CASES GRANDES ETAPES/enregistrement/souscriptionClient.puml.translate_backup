@@ -1,0 +1,62 @@
+@startuml UseCaseEnregistrementParticulier
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Client particulier" as Client #purple
+actor "Gestionnaire" as Gestionnaire #green
+actor "Analyste conformité" as Analyste #blue
+actor "Gestionnaire référentiel" as RefGestionnaire #orange
+
+package "INTRA" {
+    usecase "Pré-enregistrement via Web" as PreenrWeb
+    usecase "Création via INTRA" as CreationIntra
+    usecase "Rapatriement depuis Amplitude" as Rapatriement
+    usecase "Capture signature électronique" as Signature
+    usecase "Génération fiche client" as FicheClient
+    usecase "Gestion statut client" as Statut
+    usecase "Ajout mandataire" as AjoutMandat
+    usecase "Consultation mandataires" as ConsultMandat
+    usecase "Suppression mandataire" as SuppMandat
+    usecase "Gestion matricule client" as Matricule
+    usecase "Gestion référentiel client" as RefClient
+    usecase "Déclaration système matrimonial" as SysMatri
+    usecase "Déclaration régime matrimonial" as RegimeMatri
+}
+
+' Interactions positives (validation, création, consultation) en vert
+Client --> PreenrWeb #purple;text:purple
+Gestionnaire --> CreationIntra #green;text:green
+Gestionnaire --> Rapatriement #green;text:green
+Gestionnaire --> Signature #green;text:green
+Gestionnaire --> FicheClient #green;text:green
+Gestionnaire --> Statut #green;text:green
+Gestionnaire --> AjoutMandat #green;text:green
+Gestionnaire --> ConsultMandat #green;text:green
+Gestionnaire --> SuppMandat #green;text:green
+Gestionnaire --> Matricule #green;text:green
+Gestionnaire --> SysMatri #green;text:green
+Gestionnaire --> RegimeMatri #green;text:green
+
+' Interactions de contrôle ou d'audit en bleu
+Analyste --> ConsultMandat #blue;text:blue
+Analyste --> Matricule #blue;text:blue
+
+' Interactions de gestion référentiel en orange
+RefGestionnaire --> RefClient #orange;text:orange
+
+' Relations internes (inclusions) en noir normal et pointillées
+PreenrWeb --> FicheClient : <<include>>
+CreationIntra --> FicheClient : <<include>>
+Rapatriement --> FicheClient : <<include>>
+FicheClient --> Statut : <<include>>
+AjoutMandat --> ConsultMandat : <<include>>
+SuppMandat --> ConsultMandat : <<include>>
+SysMatri --> RegimeMatri : <<include>>
+
+@enduml

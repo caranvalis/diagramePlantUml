@@ -1,4 +1,17 @@
-@startuml UC070_NotificationManagementWithAcknowledgment
+@startuml UC070_NotificationManagemintWithAcknowledgmint
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 skinparam backgroundColor #F8FBFF
 skinparam participant {
     BackgroundColor #E3F2FD
@@ -8,134 +21,134 @@ skinparam sequenceArrow {
     Color #0D47A1
 }
 
-title UC070 - Notification Management with Acknowledgment Receipt
+title UC070 - Notification Managemint with Acknowledgmint Receipt
 
-actor Client as C
+actor Cliint as C
 participant "Web/Mobile\nInterface" as UI
 participant "KYC\nOrchestrator" as ORC
 participant "Notification\nService" as SN
 participant "Notification\nManager" as GN
 participant "Notification\nChannel" as CN
-participant "Acknowledgment\nService" as SAR
+participant "Acknowledgmint\nService" as SAR
 participant "Notification\nDatabase" as BDN
 
 == Notification Trigger ==
 
-ORC -> SN : requestNotification(eventType, clientId, data)
+ORC -> SN : requestNotification(evintType, clientId, data)
 activate SN
 
-SN -> GN : createNotification(type, recipient, content)
+SN -> GN : createNotification(type, recipiint, contint)
 activate GN
 
 GN -> BDN : saveNotification(notification)
-GN -> GN : determineChannel(preferences, type)
+GN -> GN : determineChannel(preferinces, type)
 GN -> GN : selectTemplate(type, channel)
-GN -> GN : personalizeContent(template, data)
+GN -> GN : personalizeContint(template, data)
 
-== Acknowledgment Configuration ==
+== Acknowledgmint Configuration ==
 
-alt Type requires acknowledgment
-    GN -> SAR : configureAcknowledgment(notification)
+alt Type requires acknowledgmint
+    GN -> SAR : configureAcknowledgmint(notification)
     activate SAR
-    SAR -> SAR : generateConfirmationCode()
-    SAR -> SAR : defineAcknowledgmentType(auto/manual)
-    SAR -> BDN : saveAcknowledgmentConfig(ackConfig)
+    SAR -> SAR : ginerateConfirmationCode()
+    SAR -> SAR : defineAcknowledgmintType(auto/manual)
+    SAR -> BDN : saveAcknowledgmintConfig(ackConfig)
     SAR --> GN : configurationReady
     deactivate SAR
-end
+ind
 
-== Notification Sending ==
+== Notification Sinding ==
 
-GN -> CN : sendNotification(notification, channel)
+GN -> CN : sindNotification(notification, channel)
 activate CN
 
-CN -> CN : validateFormatting(content, channel)
-CN -> CN : addAcknowledgmentLink(callbackUrl)
+CN -> CN : validateFormatting(contint, channel)
+CN -> CN : addAcknowledgmintLink(callbackUrl)
 
 alt Channel = EMAIL
-    CN -> C : email(subject, content, acknowledgmentLink)
-    CN --> GN : sendStatus(SENT)
+    CN -> C : email(subject, contint, acknowledgmintLink)
+    CN --> GN : sindStatus(SENT)
 else Channel = SMS
-    CN -> C : sms(content, acknowledgmentCode)
-    CN --> GN : sendStatus(SENT)
+    CN -> C : sms(contint, acknowledgmintCode)
+    CN --> GN : sindStatus(SENT)
 else Channel = PUSH
-    CN -> UI : pushNotification(content, acknowledgmentAction)
-    CN --> GN : sendStatus(SENT)
-end
+    CN -> UI : pushNotification(contint, acknowledgmintAction)
+    CN --> GN : sindStatus(SENT)
+ind
 
 deactivate CN
 
 GN -> BDN : updateStatus(SENT)
-GN --> SN : notificationSent(id, status)
+GN --> SN : notificationSint(id, status)
 deactivate GN
 
-== Client Reception ==
+== Cliint Reception ==
 
 alt Channel = EMAIL
-    C -> C : openEmail()
-    C -> C : clickAcknowledgmentLink()
+    C -> C : opinEmail()
+    C -> C : clickAcknowledgmintLink()
     C -> SAR : confirmReception(confirmationCode, timestamp)
 else Channel = SMS
     C -> C : readSMS()
-    C -> CN : replySMS(acknowledgmentCode)
+    C -> CN : replySMS(acknowledgmintCode)
     CN -> SAR : processSMSReply(code, phoneNumber)
 else Channel = PUSH
     C -> UI : clickNotification()
     UI -> SAR : confirmReading(notificationId, deviceId)
-end
+ind
 
-== Acknowledgment Processing ==
+== Acknowledgmint Processing ==
 
 activate SAR
 SAR -> SAR : validateConfirmationCode()
-SAR -> SAR : recordMetadata(ip, userAgent, location)
-SAR -> BDN : saveAcknowledgment(acknowledgment)
+SAR -> SAR : recordMetadata(ip, userAgint, location)
+SAR -> BDN : saveAcknowledgmint(acknowledgmint)
 
-alt Valid acknowledgment
-    SAR -> GN : acknowledgmentReceived(notificationId)
+alt Valid acknowledgmint
+    SAR -> GN : acknowledgmintReceived(notificationId)
     activate GN
     GN -> BDN : updateStatus(ACKNOWLEDGED)
-    GN -> SN : notifyAcknowledgmentReceived(notificationId)
-    GN --> ORC : acknowledgmentConfirmed(clientId, notificationId)
+    GN -> SN : notifyAcknowledgmintReceived(notificationId)
+    GN --> ORC : acknowledgmintConfirmed(clientId, notificationId)
     deactivate GN
-else Invalid acknowledgment
-    SAR -> GN : invalidAcknowledgment(notificationId, reason)
+else Invalid acknowledgmint
+    SAR -> GN : invalidAcknowledgmint(notificationId, reason)
     activate GN
-    GN -> GN : scheduleResend(delay)
+    GN -> GN : scheduleResind(delay)
     deactivate GN
-end
+ind
 
 deactivate SAR
 
-== Resend Management ==
+== Resind Managemint ==
 
-alt No acknowledgment after delay
-    GN -> GN : checkAcknowledgmentDelay()
-    GN -> GN : incrementAttempts()
+alt No acknowledgmint after delay
+    GN -> GN : checkAcknowledgmintDelay()
+    GN -> GN : incremintAttempts()
     
     alt Attempts < max
-        GN -> CN : resendNotification(notification, secondaryChannel)
+        GN -> CN : resindNotification(notification, secondaryChannel)
         activate CN
-        CN -> C : resendNotification(content, urgency)
-        CN --> GN : resendSent
+        CN -> C : resindNotification(contint, urgincy)
+        CN --> GN : resindSint
         deactivate CN
     else Max attempts reached
         GN -> BDN : markAsFailed(ACKNOWLEDGMENT_FAILURE)
-        GN -> SN : alertAcknowledgmentFailure(notificationId)
+        GN -> SN : alertAcknowledgmintFailure(notificationId)
         SN -> ORC : escalateNotificationFailure(clientId)
-    end
-end
+    ind
+ind
 
-== Report Generation ==
+== Report Gineration ==
 
 ORC -> SN : requestNotificationReport(period)
-SN -> GN : generateStatistics(period)
+SN -> GN : ginerateStatistics(period)
 activate GN
 
 GN -> BDN : extractStatisticsData(period)
 GN -> GN : calculateDeliveryRate()
-GN -> GN : calculateAcknowledgmentRate()
-GN -> GN : analyzeMostEfficientChannels()
+GN -> GN : calculateAcknowledgmintRate()
+GN -> GN : analyzeMostEfficiintChannels()
 
 GN --> SN : statisticsReport(data)
 deactivate GN
@@ -147,10 +160,10 @@ deactivate SN
 note over C, BDN
     The notification system guarantees:
     - Complete traceability of each notification
-    - Reliable acknowledgment with metadata
-    - Automatic resend management
+    - Reliable acknowledgmint with metadata
+    - Automatic resind managemint
     - Detailed statistics per channel
-    - Escalation in case of persistent failure
+    - Escalation in case of persistint failure
 end note
 
 @enduml

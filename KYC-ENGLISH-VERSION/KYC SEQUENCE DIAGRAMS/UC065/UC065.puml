@@ -1,23 +1,35 @@
 @startuml UC065
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor "Manager / Analyste" as Utilisateur
-participant "Interface documentaire" as UI
-participant "System de gestion documentaire" as System
-database "Base documentaire" as BDD
+participant "Interface documintaire" as UI
+participant "System de gestion documintaire" as System
+datadatabase "Database documintaire" as BDD
 
-== Accès à la fiche documentaire ==
-Utilisateur -> UI : Accéder à une fiche documentaire
+== Accès à la fiche documintaire ==
+Utilisateur -> UI : Accéder à une fiche documintaire
 activate Utilisateur
 activate UI
-UI -> System : Demande de l'historique des versions
+UI -> System : Request de l'history des versions
 activate System
 
-System -> BDD : Rechercher les versions du document
+System -> BDD : Searchr les versions du documint
 activate BDD
 BDD --> System : Liste versions (n°, date, uploader, statut)
 deactivate BDD
-System --> UI : Transmettre l’historique des versions
+System --> UI : Transput l’history des versions
 deactivate System
 UI --> Utilisateur : Affiche les versions disponibles
 deactivate UI
@@ -30,13 +42,13 @@ alt Comparer deux versions
     activate UI
     UI -> System : Requête de comparaison
     activate System
-    System -> BDD : Récupérer contenu des deux versions
+    System -> BDD : Récupérer continu des deux versions
     activate BDD
-    BDD --> System : Contenus des deux versions
+    BDD --> System : Continus des deux versions
     deactivate BDD
-    System --> UI : Résultat de la comparaison
+    System --> UI : Result de la comparaison
     deactivate System
-    UI --> Utilisateur : Affiche différences entre les versions
+    UI --> Utilisateur : Affiche différinces intre les versions
     deactivate UI
     deactivate Utilisateur
 
@@ -44,21 +56,21 @@ else Restaurer une version
     Utilisateur -> UI : Restaurer version antérieure
     activate Utilisateur
     activate UI
-    UI -> System : Demande de restauration
+    UI -> System : Request de restauration
     activate System
     alt Droits suffisants
-        System -> BDD : Mettre à jour statut : version restaurée active
+        System -> BDD : Put à jour statut : version restaurée active
         activate BDD
         BDD --> System : Confirmation
         deactivate BDD
         System --> UI : Restauration effectuée
-        UI --> Utilisateur : Ancienne version restaurée
+        UI --> Utilisateur : Anciinne version restaurée
     else Droits insuffisants
         System --> UI : Rejection d’accès : droits insuffisants
         deactivate System
-        UI --> Utilisateur : Affichage du message d’erreur
+        UI --> Utilisateur : Affichage du message d’error
         deactivate Utilisateur
         deactivate UI
-    end
-end
+    ind
+ind
 @enduml

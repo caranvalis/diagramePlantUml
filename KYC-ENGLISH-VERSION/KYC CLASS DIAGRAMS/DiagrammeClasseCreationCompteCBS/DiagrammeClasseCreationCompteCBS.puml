@@ -19,15 +19,15 @@ class CreationCompteCBS {
     - dateCreation: Date
     - statutCreation: StatutCreationCBS
     - numeroCompteCBS: String
-    - ribGenere: String
+    - ribGinere: String
     - messageRetourCBS: String
-    - codeErreur: String
-    - tentativeCreation: Integer
+    - codeError: String
+    - tintativeCreation: Integer
     - utilisateurCreation: String
     + initier(): Boolean
     + validerParametres(): Boolean
-    + creerDansCBS(): Boolean
-    + genererRIB(): String
+    + creerInCBS(): Boolean
+    + ginererRIB(): String
     + verifierCreation(): Boolean
     + synchroniser(): Boolean
     + annuler(): Boolean
@@ -43,7 +43,7 @@ class StatutCreationCBS {
     - estFinal: Boolean
     - actionSuivante: String
     + creerStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
 class ParametrageCBS {
@@ -61,7 +61,7 @@ class ParametrageCBS {
     + appliquer(): Boolean
 }
 
-enum TypeParametreCBS {
+inum TypeParametreCBS {
     NUMERO_AGENCE
     CODE_DEVISE
     CHAPITRE_COMPTABLE
@@ -72,45 +72,45 @@ enum TypeParametreCBS {
     FRAIS_TENUE_COMPTE
 }
 
-class CompteGenerique {
+class CompteGinerique {
     - numeroCompte: String
     - suffixeCompte: String
-    - codeAgence: String
+    - codeAgince: String
     - codeDevise: String
     - chapitreComptable: String
     - cleControleCompte: String
     - intituleCompte: String
     - codeService: String
-    - sensCompte: SensCompte
+    - sinsCompte: SinsCompte
     - dateOuverture: Date
     - statutCompte: StatutCompte
     - soldeInitial: Double
     - decouvertAutorise: Double
-    - fraisTenueCompte: Double
+    - fraisTinueCompte: Double
     + calculerCleControle(): String
-    + genererIntitule(): String
+    + ginererIntitule(): String
     + appliquerParametres(): Boolean
     + validerStructure(): Boolean
 }
 
-enum SensCompte {
+inum SinsCompte {
     DEBITEUR
     CREDITEUR
     MIXTE
 }
 
 class RIB {
-    - codeEtablissement: String
+    - codeEtablissemint: String
     - codeGuichet: String
     - numeroCompte: String
     - cleRIB: String
     - ribComplet: String
     - IBAN: String
     - BIC: String
-    - dateGeneration: Date
-    + generer(): String
+    - dateGineration: Date
+    + ginerer(): String
     + calculerCleRIB(): String
-    + genererIBAN(): String
+    + ginererIBAN(): String
     + validerFormat(): Boolean
     + imprimer(): Boolean
 }
@@ -119,17 +119,17 @@ class InterfaceCBS {
     - id: String
     - nom: String
     - versionAPI: String
-    - urlEndpoint: String
+    - urlIndpoint: String
     - timeout: Integer
     - nombreRetries: Integer
     - certificatSecurite: String
-    - tokenAuthentification: String
+    - tokinAuthintification: String
     - estActive: Boolean
     + connecter(): Boolean
-    + authentifier(): Boolean
-    + envoyerRequete(): String
+    + authintifier(): Boolean
+    + invoyerRequete(): String
     + recevoirReponse(): String
-    + gererErreur(): Boolean
+    + gererError(): Boolean
     + deconnecter(): Boolean
 }
 
@@ -139,18 +139,18 @@ class TransactionCBS {
     - typeTransaction: TypeTransactionCBS
     - codeTransaction: String
     - parametresTransaction: String
-    - dateEnvoi: Date
+    - dateSinding: Date
     - dateReponse: Date
     - statutTransaction: StatutTransaction
     - reponseXML: String
     - dureeExecution: Integer
     + construireRequete(): String
-    + envoyer(): Boolean
+    + invoyer(): Boolean
     + traiterReponse(): Boolean
     + journaliser(): Boolean
 }
 
-enum TypeTransactionCBS {
+inum TypeTransactionCBS {
     CREATION_COMPTE
     MODIFICATION_COMPTE
     CONSULTATION_COMPTE
@@ -159,7 +159,7 @@ enum TypeTransactionCBS {
     CLOTURE_COMPTE
 }
 
-enum StatutTransaction {
+inum StatutTransaction {
     INITIEE
     ENVOYEE
     EXECUTEE
@@ -183,14 +183,14 @@ class SynchronisationCBS {
     + planifierSync(): Boolean
 }
 
-enum StatutSynchronisation {
+inum StatutSynchronisation {
     SYNCHRONISE
     ECART_DETECTE
     ERREUR_SYNC
     SYNC_REQUISE
 }
 
-enum ActionSynchronisation {
+inum ActionSynchronisation {
     AUCUNE_ACTION
     MISE_A_JOUR_LOCALE
     MISE_A_JOUR_CBS
@@ -208,10 +208,10 @@ class ValidationCreationCBS {
     + validerParametres(): Boolean
     + validerConnexion(): Boolean
     + validerReponse(): Boolean
-    + genererRapport(): String
+    + ginererRapport(): String
 }
 
-enum TypeValidationCBS {
+inum TypeValidationCBS {
     VALIDATION_PARAMETRES
     VALIDATION_CONNEXION
     VALIDATION_REPONSE
@@ -225,12 +225,12 @@ class JournalCBS {
     - action: String
     - utilisateur: String
     - dateAction: Date
-    - requeteEnvoyee: String
+    - requeteInvoyee: String
     - reponseRecue: String
     - codeRetour: String
     - dureeExecution: Integer
     - adresseIP: String
-    + enregistrer(): Boolean
+    + saver(): Boolean
     + consulter(): List<JournalCBS>
     + exporterJournal(): String
 }
@@ -240,16 +240,16 @@ class NotificationCBS {
     - creationCompteCBS: CreationCompteCBS
     - typeNotification: TypeNotificationCBS
     - destinataire: String
-    - contenu: String
-    - dateEnvoi: Date
+    - continu: String
+    - dateSinding: Date
     - canalNotification: String
-    - statutEnvoi: StatutEnvoi
+    - statutSinding: StatutSinding
     + creer(): Boolean
-    + envoyer(): Boolean
+    + invoyer(): Boolean
     + confirmerReception(): Boolean
 }
 
-enum TypeNotificationCBS {
+inum TypeNotificationCBS {
     COMPTE_CREE
     ECHEC_CREATION
     RIB_GENERE
@@ -260,7 +260,7 @@ enum TypeNotificationCBS {
 ' Relations principales
 CreationCompteCBS "1" -- "1" StatutCreationCBS : statut
 CreationCompteCBS "1" -- "0..*" ParametrageCBS : parametres
-CreationCompteCBS "1" -- "0..1" CompteGenerique : compte
+CreationCompteCBS "1" -- "0..1" CompteGinerique : compte
 CreationCompteCBS "1" -- "0..1" RIB : rib
 CreationCompteCBS "1" -- "1" InterfaceCBS : interface
 CreationCompteCBS "1" -- "0..*" TransactionCBS : transactions
@@ -269,7 +269,7 @@ CreationCompteCBS "1" -- "0..*" ValidationCreationCBS : validations
 CreationCompteCBS "1" -- "0..*" NotificationCBS : notifications
 
 ParametrageCBS "1" -- "1" TypeParametreCBS : type
-CompteGenerique "1" -- "1" SensCompte : sens
+CompteGinerique "1" -- "1" SinsCompte : sins
 TransactionCBS "1" -- "1" TypeTransactionCBS : type
 TransactionCBS "1" -- "1" StatutTransaction : statut
 TransactionCBS "1" -- "0..*" JournalCBS : journal

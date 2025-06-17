@@ -1,0 +1,161 @@
+@startuml UC022
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+    MessageAlignment center
+}
+skinparam shadowing true
+
+title <color:#4a90e2>UC022 - Automatic Account Closure Notification</color>
+
+' Actors
+participant "<color:#00ff00>Client</color>" as Client
+participant "<color:#ff6b6b>Manager</color>" as Manager
+
+' Event System  
+participant "<color:#45b7d1>Event Handler</color>" as EventHandler
+participant "<color:#96ceb4>Notification Service</color>" as NotificationService
+
+' Technical Services
+participant "<color:#feca57>Audit Service</color>" as AuditService
+participant "<color:#ff9ff3>Email Service</color>" as EmailService
+participant "<color:#ff9ff3>SMS Service</color>" as SMSService
+participant "<color:#54a0ff>Cache Service</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>Queue Manager</color>" as QueueManager
+database "<color:#00d2d3>KYC Database</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Automatic Trigger ==
+
+note over EventHandler : <color:#ffa726>Event detected:</color>\n<color:#ffa726>Account closure successful</color>
+
+EventHandler -> EventHandler : <color:#00ff00>Receive ACCOUNT_CLOSED event</color>
+activate EventHandler
+
+EventHandler -> AuditService : <color:#feca57>Log event reception</color>
+activate AuditService
+AuditService -> AuditDB : Save event log
+deactivate AuditService
+
+EventHandler -> KYCDB : <color:#45b7d1>Get account details</color>
+activate KYCDB
+KYCDB --> EventHandler : <color:#00d2d3>Account + client data</color>
+deactivate KYCDB
+
+alt <color:#ff6b6b>Account not found</color>
+    EventHandler -> AuditService : <color:#feca57>Log error - account not found</color>
+    activate AuditService
+    AuditService -> AuditDB : Save error
+    deactivate AuditService
+    
+    EventHandler --> EventHandler : <color:#ff6b6b>Stop processing</color>
+    deactivate EventHandler
+    
+else <color:#00ff00>Account found</color>
+    EventHandler -> NotificationService : <color:#96ceb4>Process closure notifications</color>
+    activate NotificationService
+    deactivate EventHandler
+    
+    == Client Notification ==
+    
+    NotificationService -> EmailService : <color:#ff9ff3>Send closure email to client</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Email sending failure</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Sending error</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Put in retry queue</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>Queued</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log email failure client</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure
+        deactivate AuditService
+        
+    else <color:#00ff00>Email sent successfully</color>
+        EmailService --> NotificationService : <color:#00ff00>Email sent</color>
+        NotificationService -> AuditService : <color:#feca57>Log email success client</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success
+        deactivate AuditService
+    end
+    deactivate EmailService
+    
+    NotificationService -> SMSService : <color:#ff9ff3>Send closure SMS to client</color>
+    activate SMSService
+    
+    alt <color:#ff6b6b>SMS sending failure</color>
+        SMSService --> NotificationService : <color:#ff6b6b>Sending error</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Put in retry queue</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>Queued</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log SMS failure client</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure
+        deactivate AuditService
+        
+    else <color:#00ff00>SMS sent successfully</color>
+        SMSService --> NotificationService : <color:#00ff00>SMS sent</color>
+        NotificationService -> AuditService : <color:#feca57>Log SMS success client</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success
+        deactivate AuditService
+    end
+    deactivate SMSService
+    
+    == Manager Notification ==
+    
+    NotificationService -> EmailService : <color:#ff9ff3>Send closure email to manager</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Email sending failure</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Sending error</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Put in retry queue</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>Queued</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log email failure manager</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure
+        deactivate AuditService
+        
+    else <color:#00ff00>Email sent successfully</color>
+        EmailService --> NotificationService : <color:#00ff00>Email sent</color>
+        NotificationService -> AuditService : <color:#feca57>Log email success manager</color>
+        activate AuditService
+        AuditService -> AuditDB : Save success
+        deactivate AuditService
+    end
+    deactivate EmailService
+    
+    == Finalization ==
+    
+    NotificationService -> CacheService : <color:#54a0ff>Update notification cache</color>
+    activate CacheService
+    CacheService --> NotificationService : <color:#00d2d3>Cache updated</color>
+    deactivate CacheService
+    
+    NotificationService -> AuditService : <color:#feca57>Log process completion</color>
+    activate AuditService
+    AuditService -> AuditDB : Save completion log
+    deactivate AuditService
+    
+    deactivate NotificationService
+end
+
+note over Client, Manager : <color:#00ff00>Closure notifications received</color>\n<color:#00ff00>via configured channels</color>
+
+@enduml

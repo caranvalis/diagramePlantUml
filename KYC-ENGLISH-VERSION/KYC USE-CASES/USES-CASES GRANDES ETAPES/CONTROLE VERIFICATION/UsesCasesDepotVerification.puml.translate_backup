@@ -1,0 +1,39 @@
+@startuml UseCaseDepotVerificationPieces
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+left to right direction
+
+actor "Client particulier" as Client #purple
+actor "Gestionnaire" as Gestionnaire #green
+actor "Analyste conformité" as Analyste #blue
+
+package "INTRA" {
+    usecase "Déposer pièces justificatives" as DepotPieces
+    usecase "Vérifier complétude des pièces" as VerifPieces
+    usecase "Contrôler validité des pièces" as ControleValidite
+    usecase "Notifier client pour compléments" as NotifClient
+    usecase "Valider dossier pièces" as ValiderDossier
+}
+
+' Dépôt par le client ou le gestionnaire
+Client --> DepotPieces #purple;text:purple
+Gestionnaire --> DepotPieces #green;text:green
+
+' Vérification et contrôle par le gestionnaire
+Gestionnaire --> VerifPieces #green;text:green
+Gestionnaire --> ControleValidite #green;text:green
+Gestionnaire --> ValiderDossier #green;text:green
+
+' Contrôle/audit par l'analyste conformité
+Analyste --> ControleValidite #blue;text:blue
+
+' Notification en cas de dossier incomplet ou non conforme
+VerifPieces ..> NotifClient : <<include>>
+ControleValidite ..> NotifClient : <<include>>
+
+@enduml

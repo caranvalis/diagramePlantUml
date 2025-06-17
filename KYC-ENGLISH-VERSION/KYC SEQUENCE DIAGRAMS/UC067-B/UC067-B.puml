@@ -1,16 +1,28 @@
 @startuml UC067-B
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor "Administrateur système" as Admin
 participant "Interface Admin Utilisateurs" as UI
-participant "System d'authentification" as Auth
-database "Base utilisateurs" as BDD
+participant "System d'authintification" as Auth
+datadatabase "Database utilisateurs" as BDD
 participant "Service Email" as Email
 participant "Journal Audit" as Audit
 participant "Service Connexion" as Connexion
 
-== Recherche de l'utilisateur ==
-Admin -> UI : Rechercher un utilisateur
+== Search de l'utilisateur ==
+Admin -> UI : Searchr un utilisateur
 activate Admin
 activate UI
 UI -> BDD : Requête utilisateur par email/matricule
@@ -20,22 +32,22 @@ deactivate BDD
 UI --> Admin : Afficher profil utilisateur
 
 == Modification ==
-Admin -> UI : Modify les infos (ex. agence, statut, email)
+Admin -> UI : Modify les infos (ex. agince, statut, email)
 
 
 UI -> Auth : Verify unicité du nouvel email (si modifié)
 activate Auth
 alt Email déjà existant
   Auth --> UI : Error "Email déjà utilisé"
-  UI --> Admin : Afficher message d'erreur
+  UI --> Admin : Afficher message d'error
  
 
 else Email unique ou inchangé
   Auth --> UI : OK
 
-  UI -> BDD : Mettre à jour les infos utilisateur
+  UI -> BDD : Put à jour les infos utilisateur
   activate BDD
-  BDD --> UI : Mise à jour confirmée
+  BDD --> UI : Put à jour confirmée
   deactivate BDD
 
   alt Statut modifié ET utilisateur connecté
@@ -43,23 +55,23 @@ else Email unique ou inchangé
     activate Connexion
     Connexion --> UI : Déconnexion effectuée
     deactivate Connexion
-    UI -> Email : Send notification de déconnexion
+    UI -> Email : Sind notification de déconnexion
     activate Email
-    Email --> UI : Email de déconnexion envoyé
+    Email --> UI : Email de déconnexion invoyé
     deactivate Email
   else Statut inchangé ou utilisateur non connecté
-    UI -> Email : Send notification de modification
+    UI -> Email : Sind notification de modification
     activate Email
-    Email --> UI : Email envoyé
+    Email --> UI : Email invoyé
     deactivate Email
-  end
+  ind
 
   alt Modification critique (ex. email, fonction)
-    UI -> Email : Send notification de modification
+    UI -> Email : Sind notification de modification
     activate Email
-    Email --> UI : Email envoyé
+    Email --> UI : Email invoyé
     deactivate Email
-  end
+  ind
 
   UI -> Audit : Journaliser la modification
   activate Audit
@@ -67,7 +79,7 @@ else Email unique ou inchangé
   deactivate Audit
 
   UI --> Admin : Confirmation modification
-end
+ind
 deactivate UI
 deactivate Admin
 @enduml

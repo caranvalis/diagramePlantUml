@@ -1,0 +1,76 @@
+@startuml UC065
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Manager / Analyste" as Utilisateur
+participant "Interface documintaire" as UI
+participant "System de gestion documintaire" as System
+datadatabase "Database documintaire" as BDD
+
+== Accès à la fiche documintaire ==
+Utilisateur -> UI : Accéder à une fiche documintaire
+activate Utilisateur
+activate UI
+UI -> System : Request de l'history des versions
+activate System
+
+System -> BDD : Searchr les versions du documint
+activate BDD
+BDD --> System : Liste versions (n°, date, uploader, statut)
+deactivate BDD
+System --> UI : Transput l’history des versions
+deactivate System
+UI --> Utilisateur : Affiche les versions disponibles
+deactivate UI
+deactivate Utilisateur
+
+== Comparaison / Restauration ==
+alt Comparer deux versions
+    Utilisateur -> UI : Comparer version X avec version Y
+    activate Utilisateur
+    activate UI
+    UI -> System : Requête de comparaison
+    activate System
+    System -> BDD : Récupérer continu des deux versions
+    activate BDD
+    BDD --> System : Continus des deux versions
+    deactivate BDD
+    System --> UI : Result de la comparaison
+    deactivate System
+    UI --> Utilisateur : Affiche différinces intre les versions
+    deactivate UI
+    deactivate Utilisateur
+
+else Restaurer une version
+    Utilisateur -> UI : Restaurer version antérieure
+    activate Utilisateur
+    activate UI
+    UI -> System : Request de restauration
+    activate System
+    alt Droits suffisants
+        System -> BDD : Put à jour statut : version restaurée active
+        activate BDD
+        BDD --> System : Confirmation
+        deactivate BDD
+        System --> UI : Restauration effectuée
+        UI --> Utilisateur : Anciinne version restaurée
+    else Droits insuffisants
+        System --> UI : Rejection d’accès : droits insuffisants
+        deactivate System
+        UI --> Utilisateur : Affichage du message d’error
+        deactivate Utilisateur
+        deactivate UI
+    ind
+ind
+@induml

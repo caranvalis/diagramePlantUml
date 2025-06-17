@@ -1,0 +1,281 @@
+@startuml DiagrammeClasseCreationCompteCBS
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Création Compte CBS
+
+class CreationCompteCBS {
+    - id: String
+    - numeroTransaction: String
+    - clientId: String
+    - typeCompte: TypeCompte
+    - parametresCreation: Map<String, String>
+    - dateCreation: Date
+    - statutCreation: StatutCreationCBS
+    - numeroCompteCBS: String
+    - ribGenere: String
+    - messageRetourCBS: String
+    - codeErreur: String
+    - tentativeCreation: Integer
+    - utilisateurCreation: String
+    + initier(): Boolean
+    + validerParametres(): Boolean
+    + creerDansCBS(): Boolean
+    + genererRIB(): String
+    + verifierCreation(): Boolean
+    + synchroniser(): Boolean
+    + annuler(): Boolean
+}
+
+class StatutCreationCBS {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - actionSuivante: String
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+}
+
+class ParametrageCBS {
+    - id: String
+    - nom: String
+    - typeParametre: TypeParametreCBS
+    - valeur: String
+    - description: String
+    - estObligatoire: Boolean
+    - valeurParDefaut: String
+    - formatValidation: String
+    - dateModification: Date
+    + configurer(): Boolean
+    + valider(): Boolean
+    + appliquer(): Boolean
+}
+
+enum TypeParametreCBS {
+    NUMERO_AGENCE
+    CODE_DEVISE
+    CHAPITRE_COMPTABLE
+    CODE_SERVICE
+    SENS_COMPTE
+    PROFIL_CLIENT
+    LIMITE_DECOUVERT
+    FRAIS_TENUE_COMPTE
+}
+
+class CompteGenerique {
+    - numeroCompte: String
+    - suffixeCompte: String
+    - codeAgence: String
+    - codeDevise: String
+    - chapitreComptable: String
+    - cleControleCompte: String
+    - intituleCompte: String
+    - codeService: String
+    - sensCompte: SensCompte
+    - dateOuverture: Date
+    - statutCompte: StatutCompte
+    - soldeInitial: Double
+    - decouvertAutorise: Double
+    - fraisTenueCompte: Double
+    + calculerCleControle(): String
+    + genererIntitule(): String
+    + appliquerParametres(): Boolean
+    + validerStructure(): Boolean
+}
+
+enum SensCompte {
+    DEBITEUR
+    CREDITEUR
+    MIXTE
+}
+
+class RIB {
+    - codeEtablissement: String
+    - codeGuichet: String
+    - numeroCompte: String
+    - cleRIB: String
+    - ribComplet: String
+    - IBAN: String
+    - BIC: String
+    - dateGeneration: Date
+    + generer(): String
+    + calculerCleRIB(): String
+    + genererIBAN(): String
+    + validerFormat(): Boolean
+    + imprimer(): Boolean
+}
+
+class InterfaceCBS {
+    - id: String
+    - nom: String
+    - versionAPI: String
+    - urlEndpoint: String
+    - timeout: Integer
+    - nombreRetries: Integer
+    - certificatSecurite: String
+    - tokenAuthentification: String
+    - estActive: Boolean
+    + connecter(): Boolean
+    + authentifier(): Boolean
+    + envoyerRequete(): String
+    + recevoirReponse(): String
+    + gererErreur(): Boolean
+    + deconnecter(): Boolean
+}
+
+class TransactionCBS {
+    - id: String
+    - creationCompteCBS: CreationCompteCBS
+    - typeTransaction: TypeTransactionCBS
+    - codeTransaction: String
+    - parametresTransaction: String
+    - dateEnvoi: Date
+    - dateReponse: Date
+    - statutTransaction: StatutTransaction
+    - reponseXML: String
+    - dureeExecution: Integer
+    + construireRequete(): String
+    + envoyer(): Boolean
+    + traiterReponse(): Boolean
+    + journaliser(): Boolean
+}
+
+enum TypeTransactionCBS {
+    CREATION_COMPTE
+    MODIFICATION_COMPTE
+    CONSULTATION_COMPTE
+    BLOCAGE_COMPTE
+    DEBLOCAGE_COMPTE
+    CLOTURE_COMPTE
+}
+
+enum StatutTransaction {
+    INITIEE
+    ENVOYEE
+    EXECUTEE
+    ECHEC
+    TIMEOUT
+    ANNULEE
+}
+
+class SynchronisationCBS {
+    - id: String
+    - compteId: String
+    - dateDernierSync: Date
+    - statutSynchronisation: StatutSynchronisation
+    - donneesLocales: String
+    - donneesCBS: String
+    - ecarts: List<String>
+    - actionSynchronisation: ActionSynchronisation
+    + synchroniser(): Boolean
+    + detecterEcarts(): List<String>
+    + resoudreEcarts(): Boolean
+    + planifierSync(): Boolean
+}
+
+enum StatutSynchronisation {
+    SYNCHRONISE
+    ECART_DETECTE
+    ERREUR_SYNC
+    SYNC_REQUISE
+}
+
+enum ActionSynchronisation {
+    AUCUNE_ACTION
+    MISE_A_JOUR_LOCALE
+    MISE_A_JOUR_CBS
+    INTERVENTION_MANUELLE
+}
+
+class ValidationCreationCBS {
+    - id: String
+    - creationCompteCBS: CreationCompteCBS
+    - typeValidation: TypeValidationCBS
+    - resultatValidation: Boolean
+    - messageValidation: String
+    - dateValidation: Date
+    - validateur: String
+    + validerParametres(): Boolean
+    + validerConnexion(): Boolean
+    + validerReponse(): Boolean
+    + genererRapport(): String
+}
+
+enum TypeValidationCBS {
+    VALIDATION_PARAMETRES
+    VALIDATION_CONNEXION
+    VALIDATION_REPONSE
+    VALIDATION_INTEGRITE
+    VALIDATION_CONFORMITE
+}
+
+class JournalCBS {
+    - id: String
+    - transactionCBS: TransactionCBS
+    - action: String
+    - utilisateur: String
+    - dateAction: Date
+    - requeteEnvoyee: String
+    - reponseRecue: String
+    - codeRetour: String
+    - dureeExecution: Integer
+    - adresseIP: String
+    + enregistrer(): Boolean
+    + consulter(): List<JournalCBS>
+    + exporterJournal(): String
+}
+
+class NotificationCBS {
+    - id: String
+    - creationCompteCBS: CreationCompteCBS
+    - typeNotification: TypeNotificationCBS
+    - destinataire: String
+    - contenu: String
+    - dateEnvoi: Date
+    - canalNotification: String
+    - statutEnvoi: StatutEnvoi
+    + creer(): Boolean
+    + envoyer(): Boolean
+    + confirmerReception(): Boolean
+}
+
+enum TypeNotificationCBS {
+    COMPTE_CREE
+    ECHEC_CREATION
+    RIB_GENERE
+    SYNCHRONISATION_REQUISE
+    ERREUR_TECHNIQUE
+}
+
+' Relations principales
+CreationCompteCBS "1" -- "1" StatutCreationCBS : statut
+CreationCompteCBS "1" -- "0..*" ParametrageCBS : parametres
+CreationCompteCBS "1" -- "0..1" CompteGenerique : compte
+CreationCompteCBS "1" -- "0..1" RIB : rib
+CreationCompteCBS "1" -- "1" InterfaceCBS : interface
+CreationCompteCBS "1" -- "0..*" TransactionCBS : transactions
+CreationCompteCBS "1" -- "0..*" SynchronisationCBS : synchronisations
+CreationCompteCBS "1" -- "0..*" ValidationCreationCBS : validations
+CreationCompteCBS "1" -- "0..*" NotificationCBS : notifications
+
+ParametrageCBS "1" -- "1" TypeParametreCBS : type
+CompteGenerique "1" -- "1" SensCompte : sens
+TransactionCBS "1" -- "1" TypeTransactionCBS : type
+TransactionCBS "1" -- "1" StatutTransaction : statut
+TransactionCBS "1" -- "0..*" JournalCBS : journal
+SynchronisationCBS "1" -- "1" StatutSynchronisation : statut
+SynchronisationCBS "1" -- "1" ActionSynchronisation : action
+ValidationCreationCBS "1" -- "1" TypeValidationCBS : type
+NotificationCBS "1" -- "1" TypeNotificationCBS : type
+
+@enduml

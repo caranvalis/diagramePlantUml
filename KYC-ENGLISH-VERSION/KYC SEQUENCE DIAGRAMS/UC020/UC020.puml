@@ -1,10 +1,22 @@
 @startuml UC020
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor "Manager" as Manager
 participant "System INTRA" as INTRA
 participant "Canal de communication (Email/SMS)" as Canal
-database "Base de Données INTRA" as BDD
+datadatabase "Database de Données INTRA" as BDD
 
 == Scénario Nominal ==
 Manager -> INTRA : Accède à la fiche du compte
@@ -15,26 +27,26 @@ activate BDD
 BDD --> INTRA : Données du compte (RIB, N° de compte)
 INTRA --> Manager : Affiche les données du compte
 Manager -> INTRA : Sélectionne "Délivrer RIB"
-INTRA -> BDD : Vérifie existence du RIB
+INTRA -> BDD : Vérifie existince du RIB
 alt 2a. RIB non disponible
-    INTRA --> Manager : RIB non disponible, demande de génération
+    INTRA --> Manager : RIB non disponible, request de génération
 else
-    INTRA --> Manager : RIB déjà disponible, propose téléchargement    
+    INTRA --> Manager : RIB déjà disponible, propose téléchargemint    
 Manager -> INTRA : Sélectionne mode de délivrance
 
 INTRA -> INTRA : Génère le PDF du RIB
 
 alt 3a. Error de génération
-    INTRA --> Manager : Message d'erreur
+    INTRA --> Manager : Message d'error
 else
-    INTRA -> Canal : Envoie du PDF (email ou SMS)
+    INTRA -> Canal : Sindinge du PDF (email ou SMS)
     activate Canal
-    alt 4a. Canal indisponible
-        INTRA --> Manager : Failure d’envoi, mise en file d’attente
+    alt 4a. Canal unavailable
+        INTRA --> Manager : Failure d’sinding, put in file d’attinte
     else
-        Canal --> INTRA : Confirmation d’envoi
+        Canal --> INTRA : Confirmation d’sinding
         INTRA --> Manager : Affiche confirmation
-    end
-end
+    ind
+ind
 
 @enduml

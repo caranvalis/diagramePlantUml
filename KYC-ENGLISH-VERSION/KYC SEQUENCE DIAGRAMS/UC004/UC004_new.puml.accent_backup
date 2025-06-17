@@ -1,0 +1,309 @@
+@startuml UC004
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC004 - Electronic Signature avec ePad
+
+' Acteurs externes
+actor "Client" as Client #LightGreen
+actor "Manager KYC" as Manager #LightBlue
+participant "ePad Signature" as ePad #LightYellow
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface GFC" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nSignature" as SignatureService #87CEEB
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nSécurité" as SecurityService #4169E1
+    participant "Service\nValidation" as ValidationService #87CEFA
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+    participant "HSM\nSécurisé" as HSM #808080
+end box
+
+== Préparation session signature ==
+
+Manager -> WebUI : Initier session signature\npour client
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : POST /signature/session/init
+activate Gateway
+
+Gateway -> Orchestrator : initierSessionSignature()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxSignature()
+activate FluxManager
+
+FluxManager -> SecurityService : vérifierHabilitationsManager()
+activate SecurityService
+SecurityService -> DB : SELECT permissions utilisateur
+activate DB
+DB --> SecurityService : Permissions vérifiées
+deactivate DB
+
+alt Habilitations insuffisantes
+    SecurityService --> FluxManager : Accès refusé
+    deactivate SecurityService
+    FluxManager --> Orchestrator : Error autorisation
+    Orchestrator --> Gateway : Accès non autorisé
+    Gateway --> WebUI : Error permissions
+    WebUI --> Manager : **Error**: Permissions insuffisantes
+    
+else Habilitations valides
+    SecurityService --> FluxManager : Accès autorisé
+    deactivate SecurityService
+    
+    FluxManager -> AuditService : logDébutSessionSignature()
+    activate AuditService
+    AuditService -> DB : INSERT audit_flux
+    AuditService --> FluxManager : OK
+    deactivate AuditService
+    
+    FluxManager --> Orchestrator : Session autorisée
+    
+    ' Préparation des documents
+    Orchestrator -> DocumentService : préparerDocumentsSignature()
+    activate DocumentService
+    
+    DocumentService -> Storage : Récupérer documents client
+    activate Storage
+    Storage --> DocumentService : Documents à signer
+    deactivate Storage
+    
+    DocumentService -> DocumentService : Generate métadonnées\nsignature
+    DocumentService -> DocumentService : Préparer format\npour ePad
+    
+    DocumentService --> Orchestrator : Documents prêts
+    deactivate DocumentService
+    
+    Orchestrator --> Gateway : Session initialisée
+    Gateway --> WebUI : Interface signature prête
+    WebUI --> Manager : **Session prête**\nDocuments préparés
+    
+    note over Manager : Session signature\ninitialisée avec succès
+end
+
+== Initialisation ePad ==
+
+Manager -> WebUI : Lancer connexion ePad
+WebUI -> Gateway : POST /signature/epad/connect
+
+Gateway -> Orchestrator : connecterEPad()
+
+Orchestrator -> SignatureService : initialiserEPad()
+activate SignatureService
+
+SignatureService -> ePad : Verify connexion
+activate ePad
+
+alt ePad déconnecté ou défaillant
+    ePad --> SignatureService : Error connexion
+    deactivate ePad
+    
+    SignatureService -> AuditService : logErrorEPad()
+    activate AuditService
+    AuditService -> DB : INSERT audit_erreurs
+    AuditService --> SignatureService : OK
+    deactivate AuditService
+    
+    SignatureService --> Orchestrator : ePad indisponible
+    deactivate SignatureService
+    
+    Orchestrator --> Gateway : Error matériel
+    Gateway --> WebUI : ePad non connecté
+    WebUI --> Manager : **Error**: ePad déconnecté\nVerify matériel
+    
+    note over Manager : Procédure annulée\nVerify connexion ePad
+    
+else ePad opérationnel
+    ePad --> SignatureService : Connexion OK
+    
+    SignatureService -> SecurityService : authentifierEPad()
+    activate SecurityService
+    SecurityService -> HSM : Verify certificat ePad
+    activate HSM
+    HSM --> SecurityService : Certificat valide
+    deactivate HSM
+    SecurityService --> SignatureService : ePad authentifié
+    deactivate SecurityService
+    
+    SignatureService -> DocumentService : chargerDocumentsPourEPad()
+    activate DocumentService
+    DocumentService --> SignatureService : Documents formatés
+    deactivate DocumentService
+    
+    SignatureService -> ePad : Load documents
+    ePad --> SignatureService : Documents chargés
+    
+    SignatureService --> Orchestrator : ePad prêt pour signature
+    deactivate SignatureService
+    
+    Orchestrator --> Gateway : ePad initialisé
+    Gateway --> WebUI : ePad connecté et prêt
+    WebUI --> Manager : **ePad prêt**\nInviter client à signer
+    
+    note over Manager : ePad opérationnel\nClient peut signer
+    
+    == Processus signature client ==
+    
+    Manager -> Client : Inviter à signer\nsur ePad
+    activate Client
+    
+    Client -> ePad : Consulter documents
+    ePad -> SignatureService : Afficher documents
+    activate SignatureService
+    
+    SignatureService -> AuditService : logConsultationDocument()
+    activate AuditService
+    AuditService -> DB : INSERT audit_actions
+    AuditService --> SignatureService : OK
+    deactivate AuditService
+    
+    SignatureService --> ePad : Documents affichés
+    ePad --> Client : **Documents à signer**\nLecture et validation
+    
+    note over Client : Client lit et vérifie\nles documents
+    
+    Client -> ePad : Apposer signature\net empreinte
+    
+    ePad -> SignatureService : Capturer signature
+    SignatureService -> SignatureService : Traiter données\nsignature biométriques
+    
+    alt Capture signature partielle/invalide
+        SignatureService -> ValidationService : validerSignature()
+        activate ValidationService
+        ValidationService --> SignatureService : Signature incomplète
+        deactivate ValidationService
+        
+        SignatureService -> AuditService : logEchecSignature()
+        activate AuditService
+        AuditService -> DB : INSERT audit_erreurs
+        AuditService --> SignatureService : OK
+        deactivate AuditService
+        
+        SignatureService --> ePad : Request nouvelle signature
+        ePad --> Client : **Signature incorrecte**\nRecommencer
+        
+        note over Client : Signature à refaire\nQualité insuffisante
+        
+    else Signature valide et complète
+        SignatureService -> ValidationService : validerSignature()
+        activate ValidationService
+        ValidationService -> ValidationService : Control qualité\nsignature
+        ValidationService -> ValidationService : Verify intégrité\nempreinte
+        ValidationService --> SignatureService : Signature valide
+        deactivate ValidationService
+        
+        ' Intégration et archivage
+        SignatureService -> DocumentService : integrerSignature()
+        activate DocumentService
+        
+        DocumentService -> HSM : Horodater signature
+        activate HSM
+        HSM --> DocumentService : Horodatage sécurisé
+        deactivate HSM
+        
+        DocumentService -> DocumentService : Generate document\nsigné final
+        DocumentService -> Storage : Archive document signé
+        activate Storage
+        Storage --> DocumentService : Document archivé
+        deactivate Storage
+        
+        DocumentService -> DB : INSERT signature_log
+        activate DB
+        DB --> DocumentService : Signature enregistrée
+        deactivate DB
+        
+        DocumentService --> SignatureService : Document finalisé
+        deactivate DocumentService
+        
+        ' Audit et notification
+        SignatureService -> AuditService : logSignatureReussie()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> SignatureService : OK
+        deactivate AuditService
+        
+        SignatureService -> NotificationService : notifierSignature()
+        activate NotificationService
+        NotificationService --> SignatureService : Notification envoyée
+        deactivate NotificationService
+        
+        SignatureService --> ePad : Signature finalisée
+        ePad --> Client : **Signature réussie**\nDocuments signés
+        deactivate Client
+        
+        SignatureService --> Orchestrator : Signature complète
+        deactivate SignatureService
+        
+        Orchestrator --> Gateway : Processus terminé
+        Gateway --> WebUI : Signature réussie
+        WebUI --> Manager : **Success**: Documents signés\net archivés
+        
+        note over Manager : Signature électronique\nfinalisée avec succès
+    end
+end
+
+== Finalisation session ==
+
+Orchestrator -> FluxManager : terminerFluxSignature()
+FluxManager -> SignatureService : nettoyerSessionEPad()
+activate SignatureService
+SignatureService -> ePad : Effacer données temporaires
+ePad --> SignatureService : Nettoyage effectué
+deactivate ePad
+SignatureService --> FluxManager : Session fermée
+deactivate SignatureService
+
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over HSM : Signatures horodatées\net sécurisées conformément\naux standards PKI
+
+@enduml

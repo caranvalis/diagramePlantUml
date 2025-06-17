@@ -10,14 +10,21 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Gestion Documentaire Avancée
 
-start
 
+|Système|
+start
 :Document reçu
 du client;
+
 
 :Identifier type
 de document;
@@ -30,6 +37,7 @@ partition "Validation Initiale" {
     du fichier;
     
     if (Document exploitable?) then (non)
+        
         :Demander nouveau
         document au client;
         
@@ -52,11 +60,13 @@ partition "Analyse Contenu" {
     potentielles;
     
     if (Anomalies détectées?) then (oui)
+        
         :Marquer pour
         vérification manuelle;
         
         :Alerter agent
         responsable;
+        
     else (non)
     endif
 }
@@ -72,6 +82,7 @@ partition "Vérification Réglementaire" {
     et authenticité;
     
     if (Conformité OK?) then (non)
+        
         :Générer alerte
         de non-conformité;
         
@@ -101,6 +112,8 @@ partition "Stockage et Classification" {
 :Mettre à jour
 statut dossier;
 
+
+|Service Communication|
 :Notifier étape
 suivante du workflow;
 

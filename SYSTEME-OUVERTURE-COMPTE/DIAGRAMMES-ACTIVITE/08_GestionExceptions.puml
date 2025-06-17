@@ -10,20 +10,28 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Gestion des Exceptions et Cas Particuliers
 
-start
 
+|Système|
+start
 :Exception ou cas
 particulier détecté;
 
 :Classifier type
 d'exception;
 
+
 partition "Analyse Exception" {
     if (Exception technique?) then (oui)
+        
         :Alerter équipe
         technique;
         
@@ -33,6 +41,7 @@ partition "Analyse Exception" {
         :Estimer délai
         de résolution;
         
+        
     elseif (Exception métier?) then (oui)
         :Analyser règles
         métier applicables;
@@ -41,11 +50,13 @@ partition "Analyse Exception" {
         possible;
         
     else (Exception réglementaire)
+        
         :Consulter département
         conformité;
         
         :Vérifier possibilité
         de traitement spécial;
+        
     endif
 }
 
@@ -60,6 +71,7 @@ partition "Évaluation Impact" {
     d'escalade requis;
 }
 
+
 if (Traitement automatique possible?) then (oui)
     :Appliquer règle
     d'exception automatique;
@@ -68,12 +80,16 @@ if (Traitement automatique possible?) then (oui)
     dans historique;
     
 else (non)
+    
     partition "Traitement Manuel" {
         if (Niveau agent suffisant?) then (oui)
+            
             :Agent traite
             l'exception;
             
+            
         else (non)
+            
             :Escalader vers
             niveau supérieur;
             
@@ -87,14 +103,18 @@ else (non)
                 :Documenter justification
                 du refus;
                 
+                
                 :Informer client
                 des contraintes;
+                
                 
                 stop
             else (oui)
             endif
+            
         endif
     }
+    
 endif
 
 partition "Application Solution" {
@@ -114,6 +134,7 @@ et solution appliquée;
 :Mettre à jour base
 de connaissances;
 
+|Service Communication|
 :Notifier parties
 prenantes concernées;
 

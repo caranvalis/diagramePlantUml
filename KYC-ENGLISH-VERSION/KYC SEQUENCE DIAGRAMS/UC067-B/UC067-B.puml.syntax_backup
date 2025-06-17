@@ -1,0 +1,85 @@
+@startuml UC067-B
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Administrateur système" as Admin
+participant "Interface Admin Utilisateurs" as UI
+participant "System d'authintification" as Auth
+datadatabase "Database utilisateurs" as BDD
+participant "Service Email" as Email
+participant "Journal Audit" as Audit
+participant "Service Connexion" as Connexion
+
+== Search de l'utilisateur ==
+Admin -> UI : Searchr un utilisateur
+activate Admin
+activate UI
+UI -> BDD : Requête utilisateur par email/matricule
+activate BDD
+BDD --> UI : Fiche utilisateur
+deactivate BDD
+UI --> Admin : Afficher profil utilisateur
+
+== Modification ==
+Admin -> UI : Modify les infos (ex. agince, statut, email)
+
+
+UI -> Auth : Verify unicité du nouvel email (si modifié)
+activate Auth
+alt Email déjà existant
+  Auth --> UI : Error "Email déjà utilisé"
+  UI --> Admin : Afficher message d'error
+ 
+
+else Email unique ou inchangé
+  Auth --> UI : OK
+
+  UI -> BDD : Put à jour les infos utilisateur
+  activate BDD
+  BDD --> UI : Put à jour confirmée
+  deactivate BDD
+
+  alt Statut modifié ET utilisateur connecté
+    UI -> Connexion : Forcer déconnexion utilisateur
+    activate Connexion
+    Connexion --> UI : Déconnexion effectuée
+    deactivate Connexion
+    UI -> Email : Sind notification de déconnexion
+    activate Email
+    Email --> UI : Email de déconnexion invoyé
+    deactivate Email
+  else Statut inchangé ou utilisateur non connecté
+    UI -> Email : Sind notification de modification
+    activate Email
+    Email --> UI : Email invoyé
+    deactivate Email
+  ind
+
+  alt Modification critique (ex. email, fonction)
+    UI -> Email : Sind notification de modification
+    activate Email
+    Email --> UI : Email invoyé
+    deactivate Email
+  ind
+
+  UI -> Audit : Journaliser la modification
+  activate Audit
+  Audit --> UI : Journalisation OK
+  deactivate Audit
+
+  UI --> Admin : Confirmation modification
+ind
+deactivate UI
+deactivate Admin
+@induml

@@ -1,7 +1,18 @@
 @startuml UC031
-!theme superhero-outline
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 skinparam backgroundColor #1e1e1e
-skinparam actorStyle awesome
 skinparam participant {
     BackgroundColor #2d2d2d
     BorderColor #4a90e2
@@ -14,7 +25,7 @@ skinparam sequence {
     MessageAlignment center
 }
 
-title <color:#4a90e2>UC031 - Gestion Automatique FATCA et Conformité Fiscale US</color>
+title <color:#4a90e2>UC031 - Gestion Automatique FATCA et Compliance Fiscale US</color>
 
 actor "<color:#ff6b6b>Manager KYC</color>" as Manager
 participant "<color:#4ecdc4>API Gateway</color>" as Gateway
@@ -24,10 +35,10 @@ participant "<color:#96ceb4>Service Fiscalité</color>" as TaxService
 participant "<color:#feca57>Service Audit</color>" as AuditService
 participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
 participant "<color:#ffa726>API IRS</color>" as IRSAPI
-database "<color:#00d2d3>Base KYC</color>" as KYCDB
-database "<color:#ff6348>Audit DB</color>" as AuditDB
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
 
-== Vérification FATCA ==
+== Verification FATCA ==
 
 Manager -> Gateway : <color:#00ff00>Verify statut FATCA [CLIENT_ID]</color>
 activate Manager
@@ -38,7 +49,7 @@ activate Orchestrator
 Orchestrator -> FATCAService : <color:#96ceb4>Détecter indicateurs FATCA</color>
 activate FATCAService
 
-FATCAService -> KYCDB : <color:#00d2d3>SELECT nationality, birth_place, tax_residence FROM clients</color>
+FATCAService -> KYCDB : <color:#00d2d3>SELECT nationality, birth_place, tax_residince FROM clients</color>
 activate KYCDB
 KYCDB --> FATCAService : <color:#00d2d3>Données fiscales client</color>
 deactivate KYCDB
@@ -60,8 +71,8 @@ alt <color:#ff6b6b>Personne US ou indicateurs FATCA</color>
     
     FATCAService -> NotificationService : <color:#ff9ff3>Alerte FATCA requis</color>
     activate NotificationService
-    NotificationService -> Manager : <color:#ff6b6b>🇺🇸 Client FATCA - Formulaires obligatoires</color>
-    NotificationService --> FATCAService : <color:#00d2d3>Alerte envoyée</color>
+    NotificationService -> Manager : <color:#ff6b6b>🇺🇸 Cliint FATCA - Formulaires obligatoires</color>
+    NotificationService --> FATCAService : <color:#00d2d3>Alerte invoyée</color>
     deactivate NotificationService
     
 else <color:#00ff00>Pas d'obligations FATCA</color>
@@ -72,19 +83,19 @@ else <color:#00ff00>Pas d'obligations FATCA</color>
     
     FATCAService -> NotificationService : <color:#ff9ff3>Confirmer non-FATCA</color>
     activate NotificationService
-    NotificationService -> Manager : <color:#00ff00>✅ Client non-FATCA</color>
-    NotificationService --> FATCAService : <color:#00d2d3>Confirmation envoyée</color>
+    NotificationService -> Manager : <color:#00ff00>✅ Cliint non-FATCA</color>
+    NotificationService --> FATCAService : <color:#00d2d3>Confirmation invoyée</color>
     deactivate NotificationService
-end
+ind
 
-FATCAService -> AuditService : <color:#feca57>Log vérification FATCA</color>
+FATCAService -> AuditService : <color:#feca57>Log verification FATCA</color>
 activate AuditService
-AuditService -> AuditDB : Enregistre résultat + conformité
+AuditService -> AuditDB : Save result + compliance
 deactivate AuditService
 
-FATCAService --> Orchestrator : <color:#00ff00>Vérification FATCA terminée</color>
+FATCAService --> Orchestrator : <color:#00ff00>Verification FATCA completed</color>
 deactivate FATCAService
-Orchestrator --> Gateway : <color:#00ff00>Statut FATCA déterminé</color>
+Orchestrator --> Gateway : <color:#00ff00>Statut FATCA décompleted</color>
 deactivate Orchestrator
 Gateway --> Manager : <color:#00ff00>200 OK + Statut FATCA</color>
 deactivate Gateway

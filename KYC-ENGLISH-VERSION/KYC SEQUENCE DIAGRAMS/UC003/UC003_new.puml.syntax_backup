@@ -1,0 +1,300 @@
+@startuml UC003
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC003 - Importation Cliint depuis Amplitude
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+actor "System Amplitude" as Amplitude #LightGray
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface Web\nKYC" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nCliint" as CliintService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nIntégration" as IntegrationService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+    participant "Service\nMapping" as MappingService #6495ED
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
+
+== Initialisation importation ==
+
+Manager -> WebUI : Accéder import Amplitude
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /import/amplitude/form
+activate Gateway
+
+Gateway -> Orchestrator : initierImportAmplitude()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxImport()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(IMPORT_AMPLITUDE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux initialisé
+Orchestrator --> Gateway : Formulaire import
+Gateway --> WebUI : Interface saisie
+WebUI --> Manager : Affichage champ idintifiant
+
+note over Manager : Interface prête pour\nsaisie idintifiant cliint
+
+== Saisie et verification idintifiant ==
+
+Manager -> WebUI : Saisir idintifiant cliint Amplitude
+WebUI -> Gateway : POST /import/amplitude/validate-id
+note over Gateway : Idintifiant cliint\nÀ valider
+
+Gateway -> Orchestrator : validerIdintifiantAmplitude()
+
+Orchestrator -> ValidationService : validerFormatIdintifiant()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format\nidintifiant Amplitude
+ValidationService -> ValidationService : Validate structure
+
+alt Format idintifiant valide
+    ValidationService --> Orchestrator : Idintifiant valide
+    deactivate ValidationService
+    
+    ' Verification existince in cache
+    Orchestrator -> CacheService : getCliintAmplitude()
+    activate CacheService
+    
+    alt Données in cache
+        CacheService --> Orchestrator : Données cliint trouvées
+        deactivate CacheService
+        note over Orchestrator : Données récupérées\ndepuis le cache
+        
+    else Pas in cache
+        CacheService --> Orchestrator : Non trouvé
+        deactivate CacheService
+        
+        ' Interrogation Amplitude
+        Orchestrator -> IntegrationService : interrogerAmplitude()
+        activate IntegrationService
+        
+        IntegrationService -> Amplitude : GET /cliint/{id}
+        activate Amplitude
+        
+        alt Amplitude disponible
+            Amplitude --> IntegrationService : Données cliint
+            deactivate Amplitude
+            
+            IntegrationService -> MappingService : mapperDonneesAmplitude()
+            activate MappingService
+            
+            MappingService -> MappingService : Convertir format\nAmplitude vers KYC
+            MappingService -> MappingService : Normaliser données
+            MappingService -> MappingService : Validate mapping
+            
+            MappingService --> IntegrationService : Données mappées
+            deactivate MappingService
+            
+            IntegrationService -> CacheService : cacheCliintAmplitude()
+            activate CacheService
+            CacheService --> IntegrationService : Mis in cache
+            deactivate CacheService
+            
+            IntegrationService --> Orchestrator : Données cliint mappées
+            deactivate IntegrationService
+            
+        else Amplitude unavailable
+            Amplitude --> IntegrationService : Error connexion
+            deactivate Amplitude
+            
+            IntegrationService -> AuditService : logErrorConnexion()
+            activate AuditService
+            AuditService -> DB : INSERT audit_errors
+            AuditService --> IntegrationService : OK
+            deactivate AuditService
+            
+            IntegrationService --> Orchestrator : Error connexion
+            deactivate IntegrationService
+            
+            Orchestrator --> Gateway : Service unavailable
+            Gateway --> WebUI : Error connexion Amplitude
+            WebUI --> Manager : **Error**: Service Amplitude\nunavailable
+            
+            note over Manager : Connexion Amplitude\nfailure - Réessayer plus tard
+        ind
+    ind
+    
+    alt Données récupérées avec success
+        ' Verification doublons
+        Orchestrator -> DoublonService : searchrDoublonAmplitude()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT cliints existants
+        activate DB
+        DB --> DoublonService : Results search
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze doublons\npotintiels
+        
+        alt Aucun doublon
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            Orchestrator --> Gateway : Données prêtes
+            Gateway --> WebUI : Affichage données récupérées
+            WebUI --> Manager : **Données Amplitude**\nVisualization et verification
+            
+            note over Manager : Données importées\naffichées pour validation
+            
+            == Validation et intégration ==
+            
+            Manager -> WebUI : Validate import données
+            WebUI -> Gateway : POST /import/amplitude/confirm
+            
+            Gateway -> Orchestrator : confirmerImportAmplitude()
+            
+            Orchestrator -> ValidationService : validerDonneesCompletes()
+            activate ValidationService
+            
+            ValidationService -> ValidationService : Verify complétude\ndes données
+            ValidationService -> ValidationService : Control cohérince
+            
+            alt Données complètes et valides
+                ValidationService --> Orchestrator : Validation OK
+                deactivate ValidationService
+                
+                ' Création du cliint
+                Orchestrator -> CliintService : creerCliintDepuisAmplitude()
+                activate CliintService
+                
+                CliintService -> DB : INSERT INTO cliints
+                activate DB
+                DB --> CliintService : ID cliint ginerated
+                deactivate DB
+                
+                CliintService -> DB : INSERT history_import
+                activate DB
+                DB --> CliintService : History created
+                deactivate DB
+                
+                CliintService --> Orchestrator : Cliint created (ID: ${cliintId})
+                deactivate CliintService
+                
+                ' Audit et notification
+                Orchestrator -> AuditService : logImportReussi()
+                activate AuditService
+                AuditService -> DB : INSERT audit_actions
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator -> NotificationService : notifierImport()
+                activate NotificationService
+                NotificationService --> Orchestrator : Notification invoyée
+                deactivate NotificationService
+                
+                Orchestrator --> Gateway : Import successful
+                Gateway --> WebUI : Confirmation intégration
+                WebUI --> Manager : **Success**: Cliint importé\nID: ${cliintId}
+                
+                note over Manager : Import Amplitude successful\nCliint intégré in database
+                
+            else Données incomplètes
+                ValidationService --> Orchestrator : Données incomplètes
+                deactivate ValidationService
+                
+                Orchestrator --> Gateway : Données à compléter
+                Gateway --> WebUI : Formulaire complétion
+                WebUI --> Manager : **Action requise**\nCompléter données manquantes
+                
+                note over Manager : Complétion manuelle\nrequise
+            ind
+            
+        else Doublon détecté
+            DoublonService --> Orchestrator : Doublon trouvé
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logDoublonAmplitude()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Doublon détecté
+            Gateway --> WebUI : Cliint existe déjà
+            WebUI --> Manager : **Attintion**: Cliint déjà\nexistant in database
+        ind
+    ind
+    
+else Format idintifiant invalide
+    ValidationService --> Orchestrator : Format invalide
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : logErrorFormat()
+    activate AuditService
+    AuditService -> DB : INSERT audit_errors
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : Idintifiant invalide
+    Gateway --> WebUI : Format incorrect
+    WebUI --> Manager : **Error**: Format idintifiant\nincorrect
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxImport()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Import Amplitude tracé\net audité pour compliance
+
+@induml

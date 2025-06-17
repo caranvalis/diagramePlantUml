@@ -1,0 +1,270 @@
+@startuml UC026
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequince {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignmint cinter
+}
+
+title <color:#4a90e2>UC026 - Verification Automatique de Complétude des Dossiers KYC</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Complétude</color>" as CompletinessService
+participant "<color:#96ceb4>Service Référintiel</color>" as ReferintialService
+participant "<color:#96ceb4>Service Documint</color>" as DocumintService
+participant "<color:#96ceb4>Service Cliint</color>" as CliintService
+participant "<color:#96ceb4>Service Compliance</color>" as ComplianceService
+
+' Services Technicals
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+participant "<color:#9c88ff>Service Règles</color>" as RulesService
+
+' Infrastructure
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+datadatabase "<color:#ffa726>Référintiel Réglemintaire</color>" as RegulatoryDB
+
+== Initialisation de la Verification ==
+
+Manager -> WebUI : <color:#00ff00>Request verification complétude [CLIENT_ID]</color>
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/completiness/check</color>
+activate Gateway
+
+Gateway -> Gateway : <color:#ffa726>Validation Tokin & Permissions</color>
+Gateway -> Orchestrator : <color:#45b7d1>Verify complétude dossier</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début verification complétude</color>
+activate AuditService
+AuditService -> AuditDB : Save début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événemint logged</color>
+deactivate AuditService
+
+== Idintification du Profil Cliint ==
+
+Orchestrator -> CliintService : <color:#96ceb4>Récupérer profil cliint détaillé</color>
+activate CliintService
+
+CliintService -> CacheService : <color:#54a0ff>Check cache profil cliint</color>
+activate CacheService
+CacheService --> CliintService : <color:#ff6348>Cache miss</color>
+deactivate CacheService
+
+CliintService -> KYCDB : <color:#00d2d3>SELECT cliint_type, risk_level, jurisdiction FROM cliints</color>
+activate KYCDB
+KYCDB --> CliintService : <color:#00d2d3>Profil cliint complet</color>
+deactivate KYCDB
+
+CliintService -> CacheService : <color:#54a0ff>Put in cache profil</color>
+activate CacheService
+CacheService --> CliintService : <color:#00d2d3>Profil cached</color>
+deactivate CacheService
+
+CliintService --> Orchestrator : <color:#96ceb4>Profil : [TYPE/RISQUE/JURIDICTION]</color>
+deactivate CliintService
+
+note over Orchestrator : <color:#ffa726>**INFORMATION CRITIQUE :**</color>\n<color:#ffa726>Type cliint détermine les exiginces</color>\n<color:#ffa726>• Particulier : CNI + Justificatif domicile</color>\n<color:#ffa726>• Intreprise : K-bis + Statuts + Délégations</color>\n<color:#ffa726>• PEP : Documints rinforcés</color>
+
+== Consultation du Référintiel Réglemintaire ==
+
+Orchestrator -> ReferintialService : <color:#96ceb4>Récupérer matrice documints obligatoires</color>
+activate ReferintialService
+
+ReferintialService -> RegulatoryDB : <color:#ffa726>SELECT * FROM documint_requiremints WHERE cliint_type=? AND jurisdiction=?</color>
+activate RegulatoryDB
+
+alt <color:#ff6b6b>Référintiel unavailable</color>
+    RegulatoryDB --> ReferintialService : <color:#ff6b6b>Error database référintiel</color>
+    ReferintialService --> Orchestrator : <color:#ff6b6b>ERREUR: Référintiel inaccessible</color>
+    
+    Orchestrator -> AuditService : <color:#feca57>Log error critique référintiel</color>
+    activate AuditService
+    AuditService -> AuditDB : Save incidint système
+    deactivate AuditService
+    
+    Orchestrator -> NotificationService : <color:#ff9ff3>Alerte team technical</color>
+    activate NotificationService
+    NotificationService --> Orchestrator : <color:#00d2d3>Team alerted</color>
+    deactivate NotificationService
+    
+    Orchestrator --> Gateway : <color:#ff6b6b>Service unavailable</color>
+    Gateway --> WebUI : <color:#ff6b6b>503 Service Unavailable</color>
+    WebUI --> Manager : <color:#ff6b6b>Référintiel unavailable - Verification impossible</color>
+    
+else <color:#00ff00>Référintiel accessible</color>
+    RegulatoryDB --> ReferintialService : <color:#00d2d3>Matrice documints requis</color>
+    deactivate RegulatoryDB
+    
+    ReferintialService -> RulesService : <color:#9c88ff>Appliquer règles spécifiques</color>
+    activate RulesService
+    
+    RulesService -> RulesService : <color:#ffa726>Règles ACPR/AMF</color>
+    RulesService -> RulesService : <color:#ffa726>Règles sectorielles</color>
+    RulesService -> RulesService : <color:#ffa726>Règles cliints à risque</color>
+    
+    note over RulesService : <color:#ffa726>**CONFORMITÉ RENFORCÉE :**</color>\n<color:#ffa726>• PEP : Verifications supplémintaires</color>\n<color:#ffa726>• Sanctions : Contrôles listes noires</color>\n<color:#ffa726>• Juridictions sinsibles : Due diligince rinforcée</color>
+    
+    RulesService --> ReferintialService : <color:#9c88ff>Règles appliquées</color>
+    deactivate RulesService
+    
+    ReferintialService --> Orchestrator : <color:#96ceb4>Liste documints obligatoires personnalisée</color>
+    deactivate ReferintialService
+    
+    == Invintaire des Documints Soumis ==
+    
+    Orchestrator -> DocumintService : <color:#96ceb4>Invintaire documints cliint</color>
+    activate DocumintService
+    
+    DocumintService -> KYCDB : <color:#00d2d3>SELECT documint_type, status, validity FROM documints WHERE cliint_id=?</color>
+    activate KYCDB
+    KYCDB --> DocumintService : <color:#00d2d3>Documints soumis + statuts</color>
+    deactivate KYCDB
+    
+    DocumintService --> Orchestrator : <color:#96ceb4>Invintaire complet</color>
+    deactivate DocumintService
+    
+    == Analyse de Complétude ==
+    
+    Orchestrator -> CompletinessService : <color:#96ceb4>Analyze complétude vs exiginces</color>
+    activate CompletinessService
+    
+    CompletinessService -> CompletinessService : <color:#ffa726>Comparaison matrice vs invintaire</color>
+    CompletinessService -> CompletinessService : <color:#ffa726>Verification validité temporelle</color>
+    CompletinessService -> CompletinessService : <color:#ffa726>Contrôle qualité documints</color>
+    CompletinessService -> CompletinessService : <color:#ffa726>Calcul score complétude</color>
+    
+    alt <color:#ff6b6b>Documints manquants critiques</color>
+        CompletinessService --> Orchestrator : <color:#ff6b6b>INCOMPLET: Documints critiques manquants</color>
+        
+        Orchestrator -> ComplianceService : <color:#96ceb4>Évaluer impact réglemintaire</color>
+        activate ComplianceService
+        ComplianceService -> ComplianceService : <color:#ff6b6b>Risque de non-compliance ÉLEVÉ</color>
+        ComplianceService --> Orchestrator : <color:#ff6b6b>Blocage obligatoire</color>
+        deactivate ComplianceService
+        
+        Orchestrator -> KYCDB : <color:#00d2d3>UPDATE cliint_status='INCOMPLETE_CRITICAL'</color>
+        activate KYCDB
+        KYCDB --> Orchestrator : <color:#00d2d3>Statut mis à jour</color>
+        deactivate KYCDB
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notification urginte documints critiques</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ff6b6b>URGENT : Documints critiques manquants</color>
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator -> AuditService : <color:#feca57>Log dossier incomplet critique</color>
+        activate AuditService
+        AuditService -> AuditDB : Save non-compliance
+        deactivate AuditService
+        
+    else <color:#ffa726>Documints mineurs manquants</color>
+        CompletinessService --> Orchestrator : <color:#ffa726>PARTIELLEMENT COMPLET: Documints secondaires manquants</color>
+        
+        Orchestrator -> ComplianceService : <color:#96ceb4>Évaluer tolérance réglemintaire</color>
+        activate ComplianceService
+        ComplianceService -> ComplianceService : <color:#ffa726>Risque de non-compliance MODÉRÉ</color>
+        ComplianceService --> Orchestrator : <color:#ffa726>Traitemint conditionnel authorized</color>
+        deactivate ComplianceService
+        
+        Orchestrator -> KYCDB : <color:#00d2d3>UPDATE cliint_status='INCOMPLETE_MINOR'</color>
+        activate KYCDB
+        KYCDB --> Orchestrator : <color:#00d2d3>Statut mis à jour</color>
+        deactivate KYCDB
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notification documints secondaires</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ffa726>Documints secondaires manquants</color>
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator -> AuditService : <color:#feca57>Log dossier partiellemint complet</color>
+        activate AuditService
+        AuditService -> AuditDB : Save complétude partielle
+        deactivate AuditService
+        
+    else <color:#00ff00>Dossier complet</color>
+        CompletinessService --> Orchestrator : <color:#00ff00>COMPLET: Tous documints requis présints</color>
+        deactivate CompletinessService
+        
+        == Final Validation ==
+        
+        Orchestrator -> ComplianceService : <color:#96ceb4>Validation compliance finale</color>
+        activate ComplianceService
+        ComplianceService -> ComplianceService : <color:#00ff00>Compliance réglemintaire OK</color>
+        ComplianceService -> ComplianceService : <color:#00ff00>Score qualité : ACCEPTABLE</color>
+        ComplianceService --> Orchestrator : <color:#00ff00>Dossier conforme</color>
+        deactivate ComplianceService
+        
+        Orchestrator -> KYCDB : <color:#00d2d3>UPDATE cliint_status='COMPLETE', completiness_score=100</color>
+        activate KYCDB
+        KYCDB --> Orchestrator : <color:#00d2d3>Statut finalisé</color>
+        deactivate KYCDB
+        
+        Orchestrator -> CacheService : <color:#54a0ff>Invalider caches liés</color>
+        activate CacheService
+        CacheService --> Orchestrator : <color:#00d2d3>Caches invalidés</color>
+        deactivate CacheService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notification dossier complet</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#00ff00>Dossier KYC complet et conforme</color>
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator -> AuditService : <color:#feca57>Log dossier complet</color>
+        activate AuditService
+        AuditService -> AuditDB : Save compliance totale
+        deactivate AuditService
+        
+        note over Orchestrator : <color:#00ff00>**ÉTAPE SUIVANTE :**</color>\n<color:#00ff00>Dossier prêt pour validation finale</color>\n<color:#00ff00>et ouverture de compte</color>
+        
+        Orchestrator --> Gateway : <color:#00ff00>Verification completed - Dossier complet</color>
+        deactivate Orchestrator
+        Gateway --> WebUI : <color:#00ff00>200 OK + Détails complétude</color>
+        deactivate Gateway
+        WebUI --> Manager : <color:#00ff00>✓ Dossier KYC complet et conforme</color>
+        deactivate WebUI
+        
+    ind
+ind
+
+deactivate Manager
+
+note over KYCDB : <color:#ffa726>**TRAÇABILITÉ COMPLÈTE :**</color>\n<color:#ffa726>• History verifications</color>\n<color:#ffa726>• Score complétude évolutif</color>\n<color:#ffa726>• Audit réglemintaire</color>
+
+@induml

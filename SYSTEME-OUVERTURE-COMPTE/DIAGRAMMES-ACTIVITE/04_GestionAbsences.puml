@@ -10,110 +10,131 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam swimlane {
+    BorderColor #1976D2
+    TitleBackgroundColor #E3F2FD
+    TitleFontColor #0D47A1
+}
 skinparam shadowing true
 
-title Diagramme d'Activité - Gestion des Absences et Continuité
+title Diagramme d'Activité - Gestion des Absences et Continuité avec Couloirs
 
+|Agent Titulaire|
 start
-
 :Agent responsable
 du dossier absent;
 
-:Système détecte
-absence planifiée/imprévue;
+|Système|
+:Détecte absence
+planifiée/imprévue;
 
-partition "Identification Remplaçant" {
-    if (Remplaçant désigné?) then (oui)
-        :Notifier remplaçant
-        désigné;
-    else (non)
-        :Identifier remplaçant
-        selon compétences;
-        
-        :Vérifier disponibilité
-        du remplaçant;
-        
-        if (Remplaçant disponible?) then (non)
-            :Escalader vers
-            responsable unité;
-            
-            :Réaffecter selon
-            charge de travail;
-        else (oui)
-        endif
-    endif
-}
+if (Remplaçant désigné?) then (oui)
+:Notifier remplaçant
+désigné;
+else (non)
+:Identifier remplaçant
+selon compétences;
 
+:Vérifier disponibilité
+du remplaçant;
+
+if (Remplaçant disponible?) then (non)
+|Responsable Unité|
+:Escalader vers
+responsable unité;
+
+:Réaffecter selon
+charge de travail;
+else (oui)
+endif
+endif
+
+|Système|
 :Transférer responsabilité
 temporaire du dossier;
 
 :Donner accès au
 remplaçant;
 
-partition "Briefing Remplaçant" {
-    :Fournir contexte
-    du dossier;
-    
-    :Expliquer étapes
-    en cours;
-    
-    :Transmettre contacts
-    client et partenaires;
-    
-    :Définir limites
-    de délégation;
-}
+|Agent Titulaire|
+:Fournir contexte
+du dossier;
 
+:Expliquer étapes
+en cours;
+
+:Transmettre contacts
+client et partenaires;
+
+|Responsable Unité|
+:Définir limites
+de délégation;
+
+|Agent Remplaçant|
+:Prendre en charge
+le dossier;
+
+|Client|
 :Notifier client
 du changement temporaire;
 
+|Système|
 :Mettre à jour système
 avec nouvelle responsabilité;
 
-partition "Suivi Pendant Absence" {
-    :Remplaçant traite
-    les demandes urgentes;
-    
-    :Reporter les décisions
-    importantes si possible;
-    
-    if (Décision urgente requise?) then (oui)
-        if (Dans délégation remplaçant?) then (oui)
-            :Prendre décision
-            et documenter;
-        else (non)
-            :Escalader vers
-            hiérarchie;
-        endif
-    else (non)
-        :Mettre en attente
-        retour titulaire;
-    endif
-}
+|Agent Remplaçant|
+:Traiter les demandes
+urgentes;
 
+:Reporter les décisions
+importantes si possible;
+
+if (Décision urgente requise?) then (oui)
+if (Dans délégation remplaçant?) then (oui)
+:Prendre décision
+et documenter;
+else (non)
+|Responsable Unité|
+:Escalader vers
+hiérarchie;
+endif
+else (non)
+|Agent Remplaçant|
+:Mettre en attente
+retour titulaire;
+endif
+
+|Agent Titulaire|
 :Agent titulaire
 de retour;
 
-partition "Retour Titulaire" {
-    :Briefing du remplaçant
-    sur actions menées;
-    
-    :Récupération de la
-    responsabilité du dossier;
-    
-    :Mise à jour des
-    suivis clients;
-    
-    :Remercier remplaçant
-    et clôturer délégation;
-}
+|Agent Remplaçant|
+:Briefing du remplaçant
+sur actions menées;
 
-:Reprendre suivi
-normal du dossier;
+|Agent Titulaire|
+:Récupération de la
+responsabilité du dossier;
 
-:Archiver historique
-de remplacement;
+:Mise à jour des
+suivis clients;
+
+|Système|
+:Remercier remplaçant
+et clôturer délégation;
+
+:Continuité assurée
+avec succès;
 
 stop
+
+note right
+Couloirs par acteur :
+- **Agent Titulaire** : Responsable initial
+- **Système** : Gestion automatique  
+- **Responsable Unité** : Supervision
+- **Agent Remplaçant** : Intérim
+- **Client** : Information
+end note
 
 @enduml

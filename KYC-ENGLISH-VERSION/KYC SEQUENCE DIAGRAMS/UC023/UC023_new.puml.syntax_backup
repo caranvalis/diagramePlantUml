@@ -1,0 +1,238 @@
+@startuml UC023
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequince {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignmint cinter
+}
+
+title <color:#4a90e2>UC023 - Validation Automatique des Documints d'Idintification</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+participant "<color:#96ceb4>Service Documint</color>" as DocumintService
+participant "<color:#96ceb4>Service OCR</color>" as OCRService
+participant "<color:#96ceb4>Service IA</color>" as AIService
+
+' Services Technicals
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+participant "<color:#9c88ff>Service Fichier</color>" as FileService
+
+' Infrastructure
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+participant "<color:#5f27cd>Stockage Fichiers</color>" as FileStorage
+
+== Soumission des Documints ==
+
+Manager -> WebUI : <color:#00ff00>Upload documints idintification</color>
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/documints/validation</color>
+activate Gateway
+
+Gateway -> Gateway : <color:#ffa726>Validation Tokin & Permissions</color>
+Gateway -> Orchestrator : <color:#45b7d1>Validate documints soumis</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début validation</color>
+activate AuditService
+AuditService -> AuditDB : Save début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événemint logged</color>
+deactivate AuditService
+
+== Verification Technical des Fichiers ==
+
+Orchestrator -> FileService : <color:#9c88ff>Analyze fichiers uploadés</color>
+activate FileService
+
+FileService -> FileService : <color:#ffa726>Verify formats authorizeds</color>
+FileService -> FileService : <color:#ffa726>Verify taille fichiers</color>
+FileService -> FileService : <color:#ffa726>Analyze integrity</color>
+
+alt <color:#ff6b6b>Fichiers corrompus ou invalides</color>
+    FileService --> Orchestrator : <color:#ff6b6b>ERREUR: Fichiers invalides</color>
+    
+    Orchestrator -> AuditService : <color:#feca57>Log rejet technical</color>
+    activate AuditService
+    AuditService -> AuditDB : Save rejet
+    deactivate AuditService
+    
+    Orchestrator -> NotificationService : <color:#ff9ff3>Notify rejet technical</color>
+    activate NotificationService
+    NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+    deactivate NotificationService
+    
+    Orchestrator --> Gateway : <color:#ff6b6b>Fichiers invalides</color>
+    Gateway --> WebUI : <color:#ff6b6b>400 Bad Request</color>
+    WebUI --> Manager : <color:#ff6b6b>Fichiers corrompus ou format invalide</color>
+    
+else <color:#00ff00>Fichiers technicalmint valides</color>
+    FileService -> FileStorage : <color:#5f27cd>Stocker fichiers temporaires</color>
+    activate FileStorage
+    FileStorage --> FileService : <color:#00d2d3>Fichiers stockés</color>
+    deactivate FileStorage
+    
+    FileService --> Orchestrator : <color:#00ff00>Fichiers acceptés</color>
+    deactivate FileService
+    
+    == Traitemint OCR ==
+    
+    Orchestrator -> OCRService : <color:#96ceb4>Extraire texte des documints</color>
+    activate OCRService
+    
+    OCRService -> FileStorage : <color:#5f27cd>Récupérer fichiers</color>
+    activate FileStorage
+    FileStorage --> OCRService : <color:#00d2d3>Données fichiers</color>
+    deactivate FileStorage
+    
+    OCRService -> OCRService : <color:#ffa726>Traitemint OCR avancé</color>
+    OCRService -> OCRService : <color:#ffa726>Extraction métadonnées</color>
+    
+    alt <color:#ff6b6b>Failure OCR</color>
+        OCRService --> Orchestrator : <color:#ff6b6b>Impossible de lire le documint</color>
+        
+        Orchestrator -> AuditService : <color:#feca57>Log failure OCR</color>
+        activate AuditService
+        AuditService -> AuditDB : Save failure
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notify failure OCR</color>
+        activate NotificationService
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : <color:#ff6b6b>Documint illisible</color>
+        Gateway --> WebUI : <color:#ff6b6b>422 Unprocessable Intity</color>
+        WebUI --> Manager : <color:#ff6b6b>Documint illisible - OCR échoué</color>
+        
+    else <color:#00ff00>OCR successful</color>
+        OCRService --> Orchestrator : <color:#00ff00>Texte extrait + métadonnées</color>
+        deactivate OCRService
+        
+        == Validation par IA ==
+        
+        Orchestrator -> AIService : <color:#96ceb4>Analyze continu documint</color>
+        activate AIService
+        
+        AIService -> AIService : <color:#ffa726>Verify cohérince données</color>
+        AIService -> AIService : <color:#ffa726>Détecter falsifications</color>
+        AIService -> AIService : <color:#ffa726>Validate format documint</color>
+        AIService -> AIService : <color:#ffa726>Verify lisibilité</color>
+        
+        AIService --> Orchestrator : <color:#00ff00>Analyse IA completed</color>
+        deactivate AIService
+        
+        == Application des Règles de Validation ==
+        
+        Orchestrator -> ValidationService : <color:#96ceb4>Appliquer règles métier</color>
+        activate ValidationService
+        
+        ValidationService -> ValidationService : <color:#ffa726>Verify règles obligatoires</color>
+        ValidationService -> ValidationService : <color:#ffa726>Validate champs requis</color>
+        ValidationService -> ValidationService : <color:#ffa726>Control dates validité</color>
+        ValidationService -> ValidationService : <color:#ffa726>Calculate score confiance</color>
+        
+        alt <color:#ff6b6b>Validation échouée</color>
+            ValidationService --> Orchestrator : <color:#ff6b6b>REJET: Règles non respectées</color>
+            
+            Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint REJETÉ</color>
+            activate DocumintService
+            DocumintService -> KYCDB : <color:#00d2d3>UPDATE documints SET status='REJECTED'</color>
+            activate KYCDB
+            KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
+            deactivate KYCDB
+            DocumintService --> Orchestrator : <color:#00d2d3>Documint rejeté</color>
+            deactivate DocumintService
+            
+            Orchestrator -> AuditService : <color:#feca57>Log rejet validation</color>
+            activate AuditService
+            AuditService -> AuditDB : Save rejet + raisons
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify rejet validation</color>
+            activate NotificationService
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : <color:#ff6b6b>Documint rejeté</color>
+            Gateway --> WebUI : <color:#ff6b6b>422 Unprocessable Intity</color>
+            WebUI --> Manager : <color:#ff6b6b>Documint rejeté - Règles non respectées</color>
+            
+        else <color:#00ff00>Validation successfule</color>
+            ValidationService --> Orchestrator : <color:#00ff00>ACCEPTÉ: Documint valide</color>
+            deactivate ValidationService
+            
+            == Finalisation ==
+            
+            Orchestrator -> DocumintService : <color:#96ceb4>Marquer documint VALIDÉ</color>
+            activate DocumintService
+            DocumintService -> KYCDB : <color:#00d2d3>UPDATE documints SET status='VALIDATED'</color>
+            activate KYCDB
+            KYCDB --> DocumintService : <color:#00d2d3>Statut mis à jour</color>
+            deactivate KYCDB
+            
+            DocumintService -> CacheService : <color:#54a0ff>Invalider cache documint</color>
+            activate CacheService
+            CacheService --> DocumintService : <color:#00d2d3>Cache invalidé</color>
+            deactivate CacheService
+            
+            DocumintService --> Orchestrator : <color:#00d2d3>Documint validé</color>
+            deactivate DocumintService
+            
+            Orchestrator -> AuditService : <color:#feca57>Log success validation</color>
+            activate AuditService
+            AuditService -> AuditDB : Save success + score
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify success validation</color>
+            activate NotificationService
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification invoyée</color>
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : <color:#00ff00>Documint validé avec success</color>
+            deactivate Orchestrator
+            Gateway --> WebUI : <color:#00ff00>200 OK + Détails validation</color>
+            deactivate Gateway
+            WebUI --> Manager : <color:#00ff00>Documint validé automatiquemint</color>
+            deactivate WebUI
+            
+        ind
+    ind
+ind
+
+deactivate Manager
+
+@induml

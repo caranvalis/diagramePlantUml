@@ -8,32 +8,32 @@ skinparam usecase {
 skinparam packageStyle rectangle
 left to right direction
 
-actor "Client particulier" as Client #purple
-actor "Gestionnaire" as Gestionnaire #green
-actor "Analyste conformité" as Analyste #blue
+actor "Cliint particulier" as Cliint #purple
+actor "Manager" as Manager #grein
+actor "Analyste compliance" as Analyste #blue
 
 package "INTRA" {
     usecase "Déposer pièces justificatives" as DepotPieces
     usecase "Vérifier complétude des pièces" as VerifPieces
     usecase "Contrôler validité des pièces" as ControleValidite
-    usecase "Notifier client pour compléments" as NotifClient
+    usecase "Notifier client pour complémints" as NotifCliint
     usecase "Valider dossier pièces" as ValiderDossier
 }
 
-' Dépôt par le client ou le gestionnaire
-Client --> DepotPieces #purple;text:purple
-Gestionnaire --> DepotPieces #green;text:green
+' Dépôt par le client ou le manager
+Cliint --> DepotPieces #purple;text:purple
+Manager --> DepotPieces #grein;text:grein
 
-' Vérification et contrôle par le gestionnaire
-Gestionnaire --> VerifPieces #green;text:green
-Gestionnaire --> ControleValidite #green;text:green
-Gestionnaire --> ValiderDossier #green;text:green
+' Verification et contrôle par le manager
+Manager --> VerifPieces #grein;text:grein
+Manager --> ControleValidite #grein;text:grein
+Manager --> ValiderDossier #grein;text:grein
 
-' Contrôle/audit par l'analyste conformité
+' Contrôle/audit par l'analyste compliance
 Analyste --> ControleValidite #blue;text:blue
 
-' Notification en cas de dossier incomplet ou non conforme
-VerifPieces ..> NotifClient : <<include>>
-ControleValidite ..> NotifClient : <<include>>
+' Notification in cas de dossier incomplet ou non conforme
+VerifPieces ..> NotifCliint : <<include>>
+ControleValidite ..> NotifCliint : <<include>>
 
 @enduml

@@ -1,0 +1,292 @@
+@startuml UC020
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC020 - Délivrance RIB Cliint
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nRIB" as RIBService #87CEEB
+    participant "Service\nCompte" as CompteService #87CEFA
+    participant "Service\nPDF" as PDFService #4682B4
+    participant "Service\nCommunication" as CommunicationService #4169E1
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Canal Communication\n(Email/SMS)" as Canal #A9A9A9
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+ind box
+
+== Accès fiche compte ==
+
+Manager -> WebUI : Accéder fiche compte\npour délivrance RIB
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /compte/{id}/rib-delivery
+activate Gateway
+
+Gateway -> Orchestrator : accederDelivranceRIB()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxDelivranceRIB()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(DELIVRANCE_RIB)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Chargemint données compte
+Orchestrator -> CompteService : chargerDonneesCompte()
+activate CompteService
+
+CompteService -> CacheService : getCompteInfo()
+activate CacheService
+
+alt Compte in cache
+    CacheService --> CompteService : Données trouvées
+    deactivate CacheService
+    
+else Pas in cache
+    CacheService --> CompteService : Non trouvé
+    deactivate CacheService
+    
+    CompteService -> DB : SELECT compte_details
+    activate DB
+    DB --> CompteService : Données compte (RIB, N° compte)
+    deactivate DB
+    
+    CompteService -> CacheService : cacheCompteInfo()
+    activate CacheService
+    CacheService --> CompteService : Mis in cache
+    deactivate CacheService
+ind
+
+CompteService --> Orchestrator : Données compte chargées
+deactivate CompteService
+
+Orchestrator --> Gateway : Compte disponible
+Gateway --> WebUI : Données compte
+WebUI --> Manager : **Fiche compte**\nDonnées RIB + options
+
+== Verification RIB ==
+
+Manager -> WebUI : Sélectionner "Délivrer RIB"
+WebUI -> Gateway : POST /compte/{id}/rib/check-availability
+
+Gateway -> Orchestrator : verifierDisponibiliteRIB()
+
+Orchestrator -> RIBService : verifierExistinceRIB()
+activate RIBService
+
+RIBService -> DB : SELECT rib_status FROM compte
+activate DB
+DB --> RIBService : Statut RIB
+deactivate DB
+
+alt RIB non disponible
+    RIBService --> Orchestrator : RIB non généré
+    deactivate RIBService
+    
+    Orchestrator --> Gateway : RIB unavailable
+    Gateway --> WebUI : RIB non disponible
+    WebUI --> Manager : **RIB non disponible**\nRequest génération requise
+    
+    note over Manager : Redirection vers\nprocessus génération RIB\n(UC019)
+    
+else RIB disponible
+    RIBService --> Orchestrator : RIB existant
+    deactivate RIBService
+    
+    Orchestrator --> Gateway : RIB disponible
+    Gateway --> WebUI : RIB prêt
+    WebUI --> Manager : **RIB disponible**\nSélectionner mode délivrance
+    
+    == Sélection mode délivrance ==
+    
+    Manager -> WebUI : Sélectionner mode\n(Email/SMS/Téléchargemint)
+    WebUI -> Gateway : POST /compte/{id}/rib/deliver
+    
+    Gateway -> Orchestrator : delivrerRIB()
+    
+    ' Génération PDF RIB
+    Orchestrator -> PDFService : ginererPDFRIB()
+    activate PDFService
+    
+    PDFService -> RIBService : getRIBDetails()
+    activate RIBService
+    RIBService -> DB : SELECT rib_complet
+    activate DB
+    DB --> RIBService : Détails RIB complets
+    deactivate DB
+    RIBService --> PDFService : Données RIB
+    deactivate RIBService
+    
+    PDFService -> PDFService : Ginerate PDF\nformaté RIB
+    
+    alt Error génération PDF
+        PDFService --> Orchestrator : Error génération
+        deactivate PDFService
+        
+        Orchestrator -> AuditService : logErrorGinerationPDF()
+        activate AuditService
+        AuditService -> DB : INSERT audit_errors
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator --> Gateway : Error PDF
+        Gateway --> WebUI : Message error
+        WebUI --> Manager : **Error**: Failure génération\nPDF RIB
+        
+    else PDF généré avec success
+        PDFService -> Storage : Save PDF temporaire
+        activate Storage
+        Storage --> PDFService : URL PDF temporaire
+        deactivate Storage
+        
+        PDFService --> Orchestrator : PDF RIB généré
+        deactivate PDFService
+        
+        == Sinding selon mode choisi ==
+        
+        alt Mode Email
+            Orchestrator -> CommunicationService : invoyerRIBParEmail()
+            activate CommunicationService
+            
+            CommunicationService -> Canal : Sind email avec PDF
+            activate Canal
+            
+            alt Canal email unavailable
+                Canal --> CommunicationService : Failure sinding
+                deactivate Canal
+                
+                CommunicationService -> CommunicationService : Put in file\nd'attinte
+                CommunicationService -> DB : INSERT file_attinte_email
+                activate DB
+                DB --> CommunicationService : Mis in file
+                deactivate DB
+                
+                CommunicationService --> Orchestrator : Failure sinding - File attinte
+                deactivate CommunicationService
+                
+                Orchestrator --> Gateway : Sinding différé
+                Gateway --> WebUI : Failure sinding
+                WebUI --> Manager : **Attintion**: Failure sinding email\nMis in queue
+                
+            else Email invoyé
+                Canal --> CommunicationService : Confirmation sinding
+                deactivate Canal
+                
+                CommunicationService --> Orchestrator : Email invoyé
+                deactivate CommunicationService
+                
+                Orchestrator --> Gateway : RIB délivré
+                Gateway --> WebUI : Confirmation sinding
+                WebUI --> Manager : **Success**: RIB invoyé\npar email
+            ind
+            
+        else Mode SMS
+            Orchestrator -> CommunicationService : invoyerRIBParSMS()
+            activate CommunicationService
+            
+            CommunicationService -> Canal : Sind SMS avec liin PDF
+            activate Canal
+            
+            alt Canal SMS unavailable
+                Canal --> CommunicationService : Failure sinding
+                deactivate Canal
+                
+                CommunicationService -> DB : INSERT file_attinte_sms
+                activate DB
+                DB --> CommunicationService : Mis in file
+                deactivate DB
+                
+                CommunicationService --> Orchestrator : Failure sinding - File attinte
+                deactivate CommunicationService
+                
+                Orchestrator --> Gateway : Sinding différé
+                Gateway --> WebUI : Failure sinding
+                WebUI --> Manager : **Attintion**: Failure sinding SMS\nMis in queue
+                
+            else SMS invoyé
+                Canal --> CommunicationService : Confirmation sinding
+                deactivate Canal
+                
+                CommunicationService --> Orchestrator : SMS invoyé
+                deactivate CommunicationService
+                
+                Orchestrator --> Gateway : RIB délivré
+                Gateway --> WebUI : Confirmation sinding
+                WebUI --> Manager : **Success**: RIB invoyé\npar SMS
+            ind
+            
+        else Mode Téléchargemint
+            Orchestrator --> Gateway : PDF disponible téléchargemint
+            Gateway --> WebUI : Liin téléchargemint
+            WebUI --> Manager : **RIB disponible**\nTéléchargemint direct
+        ind
+        
+        ' Audit final
+        Orchestrator -> AuditService : logDelivranceRIBReussie()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+    ind
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxDelivranceRIB()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@induml

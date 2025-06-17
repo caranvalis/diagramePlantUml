@@ -10,17 +10,24 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Intégrations Externes et Vérifications
 
-start
 
+|Système|
+start
 :Déclenchement vérification
 externe requise;
 
 :Identifier services
 externes nécessaires;
+
 
 partition "Vérifications Identité" {
     :Interroger registre
@@ -30,6 +37,7 @@ partition "Vérifications Identité" {
     documents d'identité;
     
     if (Identité confirmée?) then (non)
+        
         :Générer alerte
         identité douteuse;
         
@@ -38,9 +46,11 @@ partition "Vérifications Identité" {
         
         :Bloquer progression
         temporaire;
+        
     else (oui)
     endif
 }
+
 
 partition "Contrôles Réglementaires" {
     :Consulter listes
@@ -65,6 +75,7 @@ partition "Contrôles Réglementaires" {
     endif
 }
 
+
 partition "Vérifications Financières" {
     :Consulter centrales
     des risques;
@@ -84,6 +95,7 @@ partition "Vérifications Financières" {
     else (non)
     endif
 }
+
 
 partition "Consolidation Résultats" {
     :Compiler résultats
@@ -120,12 +132,15 @@ else (Risques majeurs)
     :Documenter justifications
     réglementaires;
     
+    
     :Notifier client
     et archiver dossier;
+    
     
     stop
 endif
 
+|Système|
 :Archiver résultats
 vérifications externes;
 

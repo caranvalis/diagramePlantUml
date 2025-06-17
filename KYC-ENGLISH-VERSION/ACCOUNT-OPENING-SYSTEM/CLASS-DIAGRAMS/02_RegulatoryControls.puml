@@ -1,0 +1,213 @@
+@startuml RegulatoryControls
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam classMethodFontSize 12
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
+
+title Package - Regulatory Controls
+
+package "Base Controls" #FFDDDD {
+  abstract class RegulatoryControl {
+    - id: String
+    - request: AccountOpeningRequest
+    - controlType: ControlType
+    - executingAgent: Agent
+    - executionDate: Date
+    - controlResult: ControlResult
+    - resultDetails: String
+    - alerts: List<ControlAlert>
+    - generatedDocument: Document
+    - isMandatory: Boolean
+    - isPassed: Boolean
+    - requiresAction: Boolean
+    + execute(): Boolean
+    + analyzeResult(): ControlResult
+    + generateAlert(): ControlAlert
+    + generateDocument(): Document
+  }
+
+  class ControlAlert {
+    - id: String
+    - control: RegulatoryControl
+    - alertType: AlertType
+    - severity: AlertSeverity
+    - message: String
+    - generationDate: Date
+    - isProcessed: Boolean
+    - processingAgent: Agent
+    - processingDate: Date
+    - recommendedAction: String
+    + generate(): Boolean
+    + process(agent: Agent): Boolean
+    + escalate(): Boolean
+    + archive(): Boolean
+  }
+}
+
+package "Specialized Controls" #FFF0E0 {
+  class BlacklistControl extends RegulatoryControl {
+    - consultedLists: List<String>
+    - matches: List<BlacklistMatch>
+    - confidenceScore: Float
+    - externalAPIs: List<String>
+    - lastUpdateDate: Date
+    + checkOFAC(): Boolean
+    + checkEUSanctions(): Boolean
+    + checkLocalBlacklists(): Boolean
+    + calculateRiskScore(): Float
+  }
+
+  class PPEControl extends RegulatoryControl {
+    - ppeCategories: List<PPECategory>
+    - politicalExposure: Boolean
+    - familyConnections: List<String>
+    - businessConnections: List<String>
+    - riskLevel: RiskLevel
+    + assessPoliticalExposure(): Boolean
+    + checkFamilyTies(): Boolean
+    + evaluateRisk(): RiskLevel
+  }
+
+  class FATCAControl extends RegulatoryControl {
+    - usPerson: Boolean
+    - taxResidency: List<String>
+    - w8Forms: List<Document>
+    - w9Forms: List<Document>
+    - certificationStatus: CertificationStatus
+    + determineUSPersonStatus(): Boolean
+    + validateTaxForms(): Boolean
+    + checkCompliance(): Boolean
+  }
+
+  class KYCControl extends RegulatoryControl {
+    - identityVerification: Boolean
+    - addressVerification: Boolean
+    - incomeVerification: Boolean
+    - sourceOfFunds: String
+    - riskProfile: RiskProfile
+    + verifyIdentity(): Boolean
+    + verifyAddress(): Boolean
+    + assessRisk(): RiskProfile
+  }
+}
+
+package "Control Configuration" #E8F8FF {
+  enum ControlType {
+    BLACKLIST_CHECK
+    PPE_VERIFICATION
+    FATCA_COMPLIANCE
+    KYC_ASSESSMENT
+    DOCUMENT_VERIFICATION
+    SIGNATURE_VALIDATION
+    RISK_EVALUATION
+  }
+
+  enum ControlResult {
+    PASSED
+    FAILED
+    WARNING
+    MANUAL_REVIEW
+    BLOCKED
+    CONDITIONAL
+    PENDING
+  }
+
+  enum AlertType {
+    BLOCKING
+    WARNING
+    INFORMATION
+    ESCALATION
+    TIMEOUT
+  }
+
+  enum AlertSeverity {
+    CRITICAL
+    HIGH
+    MEDIUM
+    LOW
+    INFO
+  }
+
+  enum PPECategory {
+    HEAD_OF_STATE
+    GOVERNMENT_OFFICIAL
+    SENIOR_EXECUTIVE
+    JUDICIAL_OFFICIAL
+    MILITARY_OFFICIAL
+    PARTY_OFFICIAL
+    FAMILY_MEMBER
+    CLOSE_ASSOCIATE
+  }
+
+  enum RiskLevel {
+    VERY_LOW
+    LOW
+    MEDIUM
+    HIGH
+    VERY_HIGH
+    PROHIBITED
+  }
+
+  enum CertificationStatus {
+    NOT_REQUIRED
+    REQUIRED
+    SUBMITTED
+    VALIDATED
+    EXPIRED
+    REJECTED
+  }
+
+  class RiskProfile {
+    - overallRisk: RiskLevel
+    - customerRisk: RiskLevel
+    - productRisk: RiskLevel
+    - geographicRisk: RiskLevel
+    - riskFactors: List<String>
+    - mitigatingFactors: List<String>
+    + calculateOverallRisk(): RiskLevel
+    + addRiskFactor(factor: String): Boolean
+    + addMitigatingFactor(factor: String): Boolean
+  }
+
+  class BlacklistMatch {
+    - matchedName: String
+    - sourceList: String
+    - matchScore: Float
+    - matchType: MatchType
+    - additionalInfo: String
+    - verificationRequired: Boolean
+  }
+}
+
+' === RELATIONSHIPS ===
+RegulatoryControl ||--o{ ControlAlert : "generates"
+RegulatoryControl ||--|| ControlType : "is of type"
+RegulatoryControl ||--|| ControlResult : "produces"
+
+BlacklistControl ||--o{ BlacklistMatch : "finds"
+PPEControl ||--o{ PPECategory : "checks"
+PPEControl ||--|| RiskLevel : "assesses"
+FATCAControl ||--|| CertificationStatus : "has"
+KYCControl ||--|| RiskProfile : "creates"
+
+ControlAlert ||--|| AlertType : "is of type"
+ControlAlert ||--|| AlertSeverity : "has severity"
+
+note top of RegulatoryControl : **Base Control Class**\nDefines common structure\nfor all regulatory controls\nwith audit trail
+
+note right of BlacklistControl : **Sanctions Screening**\nChecks against international\nsanctions lists (OFAC, EU, etc.)\nwith automated scoring
+
+note left of PPEControl : **Political Exposure**\nAssesses politically exposed\npersons and their risk level\nper regulatory requirements
+
+note bottom of FATCAControl : **US Tax Compliance**\nEnsures FATCA compliance\nfor US persons and entities\nwith proper documentation
+
+@enduml

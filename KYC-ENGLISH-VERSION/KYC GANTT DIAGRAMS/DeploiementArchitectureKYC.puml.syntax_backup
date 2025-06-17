@@ -1,0 +1,126 @@
+@startgantt DeploiementArchitectureKYC
+!theme aws-orange
+title Déploiement Architecture KYC Microservices
+
+Project starts 2025-07-01
+
+' === PHASE 1: PRÉPARATION INFRASTRUCTURE ===
+[Setup Kubernetes] starts 2025-07-01 and lasts 3 days
+[Setup Kubernetes] is colored in Purple
+
+[Configuration Registry] starts 2025-07-04 and lasts 2 days
+[Configuration Registry] is colored in Purple
+
+[Setup Monitoring] starts 2025-07-06 and lasts 2 days
+[Setup Monitoring] is colored in Blue
+
+[Configuration Logging] starts 2025-07-08 and lasts 1 days
+[Configuration Logging] is colored in Blue
+
+' === PHASE 2: DÉPLOIEMENT SERVICES CORE ===
+[Deploy API Gateway] starts 2025-07-09 and lasts 2 days
+[Deploy API Gateway] is colored in Green
+
+[Deploy Service Registry] starts 2025-07-11 and lasts 1 days
+[Deploy Service Registry] is colored in Green
+
+[Deploy Config Server] starts 2025-07-12 and lasts 1 days
+[Deploy Config Server] is colored in Green
+
+[Deploy Orchestrateur] starts 2025-07-13 and lasts 2 days
+[Deploy Orchestrateur] is colored in Green
+
+' === PHASE 3: DÉPLOIEMENT SERVICES MÉTIER ===
+[Deploy Service Client] starts 2025-07-15 and lasts 2 days
+[Deploy Service Client] is colored in Blue
+
+[Deploy Service Compte] starts 2025-07-17 and lasts 2 days
+[Deploy Service Compte] is colored in Blue
+
+[Deploy Service Document] starts 2025-07-19 and lasts 2 days
+[Deploy Service Document] is colored in Blue
+
+[Deploy Service Contrôle] starts 2025-07-21 and lasts 2 days
+[Deploy Service Contrôle] is colored in Orange
+
+[Deploy Service Validation] starts 2025-07-23 and lasts 2 days
+[Deploy Service Validation] is colored in Green
+
+' === PHASE 4: DÉPLOIEMENT SERVICES TECHNIQUES ===
+[Deploy Service Auth] starts 2025-07-25 and lasts 1 days
+[Deploy Service Auth] is colored in Red
+
+[Deploy Service Audit] starts 2025-07-26 and lasts 1 days
+[Deploy Service Audit] is colored in Yellow
+
+[Deploy Service Notification] starts 2025-07-27 and lasts 1 days
+[Deploy Service Notification] is colored in Blue
+
+[Deploy Service Cache] starts 2025-07-28 and lasts 1 days
+[Deploy Service Cache] is colored in Purple
+
+' === PHASE 5: CONFIGURATION DONNÉES ===
+[Setup Base KYC] starts 2025-07-29 and lasts 2 days
+[Setup Base KYC] is colored in Yellow
+
+[Setup Base Audit] starts 2025-07-31 and lasts 1 days
+[Setup Base Audit] is colored in Yellow
+
+[Configuration Redis] starts 2025-08-01 and lasts 1 days
+[Configuration Redis] is colored in Purple
+
+[Setup Message Queue] starts 2025-08-02 and lasts 1 days
+[Setup Message Queue] is colored in Gray
+
+' === PHASE 6: TESTS ET VALIDATION ===
+[Tests Santé Services] starts 2025-08-03 and lasts 2 days
+[Tests Santé Services] is colored in Green
+
+[Tests Intégration] starts 2025-08-05 and lasts 3 days
+[Tests Intégration] is colored in Yellow
+
+[Tests Performance] starts 2025-08-08 and lasts 3 days
+[Tests Performance] is colored in Red
+
+[Validation Sécurité] starts 2025-08-11 and lasts 2 days
+[Validation Sécurité] is colored in Red
+
+' === PHASE 7: MISE EN PRODUCTION ===
+[Switch DNS] starts 2025-08-13 and lasts 1 days
+[Switch DNS] is colored in Red
+
+[Monitoring Intensif] starts 2025-08-14 and lasts 7 days
+[Monitoring Intensif] is colored in Orange
+
+[Support 24h/24] starts 2025-08-14 and lasts 14 days
+[Support 24h/24] is colored in Red
+
+' === JALONS CRITIQUES ===
+[Infrastructure Prête] happens 2025-07-08
+[Infrastructure Prête] is colored in Purple
+
+[Services Core Déployés] happens 2025-07-15
+[Services Core Déployés] is colored in Green
+
+[Services Métier OK] happens 2025-07-25
+[Services Métier OK] is colored in Blue
+
+[Go-Live Production] happens 2025-08-14
+[Go-Live Production] is colored in Red
+
+' === DÉPENDANCES ===
+[Configuration Registry] starts after [Setup Kubernetes]'s end
+[Setup Monitoring] starts after [Configuration Registry]'s end
+[Deploy API Gateway] starts after [Configuration Logging]'s end
+[Deploy Service Registry] starts after [Deploy API Gateway]'s end
+[Deploy Config Server] starts after [Deploy Service Registry]'s end
+[Deploy Orchestrateur] starts after [Deploy Config Server]'s end
+[Deploy Service Client] starts after [Deploy Orchestrateur]'s end
+[Deploy Service Auth] starts after [Deploy Service Validation]'s end
+[Setup Base KYC] starts after [Deploy Service Cache]'s end
+[Tests Santé Services] starts after [Setup Message Queue]'s end
+[Tests Intégration] starts after [Tests Santé Services]'s end
+[Tests Performance] starts after [Tests Intégration]'s end
+[Switch DNS] starts after [Validation Sécurité]'s end
+
+@endgantt

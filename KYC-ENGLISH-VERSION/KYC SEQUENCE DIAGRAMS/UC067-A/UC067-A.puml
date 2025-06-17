@@ -1,10 +1,22 @@
 @startuml UC067-A
-skinparam actorStyle awesome
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
 
 actor "Administrateur système" as Admin
 participant "Interface Admin Utilisateurs" as UI
-participant "System d'authentification" as Auth
-database "Base utilisateurs" as BDD
+participant "System d'authintification" as Auth
+datadatabase "Database utilisateurs" as BDD
 participant "Service Email" as Email
 
 == Accès au module ==
@@ -15,37 +27,37 @@ activate UI
 == Formulaire de création ==
 Admin -> UI : Cliquer "Ajouter un utilisateur"
 UI -> Admin : Affiche formulaire
-Admin -> UI : Saisir infos : nom, prénom, email, matricule, agence, fonction
+Admin -> UI : Saisir infos : nom, prénom, email, matricule, agince, fonction
 Admin -> UI : Sélectionner statut initial et date expiration
 Admin -> UI : Validate création
 
-== Traitement système ==
+== Traitemint système ==
 UI -> Auth : Verify unicité de l’email
 activate Auth
 alt Email déjà existant
   Auth --> UI : Error "Utilisateur déjà existant"
-  UI --> Admin : Afficher erreur
+  UI --> Admin : Afficher error
   deactivate Auth
 else Email unique
   Auth --> UI : OK
   deactivate Auth
 
-  UI -> BDD : Create utilisateur avec identifiant unique
+  UI -> BDD : Create utilisateur avec idintifiant unique
   activate BDD
   BDD --> UI : Confirmation création
   deactivate BDD
 
-  UI -> Email : Send identifiants par email sécurisé
+  UI -> Email : Sind idintifiants par email sécurisé
   activate Email
-  alt Envoi réussi
-    Email --> UI : Email envoyé
-  else Failure d'envoi
-    Email --> UI : Failure envoi - Identifiants dispo en local
-  end
+  alt Sinding successful
+    Email --> UI : Email invoyé
+  else Failure d'sinding
+    Email --> UI : Failure sinding - Idintifiants dispo in local
+  ind
   deactivate Email
 
   UI --> Admin : Confirmation création + infos d'accès
-end
+ind
 deactivate UI
 deactivate Admin
 @enduml

@@ -1,0 +1,330 @@
+@startuml UC007
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title UC007 - Pre-registration Entreprise
+
+' Acteurs externes
+actor "Représentant\nEntreprise" as Representant #LightGreen
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface Web\nPublique" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nEntreprise" as EntrepriseService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+    participant "Service\nIdentifiant" as IdentService #6495ED
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+end box
+
+== Accès interface pré-enregistrement ==
+
+Representant -> WebUI : Accéder interface\npré-enregistrement entreprise
+activate Representant
+activate WebUI
+
+WebUI -> Gateway : GET /preregistration/entreprise/form
+activate Gateway
+
+Gateway -> Orchestrator : initierPreEnregistrementEntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxPreEnregistrement()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(PRE_ENREG_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Récupération formulaire depuis cache
+FluxManager -> CacheService : getFormulaireEntreprise()
+activate CacheService
+
+alt Formulaire en cache
+    CacheService --> FluxManager : Formulaire trouvé
+    deactivate CacheService
+    
+else Formulaire pas en cache
+    CacheService --> FluxManager : Non trouvé
+    deactivate CacheService
+    
+    FluxManager -> EntrepriseService : chargerFormulaireEntreprise()
+    activate EntrepriseService
+    
+    EntrepriseService -> EntrepriseService : Generate formulaire\navec champs requis
+    EntrepriseService -> EntrepriseService : Ajouter validations\nJS côté client
+    
+    EntrepriseService -> CacheService : cacheFormulaire()
+    activate CacheService
+    CacheService --> EntrepriseService : Mis en cache
+    deactivate CacheService
+    
+    EntrepriseService --> FluxManager : Formulaire préparé
+    deactivate EntrepriseService
+end
+
+FluxManager --> Orchestrator : Formulaire prêt
+Orchestrator --> Gateway : Interface initialisée
+Gateway --> WebUI : Formulaire entreprise
+WebUI --> Representant : **Formulaire pré-enregistrement**\nChamps entreprise + documents
+
+note over Representant : Formulaire affiché\navec champs obligatoires:\n- Raison sociale\n- SIRET\n- Adresse\n- Documents légaux
+
+== Saisie et soumission données ==
+
+Representant -> WebUI : Saisir données entreprise\n(SIRET, raison sociale, etc.)
+Representant -> WebUI : Téléverser documents\n(K-bis, statuts, etc.)
+Representant -> WebUI : Soumettre formulaire
+
+WebUI -> Gateway : POST /preregistration/entreprise/submit
+note over Gateway : Données entreprise +\ndocuments joints
+
+Gateway -> Orchestrator : soumettrePreEnregistrement()
+
+' Validation des données
+Orchestrator -> ValidationService : validerDonneesEntreprise()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format SIRET
+ValidationService -> ValidationService : Validate raison sociale
+ValidationService -> ValidationService : Verify adresse
+ValidationService -> ValidationService : Control cohérence données
+
+alt Données valides
+    ValidationService --> Orchestrator : Validation OK
+    deactivate ValidationService
+    
+    ' Validation des documents
+    Orchestrator -> DocumentService : validerDocumentsEntreprise()
+    activate DocumentService
+    
+    DocumentService -> DocumentService : Verify présence\ndocuments obligatoires
+    DocumentService -> DocumentService : Control formats\n(PDF, images)
+    DocumentService -> DocumentService : Validate taille fichiers
+    
+    alt Documents valides
+        DocumentService --> Orchestrator : Documents conformes
+        deactivate DocumentService
+        
+        ' Vérification doublons
+        Orchestrator -> DoublonService : rechercherDoublonEntreprise()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT entreprises SIRET
+        activate DB
+        DB --> DoublonService : Résultats recherche
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze similitudes\n(SIRET, raison sociale)
+        
+        alt Aucun doublon
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            alt Infrastructure disponible
+                ' Génération identifiant unique
+                Orchestrator -> IdentService : genererIdentifiantUnique()
+                activate IdentService
+                
+                IdentService -> IdentService : Generate ID unique\nformat: ENT-{timestamp}-{random}
+                IdentService -> DB : Verify unicité ID
+                activate DB
+                DB --> IdentService : ID unique confirmé
+                deactivate DB
+                
+                IdentService --> Orchestrator : ID généré: ${identifiant}
+                deactivate IdentService
+                
+                ' Sauvegarde pré-enregistrement
+                Orchestrator -> EntrepriseService : enregistrerPreEnregistrement()
+                activate EntrepriseService
+                
+                EntrepriseService -> DB : INSERT pre_enregistrement_entreprise
+                activate DB
+                DB --> EntrepriseService : Pre-registration créé
+                deactivate DB
+                
+                EntrepriseService -> DocumentService : sauvegarderDocuments()
+                activate DocumentService
+                
+                DocumentService -> Storage : Save documents
+                activate Storage
+                Storage --> DocumentService : Documents stockés
+                deactivate Storage
+                
+                DocumentService -> DB : INSERT documents_entreprise
+                activate DB
+                DB --> DocumentService : Références créées
+                deactivate DB
+                
+                DocumentService --> EntrepriseService : Documents associés
+                deactivate DocumentService
+                
+                EntrepriseService --> Orchestrator : Enregistrement finalisé
+                deactivate EntrepriseService
+                
+                ' Audit et notification
+                Orchestrator -> AuditService : logPreEnregistrementReussi()
+                activate AuditService
+                AuditService -> DB : INSERT audit_actions
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator -> NotificationService : notifierPreEnregistrement()
+                activate NotificationService
+                NotificationService -> NotificationService : Préparer confirmation\nemail
+                NotificationService -> NotificationService : Send notification\nau représentant
+                NotificationService --> Orchestrator : Notification envoyée
+                deactivate NotificationService
+                
+                Orchestrator --> Gateway : Pre-registration réussi
+                Gateway --> WebUI : Confirmation avec identifiant
+                WebUI --> Representant : **Success**\nIdentifiant: ${identifiant}\nConfirmation envoyée par email
+                
+                note over Representant : Pre-registration réussi\nIdentifiant unique généré\nSuivi possible avec cet ID
+                
+                == Options post-enregistrement ==
+                
+                opt Actions optionnelles
+                    alt Impression confirmation
+                        Representant -> WebUI : Imprimer confirmation
+                        WebUI -> Gateway : GET /preregistration/{id}/print
+                        Gateway -> EntrepriseService : genererRecapitulatif()
+                        activate EntrepriseService
+                        EntrepriseService --> Gateway : PDF récapitulatif
+                        deactivate EntrepriseService
+                        Gateway --> WebUI : PDF généré
+                        WebUI --> Representant : **Document imprimable**
+                        
+                    else Suivi dossier
+                        Representant -> WebUI : Suivre dossier
+                        WebUI -> Gateway : GET /preregistration/{id}/status
+                        Gateway -> EntrepriseService : getStatutDossier()
+                        activate EntrepriseService
+                        EntrepriseService -> DB : SELECT statut_dossier
+                        activate DB
+                        DB --> EntrepriseService : Statut actuel
+                        deactivate DB
+                        EntrepriseService --> Gateway : Statut dossier
+                        deactivate EntrepriseService
+                        Gateway --> WebUI : Informations statut
+                        WebUI --> Representant : **Statut**: In Progress d'instruction
+                    end
+                end
+                
+            else Infrastructure indisponible
+                Orchestrator -> AuditService : logErrorInfrastructure()
+                activate AuditService
+                AuditService -> DB : INSERT audit_erreurs
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator --> Gateway : Error technique
+                Gateway --> WebUI : Service temporairement indisponible
+                WebUI --> Representant : **Error technique**\nService temporairement indisponible\nVeuillez réessayer plus tard
+                
+                note over Representant : Problème technique\nRéessayer ultérieurement
+            end
+            
+        else Doublon détecté
+            DoublonService --> Orchestrator : Entreprise existe
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logTentativeDoublon()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Doublon détecté
+            Gateway --> WebUI : Entreprise déjà enregistrée
+            WebUI --> Representant : **Attention**: Entreprise déjà\npré-enregistrée avec ce SIRET
+        end
+        
+    else Documents invalides
+        DocumentService --> Orchestrator : Documents non conformes
+        deactivate DocumentService
+        
+        Orchestrator --> Gateway : Error documents
+        Gateway --> WebUI : Documents incorrects
+        WebUI --> Representant : **Error**: Documents invalides\nCorrections requises
+    end
+    
+else Données invalides
+    ValidationService --> Orchestrator : Données incorrectes
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Données non conformes
+    WebUI --> Representant : **Error**: Données incorrectes\nVerify saisie
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxPreEnregistrement()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Representant
+
+note over DB : Pre-registration entreprise\ntracé et audité pour\nconformité réglementaire
+
+@enduml

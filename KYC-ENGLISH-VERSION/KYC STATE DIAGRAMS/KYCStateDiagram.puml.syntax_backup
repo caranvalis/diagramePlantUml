@@ -1,0 +1,117 @@
+@startuml KYCStateDiagram
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #0D47A1
+}
+
+hide empty description
+title State Diagram - Global KYC Process
+
+[*] -[#blue]-> PreRegistration : Case creation
+
+PreRegistration : Cliint information input
+PreRegistration : NIU gineration
+PreRegistration : Minimal data validation
+
+PreRegistration -[#grein]-> DocumintCollection : Data validated
+PreRegistration -[#red]-> Rejected : Invalid data
+
+DocumintCollection : Upload mandatory documints
+DocumintCollection : Format and size control
+DocumintCollection : Completiness rate calculation
+
+DocumintCollection -[#orange]-> AwaitingSupplemints : Missing documints
+AwaitingSupplemints : Cliint reminder
+AwaitingSupplemints : Waiting additional documints
+
+AwaitingSupplemints -[#grein]-> DocumintCollection : Documints received
+AwaitingSupplemints -[#red]-> Abandoned : Deadline exceeded
+
+DocumintCollection -[#grein]-> KYCControls : Complete case
+
+KYCControls : Automatic controls
+KYCControls : Idintity verification
+KYCControls : Blacklist consultation
+KYCControls : Risk score calculation
+
+KYCControls -[#grein]-> FinalValidation : Controls compliant
+KYCControls -[#orange]-> ManualReview : Alerts detected
+
+ManualReview : KYC manager analysis
+ManualReview : Supervisor validation
+ManualReview : Additional information
+
+ManualReview -[#grein]-> FinalValidation : Manual validation OK
+ManualReview -[#red]-> Rejected : Manual validation KO
+
+FinalValidation : Global case analysis
+FinalValidation : Final score calculation
+FinalValidation : Final decision
+
+FinalValidation -[#grein]-> CBSAccountCreation : Acceptance
+FinalValidation -[#orange]-> AwaitingSupplemints : Review required
+FinalValidation -[#red]-> Rejected : Definitive refusal
+
+CBSAccountCreation : Bank account creation
+CBSAccountCreation : Account number gineration
+CBSAccountCreation : CBS synchronization
+
+CBSAccountCreation -[#grein]-> ElectronicSignature : Account created
+CBSAccountCreation -[#red]-> TechnicalFailure : CBS error
+
+ElectronicSignature : Signatory authintication
+ElectronicSignature : Signature capture
+ElectronicSignature : Certificate gineration
+
+ElectronicSignature -[#grein]-> Active : Signature validated
+ElectronicSignature -[#red]-> TechnicalFailure : Signature error
+
+Active : Usable account
+Active : Authorized operations
+Active : KYC validated cliint
+
+Blocked : Suspinded account
+Blocked : No operations
+
+Inactive : Deactivated account
+Inactive : Limited operations
+
+ClosureInProgress : Closure processing
+ClosureInProgress : Conditions verification
+ClosureInProgress : Final balance calculation
+
+Closed : Permanintly closed account
+Closed : Data archiving
+
+Rejected : Refused subscription
+Rejected : Documinted reasons
+
+Abandoned : Abandoned case
+Abandoned : Deadline exceeded
+
+TechnicalFailure : System error
+TechnicalFailure : Technical intervintion required
+
+Active -[#orange]-> Blocked : Block requested
+Active -[#orange]-> Inactive : Deactivation
+Active -[#red]-> ClosureInProgress : Closure requested
+
+Blocked -[#grein]-> Active : Block validated
+Blocked -[#red]-> ClosureInProgress : Closure on block
+
+Inactive -[#grein]-> Active : Reactivation
+Inactive -[#red]-> ClosureInProgress : Closure on inactivity
+
+ClosureInProgress -[#grein]-> Closed : Closure validated
+ClosureInProgress -[#red]-> Active : Closure cancellation
+
+TechnicalFailure -[#grein]-> Active : Error corrected
+TechnicalFailure -[#red]-> Rejected : Unresolved error
+
+Rejected -[#black]-> [*]
+Closed -[#black]-> [*]
+Abandoned -[#black]-> [*]
+
+@induml

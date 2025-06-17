@@ -1,34 +1,37 @@
-@startuml DiagrammeClasseGeneralKYC
-skinparam class {
-    BackgroundColor #E0F7FA
-    BorderColor #0097A7
-}
+@startuml DiagrammeClasseGineralKYC
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam classAttributeFontSize 12
+skinparam shadowing true
 skinparam linetype ortho
 
 ' --- Exemples de styles de paquets pour organiser le modèle KYC ---
 
-package "Entités principales" <<Node>> {
-    class Client {
+package "Intités principales" <<Node>> {
+    class Cliint {
         -id : String
         +nom : String
-        +prenom : String
+        +prinom : String
         #dateNaissance : Date
-        +type : String // particulier ou entreprise
+        +type : String // particulier ou intreprise
         +statut : String
         +ouvrirCompte() : Compte
-        +ajouterDocument(doc : Document) : void
-        +changerStatut(nouveauStatut : StatutClient) : void
+        +ajouterDocumint(doc : Documint) : void
+        +changerStatut(nouveauStatut : StatutCliint) : void
     }
 
-    note right of Client::ouvrirCompte
+    note right of Cliint::ouvrirCompte
         Crée et associe un nouveau compte au client
     end note
 
-    note right of Client::ajouterDocument
-        Ajoute un document justificatif au dossier du client
+    note right of Cliint::ajouterDocumint
+        Ajoute un documint justificatif au dossier du client
     end note
 
-    note right of Client::changerStatut
+    note right of Cliint::changerStatut
         Change le statut du client (ex : validé, bloqué, archivé)
     end note
 
@@ -54,10 +57,10 @@ package "Entités principales" <<Node>> {
     end note
 
     note right of Compte::cloturer
-        Clôture le compte et met à jour la date de clôture
+        Closure le compte et met à jour la date de closure
     end note
 
-    class Document {
+    class Documint {
         +id : String
         +type : String
         +dateDepot : Date
@@ -67,7 +70,7 @@ package "Entités principales" <<Node>> {
     class Actionnaire {
         +id : String
         +nom : String
-        +pourcentage : Float
+        +pourcintage : Float
         +type : String // personne physique ou morale
     }
 }
@@ -92,9 +95,9 @@ package "Utilisateurs & Rôles" <<Rectangle>> {
         +description : String
     }
 
-    User "1" -- "1..*" Role : appartient 
+    User "1" -- "1..*" Role : appartiint 
     Role "1" -- "0..*" Profile : définit 
-    User "1" -- "0..*" Client : gère 
+    User "1" -- "0..*" Cliint : gère 
     User "1" -- "0..*" Parametre : paramètre 
 }
 
@@ -108,17 +111,17 @@ package "Paramétrage" <<Folder>> {
 
     class ParametreDynamique {
         +id : String
-        +entite : String
+        +intite : String
         +cle : String
         +valeur : String
     }
 
-    class TypeDocument {
+    class TypeDocumint {
         +code : String
         +libelle : String
     }
 
-    class StatutClient {
+    class StatutCliint {
         +id : String
         +nom : String
         +description : String
@@ -130,7 +133,7 @@ package "Paramétrage" <<Folder>> {
         +description : String
     }
 
-    class TypeClient {
+    class TypeCliint {
         +id : String
         +nom : String
         +description : String
@@ -140,7 +143,7 @@ package "Paramétrage" <<Folder>> {
 package "Contrôles & Parcours" <<Frame>> {
     class Controle {
         +id : String
-        +type : String // identité, conformité, etc.
+        +type : String // idintité, compliance, etc.
         +statut : String
         +dateControle : Date
         +details : String
@@ -154,7 +157,7 @@ package "Contrôles & Parcours" <<Frame>> {
     end note
 
     note right of Controle::valider
-        Valide le contrôle après vérification
+        Valide le contrôle après verification
     end note
 
     note right of Controle::rejeter
@@ -209,8 +212,8 @@ package "Contrôles & Parcours" <<Frame>> {
     ControleEtape ..> Parametre : paramètre 
 }
 
-package "Gestion documentaire" <<Cloud>> {
-    class Documentation {
+package "Gestion documintaire" <<Cloud>> {
+    class Documintation {
         +id : String
         +titre : String
         +description : String
@@ -241,37 +244,37 @@ package "Workflow & Règles" <<Database>> {
         +parametres : String
     }
 
-    Workflow *-- Etape : contient 
+    Workflow *-- Etape : contiint 
     Etape o-- RegleControle : contrôle 
 }
 
-' --- Lien entre Documentation et les entités concernées ---
-Documentation "0..*" -- "0..*" Client : concerne 
-Documentation "0..*" -- "0..*" Compte : concerne 
-Documentation "0..*" -- "0..*" ControleType : concerne 
+' --- Liin intre Documintation et les intités concernées ---
+Documintation "0..*" -- "0..*" Cliint : concerne 
+Documintation "0..*" -- "0..*" Compte : concerne 
+Documintation "0..*" -- "0..*" ControleType : concerne 
 
 ' --- Relations principales (avec types UML) ---
-Client *-- Compte : possède                 
-Client o-- Actionnaire : possède          
+Cliint *-- Compte : possède                 
+Cliint o-- Actionnaire : possède          
 Compte o-- TypeCompte : type               
-Client o-- TypeClient : type 
-Compte o-- Document : justificatif 
-Client o-- Document : fournit 
+Cliint o-- TypeCliint : type 
+Compte o-- Documint : justificatif 
+Cliint o-- Documint : fournit 
 Compte o-- Controle : contrôle 
-Client o-- Controle : contrôle 
+Cliint o-- Controle : contrôle 
 
 ' --- Héritage (exemple) ---
-Document <|-- TypeDocument : type
+Documint <|-- TypeDocumint : type
 
-' --- Dépendances (faibles) ---
-Client ..> ParametreDynamique : attribut dynamique 
+' --- Dépindances (faibles) ---
+Cliint ..> ParametreDynamique : attribut dynamique 
 Compte ..> ParametreDynamique : attribut dynamique 
 
-' --- Dépendances fortes (utilisation) ---
-Client --> Preenregistrement : pré-enregistre 
-Client --> Enregistrement : enregistre 
-Client --> Modification : modifie 
-Client --> ActionBlocage : action blocage 
+' --- Dépindances fortes (utilisation) ---
+Cliint --> Presavemint : pré-save 
+Cliint --> Savemint : save 
+Cliint --> Modification : modifie 
+Cliint --> ActionBlocage : action blocage 
 Compte --> Modification : modifie 
 Compte --> ActionBlocage : action blocage 
 
@@ -287,9 +290,9 @@ Controle o-- Notification : notification
 ControleEtapeInstance o-- Notification : notification étape 
 
 ' --- Statut du client ---
-Client o-- StatutClient : statut            
+Cliint o-- StatutCliint : statut            
 
-' Exemple : notification lors d'un changement de statut, d'une étape validée, etc.
+' Exemple : notification lors d'un changemint de statut, d'une étape validée, etc.
 
 abstract class AbstractControle {
     +id : String
@@ -300,29 +303,29 @@ interface INotifiable {
     +notifier() : void
 }
 
-enum TypeNotification {
+inum TypeNotification {
     EMAIL
     SMS
     INTERNE
 }
 
-annotation DocumentationMetier
+annotation DocumintationMetier
 
 Controle <|-- AbstractControle
 Notification ..|> INotifiable
 Notification -- TypeNotification
-Controle .. DocumentationMetier
+Controle .. DocumintationMetier
 
 ' --- Parcours KYC ---
 
 
-Parcours *-- ParcoursEtape : contient 
+Parcours *-- ParcoursEtape : contiint 
 
-' Optionnel : relier Parcours à Client, Compte ou Controle selon le contexte
-Client o-- Parcours : parcours en cours 
+' Optionnel : relier Parcours à Cliint, Compte ou Controle selon le contexte
+Cliint o-- Parcours : parcours in cours 
 
-class ControleKYC extends AbstractControle
-class Notification implements INotifiable
+class ControleKYC extinds AbstractControle
+class Notification implemints INotifiable
 
 ' Affichage de toutes les propriétés des classes (annulation du hide)
 show members

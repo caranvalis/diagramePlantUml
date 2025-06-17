@@ -1,0 +1,157 @@
+@startuml ArchitecturalOverview
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classBackgroundColor #E8F5E8
+skinparam classFontSize 14
+skinparam packageFontSize 16
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 50
+skinparam ranksep 40
+
+title Architectural Overview - Modular Account Opening System
+
+package "01. Workflow Management" as Workflow #E8F5E8 {
+  class AccountOpeningRequest
+  class ValidationStep  
+  class ComplianceBoard
+  class ComplianceLine
+}
+
+package "02. Regulatory Controls" as Controls #FFE8E8 {
+  class RegulatoryControl
+  class BlacklistControl
+  class PPEControl
+  class FATCAControl
+  class KYCControl
+  class ControlAlert
+}
+
+package "03. Document Management" as Documents #F0F8E8 {
+  class RequiredDocument
+  class ClientRecord
+  class OpeningAgreement
+  class ElectronicSignature
+  class FileAttachment
+}
+
+package "04. Agents and Units" as Agents #FFF8E1 {
+  class Agent
+  class ManagementUnit
+  class Delegation
+  class Absence
+  class AccessRight
+  class AgentStatistics
+}
+
+package "05. Client and Data" as Client #F3E5F5 {
+  class PotentialClient
+  class PersonalData
+  class ProfessionalData
+  class Address
+  class ContactInfo
+  class IdentityDocument
+}
+
+package "06. External Integrations" as Integration #E1F5FE {
+  class CBSInterface
+  class ExternalAPI
+  class NotificationService
+  class AuditService
+  class ReportingEngine
+  class QueueManager
+}
+
+package "07. Configuration and Rules" as Config #FFF3E0 {
+  class BusinessRule
+  class ValidationCriteria
+  class SystemConfiguration
+  class UserPreferences
+  class SecurityPolicy
+}
+
+' === MAIN RELATIONSHIPS ===
+
+' Workflow connections
+AccountOpeningRequest ||--o{ ValidationStep : "contains"
+ValidationStep ||--o{ ComplianceBoard : "uses"
+ComplianceBoard ||--o{ ComplianceLine : "contains"
+
+' Control relationships
+ValidationStep ||--o{ RegulatoryControl : "executes"
+RegulatoryControl <|-- BlacklistControl
+RegulatoryControl <|-- PPEControl
+RegulatoryControl <|-- FATCAControl
+RegulatoryControl <|-- KYCControl
+RegulatoryControl ||--o{ ControlAlert : "generates"
+
+' Document management
+AccountOpeningRequest ||--o{ RequiredDocument : "requires"
+PotentialClient ||--|| ClientRecord : "has"
+ClientRecord ||--o{ OpeningAgreement : "signs"
+OpeningAgreement ||--o{ ElectronicSignature : "validated by"
+RequiredDocument ||--o{ FileAttachment : "attached"
+
+' Agent and delegation system
+Agent ||--o{ ManagementUnit : "belongs to"
+Agent ||--o{ Delegation : "can delegate"
+Agent ||--o{ Absence : "can be absent"
+Agent ||--o{ AccessRight : "has"
+Agent ||--|| AgentStatistics : "tracks"
+
+' Client data relationships
+AccountOpeningRequest ||--|| PotentialClient : "for"
+PotentialClient ||--|| PersonalData : "has"
+PotentialClient ||--o{ ProfessionalData : "may have"
+PotentialClient ||--o{ Address : "resides at"
+PotentialClient ||--o{ ContactInfo : "contacted via"
+PotentialClient ||--o{ IdentityDocument : "identified by"
+
+' External integrations
+AccountOpeningRequest ||--o{ CBSInterface : "processed via"
+RegulatoryControl ||--o{ ExternalAPI : "calls"
+ValidationStep ||--o{ NotificationService : "notifies via"
+RegulatoryControl ||--o{ AuditService : "logged by"
+Agent ||--o{ ReportingEngine : "generates reports"
+ValidationStep ||--o{ QueueManager : "queued in"
+
+' Configuration relationships
+ValidationStep ||--o{ BusinessRule : "follows"
+RegulatoryControl ||--o{ ValidationCriteria : "based on"
+Agent ||--o{ SystemConfiguration : "configured by"
+Agent ||--o{ UserPreferences : "has"
+AccessRight ||--o{ SecurityPolicy : "enforced by"
+
+' === ARCHITECTURAL NOTES ===
+
+note top of Workflow : **Core Business Process**\nManages the complete account\nopening workflow with\nmulti-level validations
+
+note top of Controls : **Regulatory Compliance**\nEnsures adherence to banking\nregulations and international\ncompliance standards
+
+note top of Documents : **Document Lifecycle**\nHandles all document requirements,\nelectronic signatures, and\nfile management
+
+note top of Agents : **Human Resources**\nManages agents, delegations,\nabsences, and access controls\nwith statistics tracking
+
+note top of Client : **Customer Data Model**\nComprehensive client information\nmanagement with multiple\ndata categories
+
+note top of Integration : **External Systems**\nInterfaces with core banking,\nexternal APIs, and\nsupporting services
+
+note top of Config : **System Configuration**\nBusiness rules, validation criteria,\nand security policies\nmanagement
+
+' === ARCHITECTURAL PRINCIPLES ===
+
+note as ArchPrinciples
+**ARCHITECTURAL PRINCIPLES**
+• **Modularity**: Clear separation of concerns
+• **Scalability**: Horizontal scaling capability  
+• **Compliance**: Regulatory requirements first
+• **Auditability**: Complete audit trail
+• **Flexibility**: Configurable business rules
+• **Security**: Multi-layer access control
+• **Integration**: API-first design
+• **Reliability**: Error handling and recovery
+end note
+
+@enduml

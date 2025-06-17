@@ -1,0 +1,103 @@
+@startuml UC033
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequince {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignmint cinter
+}
+
+title <color:#4a90e2>UC033 - Unblocking Cliint et Restauration des Comptes</color>
+
+actor "<color:#ff6b6b>Analyste Compliance</color>" as Analyste
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#96ceb4>Service Unblocking</color>" as UnblockingService
+participant "<color:#96ceb4>Service Compte</color>" as AccountService
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Unblocking Cliint ==
+
+Analyste -> WebUI : <color:#00ff00>Request unblocking cliint [CLIENT_ID] + justification</color>
+activate Analyste
+activate WebUI
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/cliints/unblock</color>
+activate Gateway
+Gateway -> Orchestrator : <color:#45b7d1>Débloquer cliint avec justification</color>
+activate Orchestrator
+
+Orchestrator -> UnblockingService : <color:#96ceb4>Traiter unblocking cliint</color>
+activate UnblockingService
+
+UnblockingService -> KYCDB : <color:#00d2d3>SELECT status, block_reason FROM cliints WHERE id=?</color>
+activate KYCDB
+KYCDB --> UnblockingService : <color:#00d2d3>Statut actuel cliint</color>
+deactivate KYCDB
+
+alt <color:#ff6b6b>Cliint non bloqué</color>
+    UnblockingService --> Orchestrator : <color:#ff6b6b>ERREUR: Cliint déjà actif</color>
+    Orchestrator --> Gateway : <color:#ff6b6b>Cliint non bloqué</color>
+    Gateway --> WebUI : <color:#ff6b6b>400 Bad Request</color>
+    WebUI --> Analyste : <color:#ff6b6b>❌ Cliint déjà actif</color>
+    
+else <color:#00ff00>Cliint bloqué - Unblocking authorized</color>
+    UnblockingService -> KYCDB : <color:#00d2d3>UPDATE cliints SET status='ACTIVE', unblock_reason=?</color>
+    activate KYCDB
+    KYCDB --> UnblockingService : <color:#00d2d3>Cliint débloqué</color>
+    deactivate KYCDB
+    
+    UnblockingService -> AccountService : <color:#96ceb4>Restaurer comptes associés</color>
+    activate AccountService
+    AccountService -> KYCDB : <color:#00d2d3>UPDATE accounts SET status='ACTIVE' WHERE cliint_id=?</color>
+    activate KYCDB
+    KYCDB --> AccountService : <color:#00d2d3>Comptes restaurés</color>
+    deactivate KYCDB
+    AccountService --> UnblockingService : <color:#00d2d3>Comptes associés restaurés</color>
+    deactivate AccountService
+    
+    UnblockingService -> AuditService : <color:#feca57>Log unblocking cliint + comptes</color>
+    activate AuditService
+    AuditService -> AuditDB : Save action + justification
+    deactivate AuditService
+    
+    UnblockingService -> NotificationService : <color:#ff9ff3>Notify unblocking</color>
+    activate NotificationService
+    NotificationService -> Analyste : <color:#00ff00>✅ Cliint et comptes débloqués</color>
+    NotificationService --> UnblockingService : <color:#00d2d3>Notification invoyée</color>
+    deactivate NotificationService
+    
+    UnblockingService --> Orchestrator : <color:#00ff00>Unblocking completed</color>
+    deactivate UnblockingService
+    Orchestrator --> Gateway : <color:#00ff00>Cliint débloqué avec success</color>
+    deactivate Orchestrator
+    Gateway --> WebUI : <color:#00ff00>200 OK</color>
+    deactivate Gateway
+    WebUI --> Analyste : <color:#00ff00>✅ Unblocking effectué</color>
+    deactivate WebUI
+ind
+
+deactivate Analyste
+
+@induml

@@ -1,0 +1,325 @@
+@startuml UC009
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC009 - Importation Entreprise depuis Amplitude
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+actor "System Amplitude" as Amplitude #LightGray
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nEntreprise" as EntrepriseService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nIntégration" as IntegrationService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+    participant "Service\nMapping" as MappingService #6495ED
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+end box
+
+== Initialisation importation ==
+
+Manager -> WebUI : Sélectionner "Importer entreprise\ndepuis Amplitude"
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /import/amplitude/entreprise/form
+activate Gateway
+
+Gateway -> Orchestrator : initierImportEntrepriseAmplitude()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxImportEntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(IMPORT_ENTREPRISE_AMPLITUDE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux initialisé
+Orchestrator --> Gateway : Interface prête
+Gateway --> WebUI : Formulaire saisie identifiant
+WebUI --> Manager : **Saisir identifiant**\nEntreprise Amplitude
+
+note over Manager : Interface prête pour\nsaisie identifiant entreprise
+
+== Saisie et vérification identifiant ==
+
+Manager -> WebUI : Saisir identifiant\nentreprise Amplitude
+WebUI -> Gateway : POST /import/amplitude/entreprise/validate-id
+
+Gateway -> Orchestrator : validerIdentifiantEntrepriseAmplitude()
+
+Orchestrator -> ValidationService : validerFormatIdentifiant()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format\nidentifiant Amplitude
+ValidationService -> ValidationService : Validate structure
+
+alt Format identifiant valide
+    ValidationService --> Orchestrator : Identifiant valide
+    deactivate ValidationService
+    
+    ' Vérification cache
+    Orchestrator -> CacheService : getEntrepriseAmplitude()
+    activate CacheService
+    
+    alt Données en cache
+        CacheService --> Orchestrator : Données trouvées
+        deactivate CacheService
+        note over Orchestrator : Données récupérées\ndepuis le cache
+        
+    else Pas en cache
+        CacheService --> Orchestrator : Non trouvé
+        deactivate CacheService
+        
+        ' Interrogation Amplitude
+        Orchestrator -> IntegrationService : interrogerAmplitudeEntreprise()
+        activate IntegrationService
+        
+        IntegrationService -> Amplitude : GET /entreprise/{id}
+        activate Amplitude
+        
+        alt Amplitude disponible et identifiant correct
+            Amplitude --> IntegrationService : Données entreprise
+            deactivate Amplitude
+            
+            IntegrationService -> MappingService : mapperDonneesEntrepriseAmplitude()
+            activate MappingService
+            
+            MappingService -> MappingService : Convertir format\nAmplitude vers KYC
+            MappingService -> MappingService : Normaliser données\nentreprise
+            MappingService -> MappingService : Mapper représentants\nlégaux
+            MappingService -> MappingService : Validate mapping complet
+            
+            MappingService --> IntegrationService : Données mappées
+            deactivate MappingService
+            
+            IntegrationService -> CacheService : cacheEntrepriseAmplitude()
+            activate CacheService
+            CacheService --> IntegrationService : Mis en cache
+            deactivate CacheService
+            
+            IntegrationService --> Orchestrator : Données entreprise mappées
+            deactivate IntegrationService
+            
+        else Identifiant incorrect
+            Amplitude --> IntegrationService : Entreprise non trouvée
+            deactivate Amplitude
+            
+            IntegrationService -> AuditService : logIdentifiantIncorrect()
+            activate AuditService
+            AuditService -> DB : INSERT audit_erreurs
+            AuditService --> IntegrationService : OK
+            deactivate AuditService
+            
+            IntegrationService --> Orchestrator : Identifiant invalide
+            deactivate IntegrationService
+            
+            Orchestrator --> Gateway : Entreprise non trouvée
+            Gateway --> WebUI : Identifiant incorrect
+            WebUI --> Manager : **Error**: Identifiant\nentreprise incorrect
+            
+            note over Manager : Identifiant invalide\nVerify et ressaisir
+            
+        else Amplitude indisponible
+            Amplitude --> IntegrationService : Service indisponible
+            deactivate Amplitude
+            
+            IntegrationService -> AuditService : logErrorConnexionAmplitude()
+            activate AuditService
+            AuditService -> DB : INSERT audit_erreurs
+            AuditService --> IntegrationService : OK
+            deactivate AuditService
+            
+            IntegrationService --> Orchestrator : Service indisponible
+            deactivate IntegrationService
+            
+            Orchestrator --> Gateway : Amplitude indisponible
+            Gateway --> WebUI : Service temporairement indisponible
+            WebUI --> Manager : **Error**: Service Amplitude\nindisponible - Réessayer plus tard
+            
+            note over Manager : Service temporairement\nindisponible
+        end
+    end
+    
+    alt Données récupérées avec succès
+        ' Vérification doublons
+        Orchestrator -> DoublonService : rechercherDoublonEntrepriseAmplitude()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT entreprises_existantes
+        activate DB
+        DB --> DoublonService : Résultats recherche
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze doublons\npotentiels (SIRET, raison sociale)
+        
+        alt Aucun doublon
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            Orchestrator --> Gateway : Données prêtes
+            Gateway --> WebUI : Affichage données récupérées
+            WebUI --> Manager : **Données Amplitude**\nEntreprise + Représentants\nVérification et validation
+            
+            note over Manager : Données importées affichées:\n- Informations entreprise\n- Représentants légaux\n- Documents associés
+            
+            == Validation et intégration ==
+            
+            Manager -> WebUI : Validate import entreprise
+            WebUI -> Gateway : POST /import/amplitude/entreprise/confirm
+            
+            Gateway -> Orchestrator : confirmerImportEntrepriseAmplitude()
+            
+            Orchestrator -> ValidationService : validerDonneesCompletesEntreprise()
+            activate ValidationService
+            
+            ValidationService -> ValidationService : Verify complétude\ndonnées entreprise
+            ValidationService -> ValidationService : Control cohérence\nreprésentants légaux
+            ValidationService -> ValidationService : Validate documents\nassociés
+            
+            alt Données complètes et valides
+                ValidationService --> Orchestrator : Validation OK
+                deactivate ValidationService
+                
+                ' Création de l'entreprise
+                Orchestrator -> EntrepriseService : creerEntrepriseDepuisAmplitude()
+                activate EntrepriseService
+                
+                EntrepriseService -> DB : INSERT INTO entreprises
+                activate DB
+                DB --> EntrepriseService : ID entreprise généré
+                deactivate DB
+                
+                EntrepriseService -> DB : INSERT representants_legaux
+                activate DB
+                DB --> EntrepriseService : Représentants créés
+                deactivate DB
+                
+                EntrepriseService -> DB : INSERT historique_import
+                activate DB
+                DB --> EntrepriseService : Historique créé
+                deactivate DB
+                
+                EntrepriseService --> Orchestrator : Entreprise créée (ID: ${entrepriseId})
+                deactivate EntrepriseService
+                
+                ' Audit et notification
+                Orchestrator -> AuditService : logImportEntrepriseReussi()
+                activate AuditService
+                AuditService -> DB : INSERT audit_actions
+                AuditService --> Orchestrator : OK
+                deactivate AuditService
+                
+                Orchestrator -> NotificationService : notifierImportEntreprise()
+                activate NotificationService
+                NotificationService --> Orchestrator : Notification envoyée
+                deactivate NotificationService
+                
+                Orchestrator --> Gateway : Import réussi
+                Gateway --> WebUI : Confirmation intégration
+                WebUI --> Manager : **Success**: Entreprise importée\nID: ${entrepriseId}
+                
+                note over Manager : Import Amplitude réussi\nEntreprise intégrée en base\navec représentants légaux
+                
+            else Données incomplètes
+                ValidationService --> Orchestrator : Données incomplètes
+                deactivate ValidationService
+                
+                Orchestrator --> Gateway : Données à compléter
+                Gateway --> WebUI : Formulaire complétion
+                WebUI --> Manager : **Action requise**\nCompléter données manquantes\n(représentants, documents)
+                
+                note over Manager : Complétion manuelle\nrequise pour finaliser
+            end
+            
+        else Doublon détecté
+            DoublonService --> Orchestrator : Entreprise existe
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logDoublonEntrepriseAmplitude()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Doublon détecté
+            Gateway --> WebUI : Entreprise existante
+            WebUI --> Manager : **Attention**: Entreprise déjà\nexistante en base
+        end
+    end
+    
+else Format identifiant invalide
+    ValidationService --> Orchestrator : Format invalide
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : logErrorFormatIdentifiant()
+    activate AuditService
+    AuditService -> DB : INSERT audit_erreurs
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : Identifiant invalide
+    Gateway --> WebUI : Format incorrect
+    WebUI --> Manager : **Error**: Format identifiant\nincorrect
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxImportEntreprise()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Import entreprise Amplitude\ntracé avec mapping\net vérifications complètes
+
+@enduml

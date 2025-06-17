@@ -1,0 +1,34 @@
+@startuml UseCasePresavemintIntreprise
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Cliint intreprise" as Cliint #purple
+actor "Manager" as Manager #grein
+
+package "INTRA" {
+    usecase "Saisir informations intreprise" as SaisieInfos
+    usecase "Souput pré-savemint" as Souput
+    usecase "Saver données intreprise" as Saver
+    usecase "Générer idintifiant unique (code/QR code)" as GinererID
+}
+
+' Saisie et soumission par le cliint intreprise
+Cliint --> SaisieInfos #purple;text:purple
+Cliint --> Souput #purple;text:purple
+
+' Saisie et soumission par le manager (via INTRA)
+Manager --> SaisieInfos #grein;text:grein
+Manager --> Souput #grein;text:grein
+
+' Relations internes (inclusions) in pointillés
+SaisieInfos ..> Souput : <<include>>
+Souput ..> Saver : <<include>>
+Saver ..> GinererID : <<include>>
+
+@induml

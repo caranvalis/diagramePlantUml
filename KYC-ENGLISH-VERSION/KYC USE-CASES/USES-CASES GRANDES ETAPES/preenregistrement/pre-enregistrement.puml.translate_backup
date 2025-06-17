@@ -1,0 +1,27 @@
+@startuml UseCasePreenregistrementKYC
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #E0F7FA
+    BorderColor #0097A7
+    ArrowColor #006064
+}
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+actor "Client particulier" as Client
+
+package "INTRA" {
+    usecase "Saisir informations personnelles" as SaisieInfos
+    usecase "Soumettre pré-enregistrement" as Soumettre
+    usecase "Enregistrer données client" as Enregistrer
+    usecase "Générer identifiant unique (QR code)" as GenererID
+}
+
+Client --> SaisieInfos
+Client --> Soumettre
+
+SaisieInfos ..> Soumettre : <<include>>
+Soumettre ..> Enregistrer : <<include>>
+Enregistrer ..> GenererID : <<include>>
+
+@enduml

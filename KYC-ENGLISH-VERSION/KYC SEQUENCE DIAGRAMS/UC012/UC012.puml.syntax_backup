@@ -1,0 +1,336 @@
+@startuml UC012
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC012 - Activation/Blocage Intreprise
+
+' Acteurs externes
+actor "Analyste Compliance" as Analyste #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nIntreprise" as IntrepriseService #87CEEB
+    participant "Service\nCompte" as CompteService #4682B4
+    participant "Service\nStatut" as StatutService #4169E1
+    participant "Service\nValidation" as ValidationService #87CEFA
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "System\nComptes CBS" as CBS #A9A9A9
+ind box
+
+== Accès profil intreprise ==
+
+Analyste -> WebUI : Accéder profil intreprise\npour modification statut
+activate Analyste
+activate WebUI
+
+WebUI -> Gateway : GET /intreprise/{id}/profil
+activate Gateway
+
+Gateway -> Orchestrator : accederProfilIntreprise()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGestionStatutIntreprise()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(GESTION_STATUT_ENTREPRISE)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+' Récupération informations intreprise
+Orchestrator -> IntrepriseService : getProfilIntreprise()
+activate IntrepriseService
+
+IntrepriseService -> CacheService : getIntrepriseInfo()
+activate CacheService
+
+alt Intreprise in cache
+    CacheService --> IntrepriseService : Données trouvées
+    deactivate CacheService
+    
+else Pas in cache
+    CacheService --> IntrepriseService : Non trouvé
+    deactivate CacheService
+    
+    IntrepriseService -> DB : SELECT intreprise_details
+    activate DB
+    DB --> IntrepriseService : Informations intreprise
+    deactivate DB
+    
+    IntrepriseService -> CacheService : cacheIntrepriseInfo()
+    activate CacheService
+    CacheService --> IntrepriseService : Mis in cache
+    deactivate CacheService
+ind
+
+IntrepriseService --> Orchestrator : Profil intreprise
+deactivate IntrepriseService
+
+Orchestrator --> Gateway : Profil chargé
+Gateway --> WebUI : Informations intreprise
+WebUI --> Analyste : **Profil intreprise**\nStatut actuel + options modification
+
+note over Analyste : Profil affiché avec\nstatut actuel et actions\ndisponibles (Activer/Bloquer)
+
+== Request changemint statut ==
+
+Analyste -> WebUI : Sélectionner action\n(Activer/Bloquer intreprise)
+WebUI -> Gateway : POST /intreprise/{id}/change-statut
+
+Gateway -> Orchestrator : changerStatutIntreprise()
+
+' Validation des habilitations
+Orchestrator -> ValidationService : validerHabilitationsAnalyste()
+activate ValidationService
+
+ValidationService -> DB : SELECT permissions_analyste
+activate DB
+DB --> ValidationService : Permissions verifiedes
+deactivate DB
+
+alt Habilitations insuffisantes
+    ValidationService --> Orchestrator : Accès refusé
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Error autorisation
+    Gateway --> WebUI : Permissions insuffisantes
+    WebUI --> Analyste : **Error**: Droits insuffisants\npour modification statut
+    
+else Habilitations valides
+    ValidationService --> Orchestrator : Authorized
+    deactivate ValidationService
+    
+    ' Verification statut actuel
+    Orchestrator -> StatutService : verifierStatutActuel()
+    activate StatutService
+    
+    StatutService -> DB : SELECT statut_intreprise
+    activate DB
+    DB --> StatutService : Statut actuel
+    deactivate DB
+    
+    alt Statut déjà à jour
+        StatutService --> Orchestrator : Aucun changemint requis
+        deactivate StatutService
+        
+        Orchestrator --> Gateway : Statut inchangé
+        Gateway --> WebUI : Aucune modification
+        WebUI --> Analyste : **Information**: Statut déjà\nà la valeur demandée
+        
+        note over Analyste : Aucune action\nrequise
+        
+    else Changemint requis
+        StatutService --> Orchestrator : Changemint nécessaire
+        deactivate StatutService
+        
+        ' Idintification des comptes associés
+        Orchestrator -> CompteService : idintifierComptesIntreprise()
+        activate CompteService
+        
+        CompteService -> DB : SELECT comptes_intreprise
+        activate DB
+        DB --> CompteService : Liste comptes internes
+        deactivate DB
+        
+        CompteService -> CBS : GET /accounts/intreprise/{id}
+        activate CBS
+        CBS --> CompteService : Comptes CBS
+        deactivate CBS
+        
+        CompteService -> CompteService : Consolider liste\ncomptes complète
+        CompteService --> Orchestrator : Liste comptes (${nbComptes} comptes)
+        deactivate CompteService
+        
+        == Put à jour statuts ==
+        
+        ' Put à jour statut intreprise
+        Orchestrator -> StatutService : putAJourStatutIntreprise()
+        activate StatutService
+        
+        StatutService -> IntrepriseService : updateStatutIntreprise()
+        activate IntrepriseService
+        
+        IntrepriseService -> DB : UPDATE intreprise SET statut
+        activate DB
+        DB --> IntrepriseService : Statut intreprise mis à jour
+        deactivate DB
+        
+        IntrepriseService -> CacheService : invalidateIntrepriseCache()
+        activate CacheService
+        CacheService --> IntrepriseService : Cache invalidé
+        deactivate CacheService
+        
+        IntrepriseService --> StatutService : Intreprise put à jour
+        deactivate IntrepriseService
+        
+        ' Put à jour statuts comptes
+        StatutService -> CompteService : putAJourStatutsComptesIntreprise()
+        activate CompteService
+        
+        CompteService -> CompteService : Traiter chaque compte\nindividuellemint
+        
+        loop Pour chaque compte intreprise
+            CompteService -> DB : UPDATE compte SET statut
+            activate DB
+            
+            alt Compte modifiable
+                DB --> CompteService : Put à jour OK
+                deactivate DB
+                
+                CompteService -> CBS : PUT /account/{id}/status
+                activate CBS
+                
+                alt CBS disponible
+                    CBS --> CompteService : Statut CBS mis à jour
+                    deactivate CBS
+                    note right of CompteService : Compte synchronisé\navec CBS
+                    
+                else CBS unavailable
+                    CBS --> CompteService : Error CBS
+                    deactivate CBS
+                    
+                    CompteService -> AuditService : logErrorSyncCBS()
+                    activate AuditService
+                    AuditService -> DB : INSERT audit_errors
+                    activate DB
+                    DB --> AuditService : Error loggée
+                    deactivate DB
+                    AuditService --> CompteService : OK
+                    deactivate AuditService
+                    
+                    note right of CompteService : Désynchronisation\nCBS détectée
+                ind
+                
+            else Compte verrouillé
+                DB --> CompteService : Compte verrouillé
+                deactivate DB
+                
+                CompteService -> AuditService : logCompteVerrouille()
+                activate AuditService
+                AuditService -> DB : INSERT audit_anomalies
+                activate DB
+                DB --> AuditService : Anomalie loggée
+                deactivate DB
+                AuditService --> CompteService : OK
+                deactivate AuditService
+                
+                note right of CompteService : Compte verrouillé\nnon modifiable
+            ind
+        ind
+        
+        CompteService -> CompteService : Consolider results\nput à jour
+        CompteService --> StatutService : Bilan put à jour comptes
+        deactivate CompteService
+        
+        StatutService --> Orchestrator : Put à jour completed
+        deactivate StatutService
+        
+        == Notifications et audit ==
+        
+        alt Toutes puts à jour successfules
+            Orchestrator -> NotificationService : notifierChangemintStatutIntreprise()
+            activate NotificationService
+            
+            NotificationService -> NotificationService : Préparer notifications\nreprésintants + teams
+            NotificationService -> NotificationService : Sind notifications\nchangemint statut
+            
+            NotificationService --> Orchestrator : Notifications invoyées
+            deactivate NotificationService
+            
+            Orchestrator -> AuditService : logChangemintStatutReussi()
+            activate AuditService
+            AuditService -> DB : INSERT audit_actions
+            activate DB
+            DB --> AuditService : Action auditée
+            deactivate DB
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Changemint statut complet
+            Gateway --> WebUI : Success total
+            WebUI --> Analyste : **Success**: Statut intreprise\net comptes mis à jour
+            
+            note over Analyste : Changemint statut successful\nIntreprise + comptes synchronisés
+            
+        else Puts à jour partielles
+            Orchestrator -> NotificationService : notifierChangemintPartiel()
+            activate NotificationService
+            NotificationService --> Orchestrator : Notifications partielles invoyées
+            deactivate NotificationService
+            
+            Orchestrator -> AuditService : logChangemintStatutPartiel()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            activate DB
+            DB --> AuditService : Anomalies loggées
+            deactivate DB
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Changemint partiel
+            Gateway --> WebUI : Success partiel avec alertes
+            WebUI --> Analyste : **Attintion**: Changemint partiel\nCertains comptes verrouillés
+            
+            note over Analyste : Actions manuelles\nrequises sur comptes\nverrouillés
+        ind
+    ind
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGestionStatutIntreprise()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+activate DB
+DB --> AuditService : Flux finalisé
+deactivate DB
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Analyste
+
+note over DB : Changemints statut intreprise\ntracés pour audit compliance\navec gestion comptes associés
+
+@induml

@@ -1,0 +1,167 @@
+@startuml UC001_ClientPreRegistration
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title UC001: Client Pre-Registration Process
+
+' === ACTORS ===
+actor "Client" as client #lightblue
+actor "Banking Agent" as agent #lightgreen
+actor "KYC Administrator" as admin #orange
+
+' === INTERFACES ===
+participant "Client Interface" as ui_client #lightblue
+participant "Agent Interface" as ui_agent #lightgreen
+participant "Admin Interface" as ui_admin #orange
+
+' === API GATEWAY ===
+participant "KYC API Gateway" as gateway #gold
+
+' === ORCHESTRATION ===
+participant "KYC Orchestrator" as orchestrator #red
+
+' === BUSINESS SERVICES ===
+participant "Client Service" as svc_client #lightblue
+participant "Account Service" as svc_account #lightgreen
+participant "Document Service" as svc_document #lightyellow
+participant "Control Service" as svc_control #orange
+participant "Validation Service" as svc_validation #lightcoral
+
+' === TECHNICAL SERVICES ===
+participant "Auth Service" as svc_auth #lightgray
+participant "Notification Service" as svc_notification #lightcyan
+participant "Audit Service" as svc_audit #lightpink
+participant "Cache Service" as svc_cache #lavender
+
+' === INFRASTRUCTURE ===
+database "KYC Database" as db_kyc #yellow
+database "Audit Database" as db_audit #lightyellow
+database "Redis Cache" as cache_redis #lightcyan
+queue "Event Queue" as queue #lightgray
+
+' === MAIN SEQUENCE ===
+activate client
+client -> ui_client : Submit registration form
+activate ui_client
+
+ui_client -> gateway : POST /api/v1/clients/pre-register
+activate gateway
+
+gateway -> svc_auth : Validate API key and rate limit
+activate svc_auth
+svc_auth -> db_kyc : Check API credentials
+svc_auth --> gateway : Authentication successful
+deactivate svc_auth
+
+gateway -> orchestrator : Start pre-registration workflow
+activate orchestrator
+
+' === CACHE CHECK ===
+orchestrator -> svc_cache : Check for existing data
+activate svc_cache
+svc_cache -> cache_redis : GET client data
+alt Cache hit
+    cache_redis --> svc_cache : Cached client data
+    svc_cache --> orchestrator : Data found in cache
+else Cache miss
+    svc_cache --> orchestrator : No cached data
+    deactivate svc_cache
+    
+    ' === BUSINESS LOGIC ===
+    orchestrator -> svc_client : Validate client data
+    activate svc_client
+    svc_client -> db_kyc : Check for duplicate clients
+    
+    alt Client already exists
+        db_kyc --> svc_client : Duplicate found
+        svc_client --> orchestrator : Client already registered
+        orchestrator --> gateway : Error: Duplicate client
+        gateway --> ui_client : 409 Conflict
+        ui_client --> client : Registration failed: Already registered
+    else New client
+        svc_client -> db_kyc : Create new client record
+        db_kyc --> svc_client : Client created with ID
+        svc_client --> orchestrator : Client validation successful
+        deactivate svc_client
+        
+        ' === INITIAL CONTROLS ===
+        orchestrator -> svc_control : Perform initial checks
+        activate svc_control
+        svc_control -> db_kyc : Check sanctions lists
+        svc_control -> db_kyc : Verify PEP status
+        svc_control --> orchestrator : Initial checks completed
+        deactivate svc_control
+        
+        ' === CACHE UPDATE ===
+        orchestrator -> svc_cache : Store client data
+        activate svc_cache
+        svc_cache -> cache_redis : SET client data with TTL
+        deactivate svc_cache
+        
+        ' === AUDIT AND NOTIFICATION ===
+        orchestrator -> svc_audit : Log registration event
+        activate svc_audit
+        svc_audit -> db_audit : Store audit record
+        svc_audit -> queue : Publish client.pre_registered event
+        deactivate svc_audit
+        
+        orchestrator -> svc_notification : Send confirmation
+        activate svc_notification
+        svc_notification -> queue : Queue welcome email
+        svc_notification -> queue : Queue SMS confirmation
+        deactivate svc_notification
+        
+        orchestrator --> gateway : Pre-registration successful
+        deactivate orchestrator
+        
+        gateway --> ui_client : 201 Created with client ID
+        deactivate gateway
+        
+        ui_client --> client : Registration successful
+        deactivate ui_client
+    end
+end
+
+deactivate client
+
+' === ERROR HANDLING ===
+note over orchestrator, svc_validation
+  Error Handling Strategy:
+  - Timeout: 30s per service call
+  - Retry: 3 attempts with exponential backoff
+  - Circuit breaker: Open on 5 consecutive failures
+  - Fallback: Return cached data when available
+  - Logging: Detailed error logs for debugging
+end note
+
+' === COMPLIANCE NOTES ===
+note over svc_audit, db_audit
+  Regulatory Compliance:
+  - GDPR: All personal data encrypted
+  - Audit trail: Complete action logging
+  - Data retention: Configurable policies
+  - Right to erasure: Soft delete implementation
+  - Consent management: Explicit opt-ins
+end note
+
+' === PERFORMANCE NOTES ===
+note over svc_cache, cache_redis
+  Performance Optimization:
+  - Redis TTL: 1 hour for client data
+  - Database connection pooling
+  - Asynchronous notification processing
+  - Horizontal scaling capability
+  - Load balancing across instances
+end note
+
+@enduml

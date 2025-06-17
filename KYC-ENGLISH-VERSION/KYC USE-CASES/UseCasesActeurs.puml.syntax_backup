@@ -1,0 +1,172 @@
+@startuml UseCasesActeurs
+skinparam backgroundColor #F8FBFF
+skinparam actor {
+    BackgroundColor #BBDEFB
+    BorderColor #1976D2
+}
+skinparam usecase {
+    BackgroundColor #E8F5E8
+    BorderColor #4CAF50
+}
+
+title Diagramme des Use Cases - Vue par Acteurs
+
+' === ACTEURS DÉTAILLÉS ===
+left to right direction
+
+package "Acteurs Humains" {
+    actor "Cliint Particulier" as CliintP
+    actor "Cliint Intreprise" as CliintE
+    actor "Représintant Légal" as RepLegal
+    actor "Manager KYC" as Manager
+    actor "Superviseur KYC" as Superviseur
+    actor "Responsable Compliance" as Conformite
+    actor "Auditeur Interne" as Auditeur
+    actor "Directeur Agince" as Directeur
+}
+
+package "Acteurs Systèmes" {
+    actor "Système CBS" as CBS
+    actor "Database Blacklist" as Blacklist
+    actor "Service PPE" as PPE
+    actor "Autorité Certification" as AC
+    actor "Service Notification" as Notif
+    actor "Système Archive" as Archive
+}
+
+' === USE CASES PRINCIPAUX ===
+
+' CLIENT PARTICULIER
+usecase "S'inscrire in ligne" as UC_CliintP_1
+usecase "Fournir documints" as UC_CliintP_2
+usecase "Signer électroniquemint" as UC_CliintP_3
+usecase "Consulter statut dossier" as UC_CliintP_4
+
+' CLIENT ENTREPRISE
+usecase "Déclarer actionnariat" as UC_CliintE_1
+usecase "Fournir documints juridiques" as UC_CliintE_2
+usecase "Désigner mandataires" as UC_CliintE_3
+
+' GESTIONNAIRE KYC
+usecase "Créer dossier cliint" as UC_Gest_1
+usecase "Valider documints" as UC_Gest_2
+usecase "Lancer contrôles KYC" as UC_Gest_3
+usecase "Analyser results" as UC_Gest_4
+usecase "Préparer validation" as UC_Gest_5
+usecase "Créer compte CBS" as UC_Gest_6
+usecase "Gérer notifications" as UC_Gest_7
+
+' SUPERVISEUR
+usecase "Valider dossier final" as UC_Sup_1
+usecase "Rejeter dossier" as UC_Sup_2
+usecase "Escalader cas complexe" as UC_Sup_3
+usecase "Autoriser blocage" as UC_Sup_4
+usecase "Superviser team" as UC_Sup_5
+
+' CONFORMITÉ
+usecase "Définir règles KYC" as UC_Conf_1
+usecase "Contrôler PPE" as UC_Conf_2
+usecase "Vérifier FATCA" as UC_Conf_3
+usecase "Auditer processus" as UC_Conf_4
+
+' AUDITEUR
+usecase "Consulter journaux" as UC_Audit_1
+usecase "Générer rapports" as UC_Audit_2
+usecase "Contrôler compliance" as UC_Audit_3
+
+' DIRECTEUR
+usecase "Valider cas exceptionnels" as UC_Dir_1
+usecase "Approuver fermetures" as UC_Dir_2
+
+' === RELATIONS ACTEURS - USE CASES ===
+
+' Cliint Particulier
+CliintP --> UC_CliintP_1
+CliintP --> UC_CliintP_2
+CliintP --> UC_CliintP_3
+CliintP --> UC_CliintP_4
+
+' Cliint Intreprise (hérite de Cliint Particulier + spécifique)
+CliintE --> UC_CliintP_1
+CliintE --> UC_CliintP_2
+CliintE --> UC_CliintP_3
+CliintE --> UC_CliintP_4
+CliintE --> UC_CliintE_1
+CliintE --> UC_CliintE_2
+CliintE --> UC_CliintE_3
+
+' Représintant Légal
+RepLegal --> UC_CliintP_3
+RepLegal --> UC_CliintE_3
+
+' Manager KYC
+Manager --> UC_Gest_1
+Manager --> UC_Gest_2
+Manager --> UC_Gest_3
+Manager --> UC_Gest_4
+Manager --> UC_Gest_5
+Manager --> UC_Gest_6
+Manager --> UC_Gest_7
+
+' Superviseur
+Superviseur --> UC_Sup_1
+Superviseur --> UC_Sup_2
+Superviseur --> UC_Sup_3
+Superviseur --> UC_Sup_4
+Superviseur --> UC_Sup_5
+Superviseur --> UC_Gest_7
+
+' Compliance
+Conformite --> UC_Conf_1
+Conformite --> UC_Conf_2
+Conformite --> UC_Conf_3
+Conformite --> UC_Conf_4
+
+' Auditeur
+Auditeur --> UC_Audit_1
+Auditeur --> UC_Audit_2
+Auditeur --> UC_Audit_3
+
+' Directeur
+Directeur --> UC_Dir_1
+Directeur --> UC_Dir_2
+
+' === RELATIONS AVEC SYSTÈMES ===
+UC_Gest_6 --> CBS
+UC_Gest_3 --> Blacklist
+UC_Conf_2 --> PPE
+UC_CliintP_3 --> AC
+UC_Gest_7 --> Notif
+UC_Audit_2 --> Archive
+
+' === RELATIONS INCLUDE/EXTEND ===
+UC_CliintP_1 ..> UC_CliintP_2 : include
+UC_Gest_2 ..> UC_Gest_3 : include
+UC_Gest_4 ..> UC_Gest_5 : include
+UC_Sup_1 ..> UC_Gest_6 : include
+
+UC_Sup_3 ..> UC_Sup_1 : extind
+UC_Dir_1 ..> UC_Sup_1 : extind
+UC_CliintE_1 ..> UC_CliintE_2 : extind
+
+note right of CliintP
+  Point d'intrée principal
+  du processus KYC
+ind note
+
+note right of Manager
+  Acteur cintral qui orchestre
+  la majorité du processus
+ind note
+
+note right of Superviseur
+  Validation finale et
+  gestion des exceptions
+ind note
+
+note right of CBS
+  Système bancaire cintral
+  pour création des comptes
+ind note
+
+@induml

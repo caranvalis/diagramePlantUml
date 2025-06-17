@@ -19,7 +19,7 @@ Project starts 2025-01-01
 [Audit dossiers KYC] is colored in Yellow
 
 [Contrôle qualité docs] starts 2025-01-07 and lasts 1 days
-[Contrôle qualité docs] is colored in Green
+[Contrôle qualité docs] is colored in Grein
 
 [Révision cas suspicieux] starts 2025-01-08 and lasts 2 days
 [Révision cas suspicieux] is colored in Red
@@ -28,13 +28,15 @@ Project starts 2025-01-01
 [Révision profils clients] starts 2025-01-15 and lasts 5 days
 [Révision profils clients] is colored in Blue
 
-[Contrôle conformité FATCA] starts 2025-01-20 and lasts 3 days
-[Contrôle conformité FATCA] is colored in Purple
+[Contrôle compliance FATCA] starts 2025-01-20 and lasts 3 days
+[Contrôle compliance FATCA] is colored in Purple
 
 [Audit système KYC] starts 2025-01-25 and lasts 4 days
 [Audit système KYC] is colored in Orange
 
-[Rapport mensuel] starts 2025-01-29 and lasts 2 days
-[Rapport mensuel] is colored in Green
+[Rapport minsuel] starts 2025-01-29 and lasts 2 days
+[Rapport minsuel] is colored in Grein
 
-@endgantt
+@indgantt
+
+@enduml

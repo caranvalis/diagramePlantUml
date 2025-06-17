@@ -124,3 +124,5 @@ Project starts 2025-07-01
 [Switch DNS] starts after [Validation Sécurité]'s end
 
 @endgantt
+
+@enduml

@@ -1,0 +1,289 @@
+@startuml UC028
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC028 - Détection Intelligente de Doublons et Validation Client</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Doublon</color>" as DuplicateService
+participant "<color:#96ceb4>Service Similarité</color>" as SimilarityService
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+participant "<color:#96ceb4>Service Sanctions</color>" as SanctionsService
+participant "<color:#96ceb4>Service Conformité</color>" as ComplianceService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+parameter "<color:#9c88ff>Engine ML</color>" as MLEngine
+
+' Infrastructure
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+database "<color:#ffa726>Base Sanctions</color>" as SanctionsDB
+database "<color:#5f27cd>Base Historique</color>" as HistoryDB
+
+== Demande de Validation ==
+
+Manager -> WebUI : <color:#00ff00>Demande validation client [CLIENT_ID]</color>
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/validation/complete</color>
+activate Gateway
+
+Gateway -> Gateway : <color:#ffa726>Validation Token & Permissions</color>
+Gateway -> Orchestrator : <color:#45b7d1>Lancer validation complète client</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début validation complète</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Étape 1: Détection de Doublons Avancée ==
+
+Orchestrator -> DuplicateService : <color:#96ceb4>Analyze doublons potentiels</color>
+activate DuplicateService
+
+DuplicateService -> DuplicateService : <color:#ffa726>Récupérer données client à valider</color>
+
+== Recherche Multi-Critères ==
+
+DuplicateService -> KYCDB : <color:#00d2d3>SELECT * FROM clients WHERE (nom LIKE ? OR prenom LIKE ? OR date_naissance = ?)</color>
+activate KYCDB
+KYCDB --> DuplicateService : <color:#00d2d3>Correspondances initiales</color>
+deactivate KYCDB
+
+DuplicateService -> SimilarityService : <color:#96ceb4>Analyze similarités avancées</color>
+activate SimilarityService
+
+SimilarityService -> MLEngine : <color:#9c88ff>Analyse ML similarité noms</color>
+activate MLEngine
+MLEngine -> MLEngine : <color:#ffa726>Algorithme Levenshtein + Soundex</color>
+MLEngine -> MLEngine : <color:#ffa726>Analyse phonétique</color>
+MLEngine -> MLEngine : <color:#ffa726>Détection variantes orthographiques</color>
+MLEngine --> SimilarityService : <color:#9c88ff>Scores similarité calculés</color>
+deactivate MLEngine
+
+SimilarityService -> SimilarityService : <color:#ffa726>Comparaison adresses</color>
+SimilarityService -> SimilarityService : <color:#ffa726>Analyse documents d'identité</color>
+SimilarityService -> SimilarityService : <color:#ffa726>Vérification coordonnées bancaires</color>
+
+note over SimilarityService : <color:#ffa726>**ALGORITHMES DE DÉTECTION :**</color>\n<color:#ffa726>• Score nom/prénom : > 85%</color>\n<color:#ffa726>• Correspondance date naissance exacte</color>\n<color:#ffa726>• Similarité adresse : > 70%</color>\n<color:#ffa726>• Documents identiques détectés</color>
+
+SimilarityService --> DuplicateService : <color:#96ceb4>Analyse similarité terminée</color>
+deactivate SimilarityService
+
+== Évaluation des Correspondances ==
+
+alt <color:#ff6b6b>Doublons confirmés (Score > 95%)</color>
+    DuplicateService --> Orchestrator : <color:#ff6b6b>DOUBLON CONFIRMÉ: Client déjà enregistré</color>
+    
+    Orchestrator -> ValidationService : <color:#96ceb4>Verify statut client existant</color>
+    activate ValidationService
+    ValidationService -> KYCDB : <color:#00d2d3>SELECT status FROM clients WHERE id = ?</color>
+    activate KYCDB
+    KYCDB --> ValidationService : <color:#00d2d3>Statut client existant</color>
+    deactivate KYCDB
+    ValidationService --> Orchestrator : <color:#96ceb4>Client existant actif</color>
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : <color:#feca57>Log doublon confirmé</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre tentative doublon
+    deactivate AuditService
+    
+    Orchestrator -> NotificationService : <color:#ff9ff3>Notify doublon confirmé</color>
+    activate NotificationService
+    NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+    deactivate NotificationService
+    
+    Orchestrator --> Gateway : <color:#ff6b6b>Client déjà enregistré</color>
+    Gateway --> WebUI : <color:#ff6b6b>409 Conflict</color>
+    WebUI --> Manager : <color:#ff6b6b>❌ DOUBLON : Client déjà existant</color>
+    
+else <color:#ffa726>Doublons potentiels (Score 70-95%)</color>
+    DuplicateService --> Orchestrator : <color:#ffa726>DOUBLON POTENTIEL: Vérification manuelle requise</color>
+    
+    Orchestrator -> NotificationService : <color:#ff9ff3>Alerte doublon potentiel</color>
+    activate NotificationService
+    NotificationService -> Manager : <color:#ffa726>⚠️ Doublon potentiel détecté - Vérification requise</color>
+    NotificationService --> Orchestrator : <color:#00d2d3>Alerte envoyée</color>
+    deactivate NotificationService
+    
+    Orchestrator -> KYCDB : <color:#00d2d3>UPDATE client_status='PENDING_DUPLICATE_REVIEW'</color>
+    activate KYCDB
+    KYCDB --> Orchestrator : <color:#00d2d3>Statut mis à jour</color>
+    deactivate KYCDB
+    
+    Orchestrator -> AuditService : <color:#feca57>Log doublon potentiel</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre alerte + scores
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : <color:#ffa726>Vérification manuelle requise</color>
+    Gateway --> WebUI : <color:#ffa726>202 Accepted</color>
+    WebUI --> Manager : <color:#ffa726>🔍 Doublon potentiel - Révision manuelle</color>
+    
+else <color:#00ff00>Aucun doublon (Score < 70%)</color>
+    DuplicateService --> Orchestrator : <color:#00ff00>AUCUN DOUBLON: Procéder à la validation</color>
+    deactivate DuplicateService
+    
+    == Étape 2: Vérification Sanctions Internationales ==
+    
+    Orchestrator -> SanctionsService : <color:#96ceb4>Verify listes sanctions</color>
+    activate SanctionsService
+    
+    SanctionsService -> SanctionsDB : <color:#ffa726>Recherche listes OFAC, UE, ONU</color>
+    activate SanctionsDB
+    SanctionsDB --> SanctionsService : <color:#00d2d3>Résultats recherche</color>
+    deactivate SanctionsDB
+    
+    SanctionsService -> SanctionsService : <color:#ffa726>Vérification PEP (Personnes Politiquement Exposées)</color>
+    SanctionsService -> SanctionsService : <color:#ffa726>Contrôle listes de surveillance</color>
+    
+    alt <color:#ff6b6b>Présent sur liste sanctions</color>
+        SanctionsService --> Orchestrator : <color:#ff6b6b>ALERTE SANCTIONS: Client listé</color>
+        
+        Orchestrator -> KYCDB : <color:#00d2d3>UPDATE client_status='BLOCKED_SANCTIONS'</color>
+        activate KYCDB
+        KYCDB --> Orchestrator : <color:#00d2d3>Client bloqué</color>
+        deactivate KYCDB
+        
+        Orchestrator -> AuditService : <color:#feca57>Log alerte sanctions</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre alerte critique
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Alerte urgente sanctions</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ff6b6b>🚨 URGENT : Client sur liste sanctions</color>
+        NotificationService --> Orchestrator : <color:#00d2d3>Alerte envoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : <color:#ff6b6b>Client bloqué - Sanctions</color>
+        Gateway --> WebUI : <color:#ff6b6b>403 Forbidden</color>
+        WebUI --> Manager : <color:#ff6b6b>🚫 BLOQUÉ : Client sur liste sanctions</color>
+        
+    else <color:#00ff00>Aucune sanction</color>
+        SanctionsService --> Orchestrator : <color:#00ff00>SANCTIONS OK: Aucune correspondance</color>
+        deactivate SanctionsService
+        
+        == Étape 3: Vérification Conformité Réglementaire ==
+        
+        Orchestrator -> ComplianceService : <color:#96ceb4>Vérification conformité finale</color>
+        activate ComplianceService
+        
+        ComplianceService -> ComplianceService : <color:#ffa726>Vérification données obligatoires</color>
+        ComplianceService -> ComplianceService : <color:#ffa726>Contrôle cohérence informations</color>
+        ComplianceService -> ComplianceService : <color:#ffa726>Validation réglementaire ACPR</color>
+        ComplianceService -> ComplianceService : <color:#ffa726>Calcul score risque global</color>
+        
+        alt <color:#ff6b6b>Non-conformité détectée</color>
+            ComplianceService --> Orchestrator : <color:#ff6b6b>NON-CONFORME: Règles non respectées</color>
+            
+            Orchestrator -> KYCDB : <color:#00d2d3>UPDATE client_status='NON_COMPLIANT'</color>
+            activate KYCDB
+            KYCDB --> Orchestrator : <color:#00d2d3>Statut mis à jour</color>
+            deactivate KYCDB
+            
+            Orchestrator -> AuditService : <color:#feca57>Log non-conformité</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre non-conformité + détails
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify non-conformité</color>
+            activate NotificationService
+            NotificationService -> Manager : <color:#ff6b6b>❌ Non-conforme : Règles KYC non respectées</color>
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : <color:#ff6b6b>Client non-conforme</color>
+            Gateway --> WebUI : <color:#ff6b6b>422 Unprocessable Entity</color>
+            WebUI --> Manager : <color:#ff6b6b>❌ Validation échouée - Non-conformité</color>
+            
+        else <color:#00ff00>Conformité validée</color>
+            ComplianceService --> Orchestrator : <color:#00ff00>CONFORME: Validation réussie</color>
+            deactivate ComplianceService
+            
+            == Finalisation Validation ==
+            
+            Orchestrator -> KYCDB : <color:#00d2d3>UPDATE client_status='VALIDATED', validation_date=NOW()</color>
+            activate KYCDB
+            KYCDB --> Orchestrator : <color:#00d2d3>Client validé</color>
+            deactivate KYCDB
+            
+            Orchestrator -> HistoryDB : <color:#5f27cd>INSERT validation_history</color>
+            activate HistoryDB
+            HistoryDB --> Orchestrator : <color:#00d2d3>Historique enregistré</color>
+            deactivate HistoryDB
+            
+            Orchestrator -> CacheService : <color:#54a0ff>Invalider caches client</color>
+            activate CacheService
+            CacheService --> Orchestrator : <color:#00d2d3>Caches invalidés</color>
+            deactivate CacheService
+            
+            Orchestrator -> AuditService : <color:#feca57>Log validation réussie</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre validation complète
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : <color:#ff9ff3>Notify validation réussie</color>
+            activate NotificationService
+            NotificationService -> Manager : <color:#00ff00>✅ Client validé avec succès</color>
+            NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+            deactivate NotificationService
+            
+            note over Orchestrator : <color:#00ff00>**CLIENT VALIDÉ :**</color>\n<color:#00ff00>• Aucun doublon détecté</color>\n<color:#00ff00>• Sanctions vérifiées</color>\n<color:#00ff00>• Conformité validée</color>\n<color:#00ff00>→ Prêt pour ouverture compte</color>
+            
+            Orchestrator --> Gateway : <color:#00ff00>Validation terminée avec succès</color>
+            deactivate Orchestrator
+            Gateway --> WebUI : <color:#00ff00>200 OK + Certificat validation</color>
+            deactivate Gateway
+            WebUI --> Manager : <color:#00ff00>✅ Client validé - Prêt pour ouverture compte</color>
+            deactivate WebUI
+            
+        end
+    end
+end
+
+deactivate Manager
+
+note over KYCDB : <color:#ffa726>**TRAÇABILITÉ COMPLÈTE :**</color>\n<color:#ffa726>• Historique vérifications</color>\n<color:#ffa726>• Scores de similarité</color>\n<color:#ffa726>• Résultats contrôles sanctions</color>\n<color:#ffa726>• Validation conformité</color>
+
+@enduml

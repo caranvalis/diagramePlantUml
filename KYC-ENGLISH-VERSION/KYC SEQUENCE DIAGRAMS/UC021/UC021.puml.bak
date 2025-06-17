@@ -1,0 +1,195 @@
+@startuml UC021
+!theme superhero-outline
+skinparam backgroundColor #1e1e1e
+skinparam actorStyle awesome
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC021 - Clôture de Compte KYC</color>
+
+' Acteurs
+actor "<color:#00ff00>Analyste Conformité</color>" as Analyste
+
+' Interface Layer
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+
+' Services Métier
+participant "<color:#96ceb4>Service Clôture</color>" as ClosureService
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+participant "<color:#96ceb4>Service Compte</color>" as AccountService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>CBS</color>" as CBS
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Initialisation de la Clôture ==
+
+Analyste -> WebUI : <color:#00ff00>Demande clôture compte [ID_COMPTE]</color>
+activate Analyste
+activate WebUI
+
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/accounts/{id}/closure</color>
+activate Gateway
+
+Gateway -> Gateway : <color:#ffa726>Validation Token & Permissions</color>
+Gateway -> Orchestrator : <color:#45b7d1>Initier clôture compte</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début clôture</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre événement
+AuditService --> Orchestrator : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Vérification des Conditions ==
+
+Orchestrator -> ValidationService : <color:#96ceb4>Verify conditions clôture</color>
+activate ValidationService
+
+ValidationService -> AccountService : <color:#96ceb4>Récupérer données compte</color>
+activate AccountService
+
+AccountService -> CacheService : <color:#54a0ff>Check cache compte</color>
+activate CacheService
+CacheService --> AccountService : <color:#ff6348>Cache miss</color>
+deactivate CacheService
+
+AccountService -> KYCDB : <color:#00d2d3>SELECT * FROM accounts WHERE id = ?</color>
+activate KYCDB
+KYCDB --> AccountService : <color:#00d2d3>Données compte</color>
+deactivate KYCDB
+
+AccountService -> CacheService : <color:#54a0ff>Mettre en cache</color>
+activate CacheService
+CacheService --> AccountService : <color:#00d2d3>Cached</color>
+deactivate CacheService
+
+AccountService --> ValidationService : <color:#96ceb4>Données compte</color>
+deactivate AccountService
+
+ValidationService -> ValidationService : <color:#ffa726>Verify solde = 0</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify aucune opération en cours</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify statut = ACTIF</color>
+
+alt <color:#ff6b6b>Conditions non remplies</color>
+    ValidationService --> Orchestrator : <color:#ff6b6b>ERREUR: Conditions non remplies</color>
+    Orchestrator -> AuditService : <color:#feca57>Log échec validation</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre échec
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : <color:#ff6b6b>Error validation</color>
+    Gateway --> WebUI : <color:#ff6b6b>400 Bad Request</color>
+    WebUI --> Analyste : <color:#ff6b6b>Conditions de clôture non remplies</color>
+    
+else <color:#00ff00>Conditions OK</color>
+    ValidationService --> Orchestrator : <color:#00ff00>Validation OK</color>
+    deactivate ValidationService
+    
+    == Traitement de la Clôture ==
+    
+    Orchestrator -> ClosureService : <color:#96ceb4>Traiter clôture compte</color>
+    activate ClosureService
+    
+    ClosureService -> CBS : <color:#5f27cd>API clôture compte</color>
+    activate CBS
+    
+    alt <color:#ff6b6b>CBS indisponible</color>
+        CBS --> ClosureService : <color:#ff6b6b>Timeout/Error</color>
+        ClosureService -> ClosureService : <color:#ffa726>Mettre en file d'attente</color>
+        ClosureService --> Orchestrator : <color:#ffa726>Clôture différée</color>
+        
+        Orchestrator -> AuditService : <color:#feca57>Log clôture différée</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre report
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notify report clôture</color>
+        activate NotificationService
+        NotificationService --> Orchestrator : <color:#00d2d3>Notification envoyée</color>
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : <color:#ffa726>Clôture en cours de traitement</color>
+        Gateway --> WebUI : <color:#ffa726>202 Accepted</color>
+        WebUI --> Analyste : <color:#ffa726>Clôture mise en file d'attente</color>
+        
+    else <color:#ff6b6b>Error CBS</color>
+        CBS --> ClosureService : <color:#ff6b6b>Error clôture</color>
+        ClosureService --> Orchestrator : <color:#ff6b6b>Failure clôture CBS</color>
+        
+        Orchestrator -> AuditService : <color:#feca57>Log échec CBS</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec
+        deactivate AuditService
+        
+        Orchestrator --> Gateway : <color:#ff6b6b>Error CBS</color>
+        Gateway --> WebUI : <color:#ff6b6b>500 Internal Error</color>
+        WebUI --> Analyste : <color:#ff6b6b>Failure clôture CBS</color>
+        
+    else <color:#00ff00>Success CBS</color>
+        CBS --> ClosureService : <color:#00ff00>Compte clôturé</color>
+        deactivate CBS
+        
+        == Mise à Jour Statut ==
+        
+        ClosureService -> KYCDB : <color:#00d2d3>UPDATE accounts SET status='CLOSED'</color>
+        activate KYCDB
+        KYCDB --> ClosureService : <color:#00d2d3>Statut mis à jour</color>
+        deactivate KYCDB
+        
+        ClosureService -> CacheService : <color:#54a0ff>Invalider cache compte</color>
+        activate CacheService
+        CacheService --> ClosureService : <color:#00d2d3>Cache invalidé</color>
+        deactivate CacheService
+        
+        ClosureService --> Orchestrator : <color:#00ff00>Clôture réussie</color>
+        deactivate ClosureService
+        
+        == Audit et Notification ==
+        
+        Orchestrator -> AuditService : <color:#feca57>Log succès clôture</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre succès
+        AuditService --> Orchestrator : <color:#00d2d3>Audit terminé</color>
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notify clôture réussie</color>
+        activate NotificationService
+        NotificationService -> NotificationService : <color:#00ff00>Email + SMS analyste</color>
+        NotificationService --> Orchestrator : <color:#00d2d3>Notifications envoyées</color>
+        deactivate NotificationService
+        
+        == Réponse Finale ==
+        
+        Orchestrator --> Gateway : <color:#00ff00>Clôture terminée avec succès</color>
+        deactivate Orchestrator
+        Gateway --> WebUI : <color:#00ff00>200 OK + Détails clôture</color>
+        deactivate Gateway
+        WebUI --> Analyste : <color:#00ff00>Compte clôturé avec succès</color>
+        deactivate WebUI
+        
+    end
+end
+
+deactivate Analyste
+
+@enduml

@@ -1,0 +1,78 @@
+@startuml UC066
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Manager / Auditeur" as Utilisateur
+participant "Interface documintaire" as UI
+participant "System de gestion documintaire" as System
+datadatabase "Database documintaire" as BDD
+datadatabase "Journal d’audit" as Journal
+
+== Sélection du documint ==
+Utilisateur -> UI : Sélectionner un documint cliint
+activate Utilisateur
+activate UI
+UI -> System : Request de l’history complet du documint
+activate System
+
+== Récupération des informations ==
+System -> BDD : Obtinir toutes les versions du documint
+activate BDD
+BDD --> System : Liste versions + métadonnées
+deactivate BDD
+
+System -> Journal : Obtinir le journal des actions (création, MAJ, archivage)
+activate Journal
+Journal --> System : History des actions (dates, utilisateurs)
+deactivate Journal
+
+System --> UI : Transput l’history complet
+deactivate System
+UI --> Utilisateur : Affiche versions, métadonnées et commintaires
+deactivate UI
+deactivate Utilisateur
+
+== Export de l’history ==
+alt Export demandé
+  Utilisateur -> UI : Exporter l’history
+  activate Utilisateur
+  activate UI
+  UI -> System : Requête d’export PDF / Excel
+    activate System
+  System -> Journal : Ginerate fichier export
+    activate Journal
+  Journal --> System : Fichier généré
+    deactivate Journal
+  System --> UI : Fichier prêt au téléchargemint
+    deactivate System
+  UI --> Utilisateur : Liin de téléchargemint
+ind
+
+== Contrôle des droits ==
+alt Droits insuffisants
+  UI -> System : Verification des droits
+    activate System
+  System --> UI : Rejection d’accès ou vue partielle
+    deactivate System
+  UI --> Utilisateur : Message d’error ou vue restreinte
+else Droits suffisants
+  UI -> System : Accès complet accordé
+  activate System
+  System --> UI : Affichage complet de l’history
+  deactivate System
+  UI --> Utilisateur : Affiche l’history complet
+  deactivate UI
+  deactivate Utilisateur
+ind
+@induml

@@ -1,0 +1,107 @@
+@startuml ControlesReglementaires
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title Diagramme de Séquence - Contrôles Réglementaires
+
+participant "Système\nWorkflow" as Workflow
+participant "Contrôleur\nRéglementaire" as Controleur
+participant "Service\nBlacklist" as Blacklist
+participant "Service\nPPE" as PPE
+participant "Service\nFATCA" as FATCA
+participant "Analyseur\nKYC" as KYC
+participant "Gestionnaire\nAlertes" as Alertes
+participant "Agent\nConformité" as Agent
+
+== Déclenchement des Contrôles ==
+Workflow -> Controleur : lancerControlesReglementaires(demande)
+Controleur -> Controleur : identifierControlesApplicables(demande.typeClient)
+
+== Contrôle Blacklist ==
+Controleur -> Blacklist : verifierListes(nom, prenoms, dateNaissance)
+Blacklist -> Blacklist : consulterListesSanctions()
+Blacklist -> Blacklist : consulterListesOFAC()
+Blacklist -> Blacklist : consulterListesONU()
+Blacklist --> Controleur : resultatsBlacklist(correspondances, score)
+
+alt Correspondances détectées
+    Controleur -> Alertes : genererAlerte("BLACKLIST_MATCH", correspondances)
+    Alertes -> Agent : notifierAlerte(typeAlerte, details)
+end
+
+== Contrôle PPE ==
+Controleur -> PPE : verifierStatutPPE(nom, fonction, pays)
+PPE -> PPE : consulterBasePPE()
+PPE -> PPE : analyserExposition(directe, indirecte)
+PPE --> Controleur : resultatPPE(estPPE, typeExposition, niveauRisque)
+
+alt PPE détecté
+    Controleur -> Alertes : genererAlerte("PPE_DETECTE", typeExposition)
+    Alertes -> Agent : notifierAlerte(typeAlerte, details)
+end
+
+== Contrôle FATCA ==
+Controleur -> FATCA : detecterAmericanite(lieu, nationalite, documents)
+FATCA -> FATCA : analyserIndicesAmericanite()
+FATCA -> FATCA : evaluerObligationsReporting()
+FATCA --> Controleur : resultatFATCA(estAmericain, classification, obligations)
+
+alt Personne américaine détectée
+    Controleur -> FATCA : genererFicheFATCA(client, classification)
+    FATCA --> Controleur : ficheFATCAGeneree
+    Controleur -> Alertes : genererAlerte("AMERICAIN_DETECTE", obligations)
+end
+
+== Évaluation KYC ==
+Controleur -> KYC : evaluerProfileRisque(client, revenus, activite)
+KYC -> KYC : calculerScoreRisque()
+KYC -> KYC : identifierFacteursRisque()
+KYC -> KYC : recommanderMesures()
+KYC --> Controleur : profilRisque(score, niveau, facteurs, mesures)
+
+alt Risque élevé détecté
+    Controleur -> Alertes : genererAlerte("RISQUE_ELEVE", facteurs)
+    Controleur -> KYC : genererQuestionnaire(typeClient, niveauRisque)
+    KYC --> Controleur : questionnaireComplementaire
+end
+
+== Synthèse et Décision ==
+Controleur -> Controleur : analyserResultatsGlobaux()
+Controleur -> Controleur : determinerRecommandation()
+
+alt Tous contrôles conformes
+    Controleur --> Workflow : controlesConformes(recommandation: "ACCEPTER")
+else Contrôles non conformes
+    Controleur --> Workflow : controlesNonConformes(recommandation: "REJETER", motifs)
+else Contrôles nécessitant validation manuelle
+    Controleur --> Workflow : controlesAValider(recommandation: "ESCALADER", alertes)
+    Workflow -> Agent : assignerValidationManuelle(alertes, questionnaire)
+end
+
+== Logging et Traçabilité ==
+Controleur -> Controleur : enregistrerResultatsControles()
+Controleur -> Controleur : genererDocumentSynthese()
+
+note right of Controleur
+  Tous les contrôles sont exécutés en parallèle
+  pour optimiser les performances.
+  Les résultats sont consolidés avant décision.
+end note
+
+note left of Agent
+  L'agent de conformité n'intervient
+  que pour les cas nécessitant
+  une validation manuelle
+end note
+
+@enduml

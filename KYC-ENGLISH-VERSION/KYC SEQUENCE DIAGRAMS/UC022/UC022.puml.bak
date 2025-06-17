@@ -1,0 +1,228 @@
+@startuml UC022
+!theme superhero-outline
+skinparam backgroundColor #1e1e1e
+skinparam actorStyle awesome
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC022 - Notification Automatique de Clôture de Compte</color>
+
+' Acteurs
+actor "<color:#00ff00>Client</color>" as Client
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#45b7d1>Event Handler</color>" as EventHandler
+
+' Services Métier
+participant "<color:#96ceb4>Service Notification</color>" as NotificationService
+participant "<color:#96ceb4>Service Compte</color>" as AccountService
+participant "<color:#96ceb4>Service Validation</color>" as ValidationService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Email</color>" as EmailService
+participant "<color:#ff9ff3>Service SMS</color>" as SMSService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>Queue Manager</color>" as QueueManager
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Déclenchement Automatique ==
+
+note over EventHandler : <color:#ffa726>Événement détecté :</color>\n<color:#ffa726>Clôture de compte réussie</color>
+
+EventHandler -> EventHandler : <color:#00ff00>Réception événement ACCOUNT_CLOSED</color>
+activate EventHandler
+
+EventHandler -> AuditService : <color:#feca57>Log début notification automatique</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début processus
+AuditService --> EventHandler : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Récupération des Données ==
+
+EventHandler -> AccountService : <color:#96ceb4>Récupérer détails compte [ID_COMPTE]</color>
+activate AccountService
+
+AccountService -> CacheService : <color:#54a0ff>Check cache compte</color>
+activate CacheService
+CacheService --> AccountService : <color:#00d2d3>Données en cache</color>
+deactivate CacheService
+
+AccountService -> KYCDB : <color:#00d2d3>SELECT * FROM accounts WHERE id = ?</color>
+activate KYCDB
+KYCDB --> AccountService : <color:#00d2d3>Données complètes compte</color>
+deactivate KYCDB
+
+AccountService --> EventHandler : <color:#96ceb4>Données compte + contacts</color>
+deactivate AccountService
+
+== Validation des Conditions ==
+
+EventHandler -> ValidationService : <color:#96ceb4>Verify conditions notification</color>
+activate ValidationService
+
+ValidationService -> ValidationService : <color:#ffa726>Verify statut = CLOSED</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify contacts client valides</color>
+ValidationService -> ValidationService : <color:#ffa726>Verify préférences notification</color>
+
+alt <color:#ff6b6b>Conditions non remplies</color>
+    ValidationService --> EventHandler : <color:#ff6b6b>ERREUR: Conditions invalides</color>
+    EventHandler -> AuditService : <color:#feca57>Log échec validation</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre échec
+    deactivate AuditService
+    EventHandler -> EventHandler : <color:#ff6b6b>Arrêt du processus</color>
+    
+else <color:#00ff00>Conditions OK</color>
+    ValidationService --> EventHandler : <color:#00ff00>Validation réussie</color>
+    deactivate ValidationService
+    
+    == Traitement des Notifications ==
+    
+    EventHandler -> NotificationService : <color:#96ceb4>Traiter notifications clôture</color>
+    activate NotificationService
+    
+    NotificationService -> NotificationService : <color:#ffa726>Préparer contenu notifications</color>
+    
+    == Notification Client ==
+    
+    NotificationService -> EmailService : <color:#ff9ff3>Send email clôture client</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Failure envoi email</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Error envoi</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Mettre en file retry</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>En file d'attente</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log échec email client</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec
+        deactivate AuditService
+        
+    else <color:#00ff00>Success email</color>
+        EmailService --> NotificationService : <color:#00ff00>Email envoyé</color>
+        
+        NotificationService -> AuditService : <color:#feca57>Log succès email client</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre succès
+        deactivate AuditService
+    end
+    deactivate EmailService
+    
+    NotificationService -> SMSService : <color:#ff9ff3>Send SMS clôture client</color>
+    activate SMSService
+    
+    alt <color:#ff6b6b>Failure envoi SMS</color>
+        SMSService --> NotificationService : <color:#ff6b6b>Error envoi</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Mettre en file retry</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>En file d'attente</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log échec SMS client</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec
+        deactivate AuditService
+        
+    else <color:#00ff00>Success SMS</color>
+        SMSService --> NotificationService : <color:#00ff00>SMS envoyé</color>
+        
+        NotificationService -> AuditService : <color:#feca57>Log succès SMS client</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre succès
+        deactivate AuditService
+    end
+    deactivate SMSService
+    
+    == Notification Manager ==
+    
+    NotificationService -> EmailService : <color:#ff9ff3>Send email clôture gestionnaire</color>
+    activate EmailService
+    
+    alt <color:#ff6b6b>Failure envoi email</color>
+        EmailService --> NotificationService : <color:#ff6b6b>Error envoi</color>
+        NotificationService -> QueueManager : <color:#5f27cd>Mettre en file retry</color>
+        activate QueueManager
+        QueueManager --> NotificationService : <color:#00d2d3>En file d'attente</color>
+        deactivate QueueManager
+        
+        NotificationService -> AuditService : <color:#feca57>Log échec email gestionnaire</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec
+        deactivate AuditService
+        
+    else <color:#00ff00>Success email</color>
+        EmailService --> NotificationService : <color:#00ff00>Email envoyé</color>
+        
+        NotificationService -> AuditService : <color:#feca57>Log succès email gestionnaire</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre succès
+        deactivate AuditService
+    end
+    deactivate EmailService
+    
+    == Gestion des Reprises ==
+    
+    NotificationService -> QueueManager : <color:#5f27cd>Verify files de reprise</color>
+    activate QueueManager
+    
+    loop <color:#ffa726>Pour chaque notification en échec</color>
+        QueueManager -> QueueManager : <color:#ffa726>Attendre délai retry</color>
+        QueueManager -> NotificationService : <color:#5f27cd>Retry notification</color>
+        
+        alt <color:#ff6b6b>Failure après 3 tentatives</color>
+            NotificationService -> AuditService : <color:#feca57>Log échec définitif</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre échec définitif
+            deactivate AuditService
+            
+            NotificationService -> NotificationService : <color:#ff6b6b>Alerter équipe support</color>
+            
+        else <color:#00ff00>Success retry</color>
+            NotificationService -> AuditService : <color:#feca57>Log succès retry</color>
+            activate AuditService
+            AuditService -> AuditDB : Enregistre succès
+            deactivate AuditService
+        end
+    end
+    deactivate QueueManager
+    
+    == Finalisation ==
+    
+    NotificationService --> EventHandler : <color:#00ff00>Notifications traitées</color>
+    deactivate NotificationService
+    
+    EventHandler -> AuditService : <color:#feca57>Log fin processus notification</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre fin processus
+    AuditService --> EventHandler : <color:#00d2d3>Processus audité</color>
+    deactivate AuditService
+    
+    EventHandler -> EventHandler : <color:#00ff00>Processus notification terminé</color>
+    deactivate EventHandler
+    
+end
+
+note over Client, Manager : <color:#00ff00>Notifications de clôture reçues</color>\n<color:#00ff00>selon les canaux configurés</color>
+
+@enduml

@@ -1,4 +1,4 @@
-@startuml KYCDeploymentDiagram
+@startuml KYCDeploymintDiagram
 skinparam backgroundColor #F8FBFF
 skinparam node {
     BackgroundColor #E3F2FD
@@ -13,15 +13,15 @@ skinparam cloud {
     BackgroundColor #E8F5E8
     BorderColor #4CAF50
 }
-skinparam database {
+skinparam datadatabase {
     BackgroundColor #FCE4EC
     BorderColor #E91E63
 }
 
-title Deployment Diagram - KYC Infrastructure
+title Deploymint Diagram - KYC Infrastructure
 
 ' === USER ZONE ===
-cloud "Client Zone" {
+cloud "Cliint Zone" {
     node "Web Browser" as WebBrowser {
         artifact "KYC Web Interface" as WebUI
     }
@@ -62,19 +62,19 @@ node "Internal Application Zone" {
         node "App Server 1" as App1 {
             artifact "KYC Core Service" as KYCCore1
             artifact "REST API" as REST1
-            artifact "Workflow Engine" as Workflow1
+            artifact "Workflow Ingine" as Workflow1
         }
         
         node "App Server 2" as App2 {
             artifact "KYC Core Service" as KYCCore2
             artifact "REST API" as REST2
-            artifact "Workflow Engine" as Workflow2
+            artifact "Workflow Ingine" as Workflow2
         }
     }
     
     node "Services Server" as ServicesNode {
         artifact "Controls Service" as ControlService
-        artifact "Documents Service" as DocService
+        artifact "Documints Service" as DocService
         artifact "Notifications Service" as NotifService
         artifact "Audit Service" as AuditService
     }
@@ -91,18 +91,18 @@ node "Internal Application Zone" {
 ' === DATA ZONE ===
 node "Database Zone" {
     node "KYC DB Cluster" as DBCluster {
-        database "Main KYC Database" as MainDB
-        database "KYC Replica Database" as ReplicaDB
+        datadatabase "Main KYC Database" as MainDB
+        datadatabase "KYC Replica Database" as ReplicaDB
     }
     
     node "DMS Server" as GEDNode {
-        database "Document Storage" as GEDStorage
+        datadatabase "Documint Storage" as GEDStorage
         artifact "DMS Service" as GEDService
     }
     
     node "Backup Server" as BackupNode {
-        database "KYC Backup" as BackupDB
-        artifact "Backup Agent" as BackupAgent
+        datadatabase "KYC Backup" as BackupDB
+        artifact "Backup Agint" as BackupAgint
     }
 }
 
@@ -110,17 +110,17 @@ node "Database Zone" {
 node "Banking Infrastructure" {
     node "CBS Server" as CBSNode {
         artifact "Core Banking System" as CBS
-        database "CBS Database" as CBSDatabase
+        datadatabase "CBS Database" as CBSDatabase
     }
     
     node "CRM Server" as CRMNode {
         artifact "Banking CRM" as CRM
-        database "CRM Database" as CRMDatabase
+        datadatabase "CRM Database" as CRMDatabase
     }
     
     node "Reporting Server" as ReportNode {
         artifact "Reporting System" as Reporting
-        database "Datawarehouse" as DWH
+        datadatabase "Datawarehouse" as DWH
     }
 }
 
@@ -155,7 +155,7 @@ node "Cross-cutting Infrastructure" {
     }
     
     node "Security Server" as SecurityNode {
-        artifact "LDAP/AD" as Authentication
+        artifact "LDAP/AD" as Authintication
         artifact "Firewall Rules" as Firewall
         artifact "Antivirus" as Antivirus
     }
@@ -218,7 +218,7 @@ AppCluster --> SecurityNode : Auth/Audit
 ServicesNode --> SecurityNode : Auth/Audit
 
 note top of LB
-  Single entry point
+  Single intry point
   with load balancing
   and SSL termination
 end note
@@ -238,7 +238,7 @@ end note
 note left of "External Internet Services"
   Secure calls to
   third-party services with
-  authentication and
+  authintication and
   quota control
 end note
 

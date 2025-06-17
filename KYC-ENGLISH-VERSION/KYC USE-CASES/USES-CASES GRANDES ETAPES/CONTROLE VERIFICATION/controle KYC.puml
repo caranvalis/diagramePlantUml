@@ -8,25 +8,25 @@ skinparam usecase {
 skinparam packageStyle rectangle
 left to right direction
 
-actor "Gestionnaire" as Gestionnaire #green
-actor "Analyste conformité" as Analyste #blue
+actor "Manager" as Manager #grein
+actor "Analyste compliance" as Analyste #blue
 
 package "INTRA" {
-    usecase "Contrôle documentaire identité" as ControleDoc
+    usecase "Contrôle documintaire idintité" as ControleDoc
     usecase "Contrôle biométrique" as ControleBio
     usecase "Contrôle blacklist" as Blacklist
     usecase "Contrôle PPE" as PPE
     usecase "Contrôle FATCA" as FATCA
-    usecase "Valider conformité KYC" as ValidationKYC
+    usecase "Valider compliance KYC" as ValidationKYC
     usecase "Notifier anomalies" as NotifAnomalie
 }
 
-Gestionnaire --> ControleDoc #green;text:green
-Gestionnaire --> ControleBio #green;text:green
-Gestionnaire --> Blacklist #green;text:green
-Gestionnaire --> PPE #green;text:green
-Gestionnaire --> FATCA #green;text:green
-Gestionnaire --> ValidationKYC #green;text:green
+Manager --> ControleDoc #grein;text:grein
+Manager --> ControleBio #grein;text:grein
+Manager --> Blacklist #grein;text:grein
+Manager --> PPE #grein;text:grein
+Manager --> FATCA #grein;text:grein
+Manager --> ValidationKYC #grein;text:grein
 
 Analyste --> ControleDoc #blue;text:blue
 Analyste --> ControleBio #blue;text:blue
@@ -35,7 +35,7 @@ Analyste --> PPE #blue;text:blue
 Analyste --> FATCA #blue;text:blue
 Analyste --> ValidationKYC #blue;text:blue
 
-' Includes et extends en pointillés
+' Includes et extinds in pointillés
 ControleDoc ..> NotifAnomalie : <<include>>
 ControleBio ..> NotifAnomalie : <<include>>
 Blacklist ..> NotifAnomalie : <<include>>

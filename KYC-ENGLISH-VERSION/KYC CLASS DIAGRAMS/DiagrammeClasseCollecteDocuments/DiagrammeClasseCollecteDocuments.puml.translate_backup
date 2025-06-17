@@ -1,0 +1,226 @@
+@startuml DiagrammeClasseCollecteDocuments
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Collecte des Documents KYC
+
+class CollecteDocuments {
+    - id: String
+    - numeroCollecte: String
+    - clientId: String
+    - dateDebut: Date
+    - dateFin: Date
+    - statutCollecte: StatutCollecte
+    - typeClient: TypeClient
+    - listeDocumentsRequis: List<TypeDocument>
+    - pourcentageCompletude: Float
+    - commentaires: String
+    + demarrerCollecte(): Boolean
+    + ajouterDocument(): Boolean
+    + validerCompletude(): Boolean
+    + genererListeManquants(): List<TypeDocument>
+    + relancer(): Boolean
+    + terminer(): Boolean
+}
+
+class Document {
+    - id: String
+    - nom: String
+    - typeDocument: TypeDocument
+    - categorieDocument: CategorieDocument
+    - format: FormatDocument
+    - taille: Long
+    - cheminFichier: String
+    - dateUpload: Date
+    - dateExpiration: Date
+    - version: Integer
+    - checksum: String
+    - estObligatoire: Boolean
+    - estValide: Boolean
+    - statutDocument: StatutDocument
+    - utilisateurUpload: String
+    - commentaireVersion: String
+    + uploader(): Boolean
+    + validerFormat(): Boolean
+    + verifierExpiration(): Boolean
+    + versioner(): Document
+    + genererThumbnail(): Boolean
+    + extraireTexte(): String
+}
+
+class TypeDocument {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - categorieDocument: CategorieDocument
+    - formatsAutorises: List<FormatDocument>
+    - tailleMaximale: Long
+    - estObligatoire: Boolean
+    - dureeValidite: Integer
+    - regexValidation: String
+    - templateNommage: String
+    + creerType(): Boolean
+    + validerDocument(): Boolean
+    + genererNom(): String
+}
+
+enum CategorieDocument {
+    IDENTITE
+    DOMICILE
+    REVENUS
+    ACTIVITE_PROFESSIONNELLE
+    DOCUMENTS_JURIDIQUES
+    PIECES_COMPLEMENTAIRES
+    SIGNATURES
+}
+
+enum FormatDocument {
+    PDF
+    JPEG
+    PNG
+    TIFF
+    DOC
+    DOCX
+    XML
+}
+
+class StatutDocument {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - actionSuivante: String
+    + creerStatut(): Boolean
+    + obtenirCouleur(): String
+}
+
+class ValidationDocument {
+    - id: String
+    - document: Document
+    - typeValidation: TypeValidationDocument
+    - resultat: Boolean
+    - scoreConfiance: Float
+    - messageErreur: String
+    - dateValidation: Date
+    - validateur: String
+    - dureeValidation: Integer
+    + executer(): Boolean
+    + genererRapport(): String
+    + revalider(): Boolean
+}
+
+enum TypeValidationDocument {
+    FORMAT_FICHIER
+    TAILLE_FICHIER
+    LISIBILITE
+    AUTHENTICITE
+    EXPIRATION
+    COHERENCE_DONNEES
+    DETECTION_FRAUDE
+    OCR_EXTRACTION
+}
+
+class ArchivageDocument {
+    - id: String
+    - document: Document
+    - cheminArchivage: String
+    - codeClassification: String
+    - dureeConservation: Integer
+    - dateArchivage: Date
+    - typeArchivage: TypeArchivage
+    - estArchive: Boolean
+    - checksum: String
+    + archiver(): Boolean
+    + restaurer(): Boolean
+    + purger(): Boolean
+    + verifierIntegrite(): Boolean
+}
+
+enum TypeArchivage {
+    STOCKAGE_LOCAL
+    STOCKAGE_CLOUD
+    STOCKAGE_PHYSIQUE
+    ARCHIVAGE_LEGAL
+}
+
+class NotificationDocument {
+    - id: String
+    - collecteDocuments: CollecteDocuments
+    - typeNotification: TypeNotificationDocument
+    - destinataire: String
+    - contenu: String
+    - dateEnvoi: Date
+    - estatutEnvoi: StatutEnvoi
+    - canalNotification: CanalNotification
+    + creer(): Boolean
+    + envoyer(): Boolean
+    + programmer(): Boolean
+}
+
+enum TypeNotificationDocument {
+    DOCUMENT_MANQUANT
+    DOCUMENT_EXPIRE
+    DOCUMENT_REJETE
+    COLLECTE_COMPLETE
+    RELANCE_COLLECTE
+}
+
+enum StatutEnvoi {
+    EN_ATTENTE
+    ENVOYE
+    RECU
+    ECHEC
+    ANNULE
+}
+
+enum CanalNotification {
+    EMAIL
+    SMS
+    COURRIER
+    NOTIFICATION_APP
+    APPEL_TELEPHONIQUE
+}
+
+class RegleCollecte {
+    - id: String
+    - nom: String
+    - typeClient: TypeClient
+    - typeCompte: TypeCompte
+    - documentsObligatoires: List<TypeDocument>
+    - documentsOptionnels: List<TypeDocument>
+    - delaiCollecte: Integer
+    - nombreRelances: Integer
+    - estActive: Boolean
+    + appliquer(): List<TypeDocument>
+    + verifierCompletude(): Boolean
+    + calculerDelai(): Integer
+}
+
+' Relations principales
+CollecteDocuments "1" -- "0..*" Document : documents
+CollecteDocuments "1" -- "1" StatutCollecte : statut
+CollecteDocuments "1" -- "0..*" NotificationDocument : notifications
+CollecteDocuments "1" -- "1" RegleCollecte : regle
+
+Document "1" -- "1" TypeDocument : type
+Document "1" -- "1" StatutDocument : statut
+Document "1" -- "0..*" ValidationDocument : validations
+Document "1" -- "0..1" ArchivageDocument : archivage
+
+TypeDocument "1" -- "1" CategorieDocument : categorie
+ValidationDocument "1" -- "1" TypeValidationDocument : type
+ArchivageDocument "1" -- "1" TypeArchivage : type
+NotificationDocument "1" -- "1" TypeNotificationDocument : type
+NotificationDocument "1" -- "1" CanalNotification : canal
+
+@enduml

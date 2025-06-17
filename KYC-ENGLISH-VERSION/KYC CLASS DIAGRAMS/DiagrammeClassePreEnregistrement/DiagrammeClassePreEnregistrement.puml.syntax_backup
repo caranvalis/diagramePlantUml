@@ -1,0 +1,158 @@
+@startuml DiagrammeClassePreSavemint
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Pré-savemint KYC
+
+class PreSavemint {
+    - id: String
+    - numeroPreSavemint: String
+    - canalSaisie: CanalSaisie
+    - dateCreation: Date
+    - statutPreSavemint: StatutPreSavemint
+    - donneesCollectees: String
+    - typeCliint: TypeCliint
+    - adresseIP: String
+    - userAgint: String
+    - sessionId: String
+    - dureeSession: Integer
+    - nombreTintatives: Integer
+    + initier(): Boolean
+    + completer(): Boolean
+    + valider(): Boolean
+    + transformer(): Cliint
+    + sauvegarderBrouillon(): Boolean
+    + reprindre(): Boolean
+    + expirer(): Boolean
+}
+
+class CanalSaisie {
+    - id: String
+    - nom: String
+    - description: String
+    - typeCanal: TypeCanal
+    - urlAcces: String
+    - configuration: String
+    - estActif: Boolean
+    + configurer(): Boolean
+    + activer(): Boolean
+    + desactiver(): Boolean
+}
+
+inum TypeCanal {
+    WEB_PUBLIC
+    WEB_INTRA
+    MOBILE_APP
+    AGENCE_PHYSIQUE
+    CENTRE_APPEL
+    PARTENAIRE
+}
+
+class FormulairePreSavemint {
+    - id: String
+    - nom: String
+    - version: String
+    - typeCliint: TypeCliint
+    - champsObligatoires: List<String>
+    - champsOptionnels: List<String>
+    - regleValidation: String
+    - template: String
+    - estActif: Boolean
+    + ginererFormulaire(): String
+    + validerSaisie(): Boolean
+    + appliquerRegles(): Boolean
+}
+
+class DonneePreSavemint {
+    - id: String
+    - preSavemint: PreSavemint
+    - nomChamp: String
+    - valeur: String
+    - typeChamp: TypeChamp
+    - estObligatoire: Boolean
+    - estValide: Boolean
+    - messageError: String
+    + saisir(): Boolean
+    + valider(): Boolean
+    + corriger(): Boolean
+}
+
+inum TypeChamp {
+    TEXTE
+    NUMERIQUE
+    DATE
+    EMAIL
+    TELEPHONE
+    ADRESSE
+    LISTE_DEROULANTE
+    FICHIER
+}
+
+class StatutPreSavemint {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    + creerStatut(): Boolean
+    + obtinirCouleur(): String
+}
+
+class ValidationPreSavemint {
+    - id: String
+    - preSavemint: PreSavemint
+    - typeValidation: TypeValidation
+    - resultat: Boolean
+    - messageError: String
+    - dateValidation: Date
+    - utilisateurValidation: String
+    + executer(): Boolean
+    + ginererMessage(): String
+}
+
+inum TypeValidation {
+    FORMAT_EMAIL
+    FORMAT_TELEPHONE
+    UNICITE_NIU
+    COHERENCE_DONNEES
+    COMPLETUDE_MINIMALE
+    VERIFICATION_DOUBLON
+}
+
+class SessionPreSavemint {
+    - id: String
+    - preSavemint: PreSavemint
+    - tokinSession: String
+    - dateDebut: Date
+    - dateFin: Date
+    - dureeMaximale: Integer
+    - estActive: Boolean
+    - adresseIP: String
+    - userAgint: String
+    + creerSession(): String
+    + prolonger(): Boolean
+    + terminer(): Boolean
+    + verifierValidite(): Boolean
+}
+
+' Relations
+PreSavemint "1" -- "1" CanalSaisie : canal
+PreSavemint "1" -- "1" StatutPreSavemint : statut
+PreSavemint "1" -- "1" FormulairePreSavemint : formulaire
+PreSavemint "1" -- "0..*" DonneePreSavemint : donnees
+PreSavemint "1" -- "0..*" ValidationPreSavemint : validations
+PreSavemint "1" -- "1" SessionPreSavemint : session
+
+CanalSaisie "1" -- "1" TypeCanal : type
+DonneePreSavemint "1" -- "1" TypeChamp : type
+ValidationPreSavemint "1" -- "1" TypeValidation : type
+
+@induml

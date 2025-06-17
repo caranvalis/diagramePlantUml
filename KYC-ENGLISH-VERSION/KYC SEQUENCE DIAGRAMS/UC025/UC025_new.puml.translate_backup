@@ -1,0 +1,309 @@
+@startuml UC025
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequence {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignment center
+}
+
+title <color:#4a90e2>UC025 - Gestion Automatique des Rappels d'Expiration</color>
+
+' Acteurs
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+actor "<color:#00ff00>Client</color>" as Client
+
+' Interface Layer
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+
+' Orchestration Layer
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#45b7d1>Scheduler</color>" as Scheduler
+
+' Services Métier
+participant "<color:#96ceb4>Service Rappel</color>" as ReminderService
+participant "<color:#96ceb4>Service Document</color>" as DocumentService
+participant "<color:#96ceb4>Service Client</color>" as ClientService
+
+' Services Techniques
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#ff9ff3>Service Email</color>" as EmailService
+participant "<color:#ff9ff3>Service SMS</color>" as SMSService
+participant "<color:#54a0ff>Service Cache</color>" as CacheService
+
+' Infrastructure
+participant "<color:#5f27cd>Queue Manager</color>" as QueueManager
+database "<color:#00d2d3>Base KYC</color>" as KYCDB
+database "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Déclenchement Automatique ==
+
+note over Scheduler : <color:#ffa726>Tâche planifiée :</color>\n<color:#ffa726>Rappels quotidiens d'expiration</color>
+
+Scheduler -> Scheduler : <color:#00ff00>Déclenchement tâche rappels</color>
+activate Scheduler
+
+Scheduler -> Orchestrator : <color:#45b7d1>Lancer processus rappels</color>
+activate Orchestrator
+
+Orchestrator -> AuditService : <color:#feca57>Log début rappels</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre début processus
+AuditService --> Orchestrator : <color:#00d2d3>Événement logged</color>
+deactivate AuditService
+
+== Identification des Documents à Rappeler ==
+
+Orchestrator -> DocumentService : <color:#96ceb4>Récupérer documents expirant bientôt</color>
+activate DocumentService
+
+DocumentService -> KYCDB : <color:#00d2d3>SELECT * FROM documents WHERE expiry_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)</color>
+activate KYCDB
+KYCDB --> DocumentService : <color:#00d2d3>Documents expirant sous 30 jours</color>
+deactivate KYCDB
+
+DocumentService --> Orchestrator : <color:#96ceb4>Liste documents à rappeler</color>
+deactivate DocumentService
+
+== Traitement des Rappels ==
+
+loop <color:#ffa726>Pour chaque document expirant</color>
+    Orchestrator -> ReminderService : <color:#96ceb4>Traiter rappel document [DOC_ID]</color>
+    activate ReminderService
+    
+    ReminderService -> ReminderService : <color:#ffa726>Calculate urgence rappel</color>
+    ReminderService -> ReminderService : <color:#ffa726>Déterminer fréquence rappel</color>
+    
+    == Récupération des Données Client ==
+    
+    ReminderService -> ClientService : <color:#96ceb4>Récupérer données client</color>
+    activate ClientService
+    
+    ClientService -> CacheService : <color:#54a0ff>Check cache client</color>
+    activate CacheService
+    CacheService --> ClientService : <color:#ff6348>Cache miss</color>
+    deactivate CacheService
+    
+    ClientService -> KYCDB : <color:#00d2d3>SELECT * FROM clients WHERE id = ?</color>
+    activate KYCDB
+    KYCDB --> ClientService : <color:#00d2d3>Données client + préférences</color>
+    deactivate KYCDB
+    
+    ClientService -> CacheService : <color:#54a0ff>Mettre en cache</color>
+    activate CacheService
+    CacheService --> ClientService : <color:#00d2d3>Cached</color>
+    deactivate CacheService
+    
+    ClientService --> ReminderService : <color:#96ceb4>Données client</color>
+    deactivate ClientService
+    
+    == Génération du Rappel ==
+    
+    ReminderService -> ReminderService : <color:#ffa726>Préparer contenu rappel personnalisé</color>
+    ReminderService -> ReminderService : <color:#ffa726>Sélectionner canaux selon préférences</color>
+    
+    alt <color:#ff6b6b>Données client incomplètes</color>
+        ReminderService --> Orchestrator : <color:#ff6b6b>Impossible de contacter client</color>
+        
+        Orchestrator -> NotificationService : <color:#ff9ff3>Notify gestionnaire - Contact impossible</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ff6b6b>Alerte : Client injoignable</color>
+        activate Manager
+        NotificationService --> Orchestrator : <color:#00d2d3>Manager notifié</color>
+        deactivate NotificationService
+        
+        Orchestrator -> AuditService : <color:#feca57>Log échec contact client</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec contact
+        deactivate AuditService
+        
+    else <color:#00ff00>Données client OK</color>
+        
+        == Envoi des Rappels ==
+        
+        alt <color:#00ff00>Préférence Email activée</color>
+            ReminderService -> EmailService : <color:#ff9ff3>Send email rappel</color>
+            activate EmailService
+            
+            EmailService -> EmailService : <color:#ffa726>Composer email personnalisé</color>
+            EmailService -> EmailService : <color:#ffa726>Inclure deadline + conséquences</color>
+            
+            alt <color:#ff6b6b>Failure envoi email</color>
+                EmailService --> ReminderService : <color:#ff6b6b>Error envoi</color>
+                ReminderService -> QueueManager : <color:#5f27cd>Mettre en file retry</color>
+                activate QueueManager
+                QueueManager --> ReminderService : <color:#00d2d3>En file d'attente</color>
+                deactivate QueueManager
+                
+                ReminderService -> AuditService : <color:#feca57>Log échec email rappel</color>
+                activate AuditService
+                AuditService -> AuditDB : Enregistre échec
+                deactivate AuditService
+                
+            else <color:#00ff00>Email envoyé</color>
+                EmailService --> ReminderService : <color:#00ff00>Email rappel envoyé</color>
+                
+                ReminderService -> AuditService : <color:#feca57>Log succès email rappel</color>
+                activate AuditService
+                AuditService -> AuditDB : Enregistre succès
+                deactivate AuditService
+            end
+            deactivate EmailService
+        end
+        
+        alt <color:#00ff00>Préférence SMS activée</color>
+            ReminderService -> SMSService : <color:#ff9ff3>Send SMS rappel</color>
+            activate SMSService
+            
+            SMSService -> SMSService : <color:#ffa726>Composer SMS concis</color>
+            SMSService -> SMSService : <color:#ffa726>Inclure deadline essentielle</color>
+            
+            alt <color:#ff6b6b>Failure envoi SMS</color>
+                SMSService --> ReminderService : <color:#ff6b6b>Error envoi</color>
+                ReminderService -> QueueManager : <color:#5f27cd>Mettre en file retry</color>
+                activate QueueManager
+                QueueManager --> ReminderService : <color:#00d2d3>En file d'attente</color>
+                deactivate QueueManager
+                
+                ReminderService -> AuditService : <color:#feca57>Log échec SMS rappel</color>
+                activate AuditService
+                AuditService -> AuditDB : Enregistre échec
+                deactivate AuditService
+                
+            else <color:#00ff00>SMS envoyé</color>
+                SMSService --> ReminderService : <color:#00ff00>SMS rappel envoyé</color>
+                
+                ReminderService -> AuditService : <color:#feca57>Log succès SMS rappel</color>
+                activate AuditService
+                AuditService -> AuditDB : Enregistre succès
+                deactivate AuditService
+            end
+            deactivate SMSService
+        end
+        
+        == Notification Manager ==
+        
+        ReminderService -> NotificationService : <color:#ff9ff3>Notify gestionnaire rappel envoyé</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ffa726>Info : Rappel envoyé à client</color>
+        NotificationService --> ReminderService : <color:#00d2d3>Manager informé</color>
+        deactivate NotificationService
+        
+        == Mise à Jour Statut ==
+        
+        ReminderService -> KYCDB : <color:#00d2d3>UPDATE documents SET last_reminder=NOW(), reminder_count=reminder_count+1</color>
+        activate KYCDB
+        KYCDB --> ReminderService : <color:#00d2d3>Statut mis à jour</color>
+        deactivate KYCDB
+        
+        ReminderService --> Orchestrator : <color:#00ff00>Rappel traité avec succès</color>
+        deactivate ReminderService
+        
+    end
+end
+
+== Gestion des Rappels Urgents ==
+
+Orchestrator -> DocumentService : <color:#96ceb4>Identifier documents critiques (< 7 jours)</color>
+activate DocumentService
+
+DocumentService -> KYCDB : <color:#00d2d3>SELECT * FROM documents WHERE expiry_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY)</color>
+activate KYCDB
+KYCDB --> DocumentService : <color:#00d2d3>Documents critiques</color>
+deactivate KYCDB
+
+DocumentService --> Orchestrator : <color:#96ceb4>Documents urgents</color>
+deactivate DocumentService
+
+loop <color:#ff6b6b>Pour chaque document critique</color>
+    Orchestrator -> NotificationService : <color:#ff9ff3>Alerte urgente gestionnaire</color>
+    activate NotificationService
+    
+    NotificationService -> NotificationService : <color:#ff6b6b>Composer alerte prioritaire</color>
+    NotificationService -> Manager : <color:#ff6b6b>URGENT : Document expire sous 7 jours</color>
+    NotificationService --> Orchestrator : <color:#00d2d3>Alerte urgente envoyée</color>
+    deactivate NotificationService
+    
+    Orchestrator -> AuditService : <color:#feca57>Log alerte urgente</color>
+    activate AuditService
+    AuditService -> AuditDB : Enregistre alerte critique
+    deactivate AuditService
+end
+
+== Gestion des Reprises ==
+
+Orchestrator -> QueueManager : <color:#5f27cd>Traiter files de reprise</color>
+activate QueueManager
+
+loop <color:#ffa726>Pour chaque rappel en échec</color>
+    QueueManager -> QueueManager : <color:#ffa726>Attendre délai retry</color>
+    QueueManager -> ReminderService : <color:#5f27cd>Retry rappel</color>
+    activate ReminderService
+    
+    alt <color:#ff6b6b>Failure après 3 tentatives</color>
+        ReminderService -> AuditService : <color:#feca57>Log échec définitif</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre échec définitif
+        deactivate AuditService
+        
+        ReminderService -> NotificationService : <color:#ff9ff3>Alerter équipe support</color>
+        activate NotificationService
+        NotificationService -> Manager : <color:#ff6b6b>Failure rappel définitif</color>
+        NotificationService --> ReminderService : <color:#00d2d3>Support alerté</color>
+        deactivate NotificationService
+        
+    else <color:#00ff00>Success retry</color>
+        ReminderService -> AuditService : <color:#feca57>Log succès retry</color>
+        activate AuditService
+        AuditService -> AuditDB : Enregistre succès retry
+        deactivate AuditService
+    end
+    deactivate ReminderService
+end
+deactivate QueueManager
+
+== Finalisation ==
+
+Orchestrator -> AuditService : <color:#feca57>Log fin processus rappels</color>
+activate AuditService
+AuditService -> AuditDB : Enregistre fin + statistiques
+AuditService --> Orchestrator : <color:#00d2d3>Processus audité</color>
+deactivate AuditService
+
+Orchestrator -> NotificationService : <color:#ff9ff3>Send rapport quotidien rappels</color>
+activate NotificationService
+NotificationService -> Manager : <color:#00ff00>Rapport : X rappels envoyés</color>
+NotificationService --> Orchestrator : <color:#00d2d3>Rapport envoyé</color>
+deactivate NotificationService
+
+Orchestrator --> Scheduler : <color:#00ff00>Processus rappels terminé</color>
+deactivate Orchestrator
+
+Scheduler -> Scheduler : <color:#00ff00>Planifier prochaine exécution</color>
+deactivate Scheduler
+
+note over Client : <color:#00ff00>Rappels d'expiration reçus</color>\n<color:#00ff00>selon les préférences configurées</color>
+
+note over Manager : <color:#00ff00>Rapport quotidien et alertes</color>\n<color:#00ff00>d'expiration reçus</color>
+deactivate Manager
+
+@enduml

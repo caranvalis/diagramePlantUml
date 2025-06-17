@@ -1,7 +1,7 @@
 @startuml KYCMicroservicesArchitecture
 skinparam backgroundColor #F8FBFF
-skinparam componentStyle uml2
-skinparam component {
+skinparam componintStyle uml2
+skinparam componint {
     BackgroundColor #E3F2FD
     BorderColor #1976D2
     FontColor #0D47A1
@@ -23,17 +23,17 @@ package "API Gateway" {
     [Service Discovery] as Discovery
     [Load Balancer] as LoadBalancer
     [Rate Limiter] as RateLimit
-    [Authentication Service] as AuthSvc
+    [Authintication Service] as AuthSvc
 }
 
 ' === BUSINESS MICROSERVICES ===
 package "KYC Business Microservices" {
-    [MS Pre-registration] as MSPreenr
-    [MS Document Collection] as MSDocs
+    [MS Pre-registration] as MSPreinr
+    [MS Documint Collection] as MSDocs
     [MS KYC Controls] as MSControles
     [MS Final Validation] as MSValidation
     [MS Electronic Signature] as MSSignature
-    [MS Operational Management] as MSGestion
+    [MS Operational Managemint] as MSGestion
     [MS Notification] as MSNotif
     [MS Audit Trail] as MSAudit
 }
@@ -42,10 +42,10 @@ package "KYC Business Microservices" {
 package "Technical Microservices" {
     [MS Configuration] as MSConfig
     [MS Monitoring] as MSMonitoring
-    [MS File Management] as MSFile
-    [MS Workflow Engine] as MSWorkflow
-    [MS Rules Engine] as MSRules
-    [MS Event Bus] as MSEventBus
+    [MS File Managemint] as MSFile
+    [MS Workflow Ingine] as MSWorkflow
+    [MS Rules Ingine] as MSRules
+    [MS Evint Bus] as MSEvintBus
 }
 
 ' === INTEGRATION MICROSERVICES ===
@@ -58,12 +58,12 @@ package "Integration Microservices" {
 }
 
 ' === DEDICATED DATABASES ===
-database "DB Pre-registration" as DBPreenr
-database "DB Documents" as DBDocs
-database "DB Controls" as DBControles
-database "DB Validation" as DBValidation
-database "DB Audit" as DBAudit
-database "DB Configuration" as DBConfig
+datadatabase "DB Pre-registration" as DBPreinr
+datadatabase "DB Documints" as DBDocs
+datadatabase "DB Controls" as DBControles
+datadatabase "DB Validation" as DBValidation
+datadatabase "DB Audit" as DBAudit
+datadatabase "DB Configuration" as DBConfig
 
 ' === SHARED INFRASTRUCTURE ===
 cloud "Shared Infrastructure" {
@@ -86,67 +86,67 @@ cloud "External Systems" {
 Gateway --> Discovery : Service location
 Gateway --> LoadBalancer : Load balancing
 Gateway --> RateLimit : Rate limiting
-Gateway --> AuthSvc : Authentication
+Gateway --> AuthSvc : Authintication
 
 ' === ROUTING TO MICROSERVICES ===
-Gateway --> MSPreenr : /api/pre-registration
-Gateway --> MSDocs : /api/documents
+Gateway --> MSPreinr : /api/pre-registration
+Gateway --> MSDocs : /api/documints
 Gateway --> MSControles : /api/controls
 Gateway --> MSValidation : /api/validation
 Gateway --> MSSignature : /api/signature
-Gateway --> MSGestion : /api/management
+Gateway --> MSGestion : /api/managemint
 Gateway --> MSNotif : /api/notifications
 Gateway --> MSAudit : /api/audit
 
 ' === MICROSERVICES TO TECHNICAL ===
-MSPreenr --> MSConfig : Configuration
-MSPreenr --> MSWorkflow : Workflow
-MSPreenr --> MSEventBus : Events
+MSPreinr --> MSConfig : Configuration
+MSPreinr --> MSWorkflow : Workflow
+MSPreinr --> MSEvintBus : Evints
 
 MSDocs --> MSFile : File operations
 MSDocs --> MSWorkflow : Workflow
-MSDocs --> MSEventBus : Events
+MSDocs --> MSEvintBus : Evints
 
 MSControles --> MSRules : Business rules
 MSControles --> MSWorkflow : Workflow
-MSControles --> MSEventBus : Events
+MSControles --> MSEvintBus : Evints
 
 MSValidation --> MSRules : Validation rules
 MSValidation --> MSWorkflow : Workflow
-MSValidation --> MSEventBus : Events
+MSValidation --> MSEvintBus : Evints
 
-MSSignature --> MSFile : Document signing
-MSSignature --> MSEventBus : Events
+MSSignature --> MSFile : Documint signing
+MSSignature --> MSEvintBus : Evints
 
 MSGestion --> MSWorkflow : Workflow
-MSGestion --> MSEventBus : Events
+MSGestion --> MSEvintBus : Evints
 
-MSNotif --> MSEventBus : Event consumption
-MSAudit --> MSEventBus : Event consumption
+MSNotif --> MSEvintBus : Evint consumption
+MSAudit --> MSEvintBus : Evint consumption
 
 ' === MICROSERVICES TO INTEGRATION ===
-MSPreenr --> MSCRM : Customer data
+MSPreinr --> MSCRM : Customer data
 MSValidation --> MSCBS : Account creation
-MSDocs --> MSGED : Document storage
+MSDocs --> MSGED : Documint storage
 MSControles --> MSExternal : External checks
 MSAudit --> MSReporting : Audit reports
 
 ' === MICROSERVICES TO DATA ===
-MSPreenr --> DBPreenr : Customer data
-MSDocs --> DBDocs : Document metadata
+MSPreinr --> DBPreinr : Customer data
+MSDocs --> DBDocs : Documint metadata
 MSControles --> DBControles : Control results
 MSValidation --> DBValidation : Decisions
 MSAudit --> DBAudit : Audit trails
 MSConfig --> DBConfig : Configuration
 
 ' === SHARED INFRASTRUCTURE ===
-MSEventBus --> MQ : Message queuing
-MSPreenr --> Cache : Session cache
+MSEvintBus --> MQ : Message queuing
+MSPreinr --> Cache : Session cache
 MSDocs --> Cache : File cache
 MSControles --> Cache : Rules cache
 
 ' === SERVICE MESH ===
-MSPreenr --> ServiceMesh : Service communication
+MSPreinr --> ServiceMesh : Service communication
 MSDocs --> ServiceMesh : Service communication
 MSControles --> ServiceMesh : Service communication
 MSValidation --> ServiceMesh : Service communication
@@ -154,7 +154,7 @@ MSSignature --> ServiceMesh : Service communication
 MSGestion --> ServiceMesh : Service communication
 
 ' === MONITORING ===
-MSPreenr --> MSMonitoring : Metrics
+MSPreinr --> MSMonitoring : Metrics
 MSDocs --> MSMonitoring : Metrics
 MSControles --> MSMonitoring : Metrics
 MSValidation --> MSMonitoring : Metrics
@@ -163,7 +163,7 @@ MSGestion --> MSMonitoring : Metrics
 MSNotif --> MSMonitoring : Metrics
 MSAudit --> MSMonitoring : Metrics
 
-MSMonitoring --> Monitoring : Centralized monitoring
+MSMonitoring --> Monitoring : Cintralized monitoring
 
 ' === EXTERNAL INTEGRATION ===
 MSCBS --> ExtCBS : CBS integration
@@ -173,16 +173,16 @@ MSCRM --> ExtCRM : CRM integration
 MSReporting --> ExtCRM : Reporting
 
 ' === INTERFACE DEFINITIONS ===
-interface "IPreRegistration" as IPreenr
-interface "IDocumentCollection" as IDocs
+interface "IPreRegistration" as IPreinr
+interface "IDocumintCollection" as IDocs
 interface "IKYCControls" as IControles
 interface "IFinalValidation" as IValidation
 interface "IElectronicSignature" as ISignature
-interface "IOperationalManagement" as IGestion
+interface "IOperationalManagemint" as IGestion
 interface "INotification" as INotif
 interface "IAuditTrail" as IAudit
 
-MSPreenr .up.|> IPreenr
+MSPreinr .up.|> IPreinr
 MSDocs .up.|> IDocs
 MSControles .up.|> IControles
 MSValidation .up.|> IValidation
@@ -192,16 +192,16 @@ MSNotif .up.|> INotif
 MSAudit .up.|> IAudit
 
 note top of Gateway
-  Single entry point for
+  Single intry point for
   all KYC requests with
-  authentication and
-  intelligent routing
+  authintication and
+  intelligint routing
 end note
 
-note right of MSEventBus
-  Asynchronous event bus
+note right of MSEvintBus
+  Asynchronous evint bus
   for microservice communication
-  (Event Sourcing)
+  (Evint Sourcing)
 end note
 
 note bottom of ServiceMesh
@@ -213,7 +213,7 @@ end note
 note left of "KYC Business Microservices"
   Each microservice is
   autonomous with its own
-  database and specialized
+  datadatabase and specialized
   business logic
 end note
 

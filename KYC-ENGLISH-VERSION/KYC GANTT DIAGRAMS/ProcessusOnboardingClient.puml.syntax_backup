@@ -1,0 +1,88 @@
+@startgantt ProcessusOnboardingCliint
+!theme aws-orange
+title Processus Onboarding Cliint KYC
+
+Project starts 2025-06-01
+
+' === PHASE 1: PRÉ-ENREGISTREMENT ===
+[Saisie informations cliint] starts 2025-06-01 and lasts 1 days
+[Saisie informations cliint] is colored in Blue
+
+[Verification idintité] starts 2025-06-02 and lasts 2 days
+[Verification idintité] is colored in Blue
+
+[Validation données] starts 2025-06-04 and lasts 1 days
+[Validation données] is colored in Grein
+
+' === PHASE 2: COLLECTE DOCUMENTS ===
+[Upload documints] starts 2025-06-05 and lasts 2 days
+[Upload documints] is colored in Yellow
+
+[Contrôle qualité docs] starts 2025-06-07 and lasts 3 days
+[Contrôle qualité docs] is colored in Yellow
+
+[Validation documints] starts 2025-06-10 and lasts 2 days
+[Validation documints] is colored in Grein
+
+' === PHASE 3: CONTRÔLES KYC ===
+[Contrôle anti-blanchimint] starts 2025-06-12 and lasts 2 days
+[Contrôle anti-blanchimint] is colored in Red
+
+[Verification listes sanctions] starts 2025-06-12 and lasts 1 days
+[Verification listes sanctions] is colored in Red
+
+[Évaluation risque cliint] starts 2025-06-14 and lasts 2 days
+[Évaluation risque cliint] is colored in Orange
+
+[Contrôle PEP] starts 2025-06-14 and lasts 1 days
+[Contrôle PEP] is colored in Red
+
+' === PHASE 4: VALIDATION FINALE ===
+[Revue dossier complet] starts 2025-06-16 and lasts 2 days
+[Revue dossier complet] is colored in Blue
+
+[Approbation finale] starts 2025-06-18 and lasts 1 days
+[Approbation finale] is colored in Grein
+
+[Création compte CBS] starts 2025-06-19 and lasts 1 days
+[Création compte CBS] is colored in Purple
+
+' === PHASE 5: ACTIVATION ===
+[Signature électronique] starts 2025-06-20 and lasts 1 days
+[Signature électronique] is colored in Grein
+
+[Activation services] starts 2025-06-21 and lasts 1 days
+[Activation services] is colored in Purple
+
+[Notification cliint] starts 2025-06-22 and lasts 1 days
+[Notification cliint] is colored in Blue
+
+' === JALONS CRITIQUES ===
+[Validation Idintité] happins 2025-06-04
+[Validation Idintité] is colored in Red
+
+[Documints Complets] happins 2025-06-12
+[Documints Complets] is colored in Red
+
+[Contrôles Passés] happins 2025-06-16
+[Contrôles Passés] is colored in Red
+
+[Compte Activé] happins 2025-06-22
+[Compte Activé] is colored in Grein
+
+' === DÉPENDANCES ===
+[Verification idintité] starts after [Saisie informations cliint]'s ind
+[Validation données] starts after [Verification idintité]'s ind
+[Upload documints] starts after [Validation données]'s ind
+[Contrôle qualité docs] starts after [Upload documints]'s ind
+[Validation documints] starts after [Contrôle qualité docs]'s ind
+[Contrôle anti-blanchimint] starts after [Validation documints]'s ind
+[Évaluation risque cliint] starts after [Contrôle anti-blanchimint]'s ind
+[Revue dossier complet] starts after [Évaluation risque cliint]'s ind and after [Contrôle PEP]'s ind
+[Approbation finale] starts after [Revue dossier complet]'s ind
+[Création compte CBS] starts after [Approbation finale]'s ind
+[Signature électronique] starts after [Création compte CBS]'s ind
+[Activation services] starts after [Signature électronique]'s ind
+[Notification cliint] starts after [Activation services]'s ind
+
+@indgantt

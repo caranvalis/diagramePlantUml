@@ -1,0 +1,258 @@
+@startuml GeneralKYCClassDiagram
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E8F5E8
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam shadowing true
+!theme aws-orange
+title General KYC Architecture - Class Diagram
+
+' === MAIN ENTITIES ===
+class Client {
+    +clientId: UUID
+    +firstName: String
+    +lastName: String
+    +email: String
+    +phone: String
+    +dateOfBirth: Date
+    +nationality: String
+    +riskScore: Double
+    +status: ClientStatus
+    +createdAt: DateTime
+    +updatedAt: DateTime
+    --
+    +validateIdentity(): Boolean
+    +calculateRiskScore(): Double
+    +updateProfile(): void
+    +getComplianceStatus(): ComplianceStatus
+}
+
+class Account {
+    +accountId: UUID
+    +clientId: UUID
+    +accountNumber: String
+    +accountType: AccountType
+    +currency: String
+    +balance: BigDecimal
+    +status: AccountStatus
+    +openingDate: Date
+    +closingDate: Date
+    --
+    +createAccount(): void
+    +blockAccount(): void
+    +unblockAccount(): void
+    +closeAccount(): void
+}
+
+class Document {
+    +documentId: UUID
+    +clientId: UUID
+    +documentType: DocumentType
+    +fileName: String
+    +filePath: String
+    +mimeType: String
+    +fileSize: Long
+    +checksum: String
+    +status: DocumentStatus
+    +uploadDate: DateTime
+    +expiryDate: Date
+    --
+    +upload(): void
+    +validate(): ValidationResult
+    +archive(): void
+    +extract(): DocumentData
+}
+
+' === SERVICES ===
+class KYCOrchestrator {
+    +orchestratorId: UUID
+    +processId: String
+    +currentStep: WorkflowStep
+    +status: ProcessStatus
+    +startTime: DateTime
+    +endTime: DateTime
+    --
+    +startKYCProcess(): ProcessId
+    +executeStep(): StepResult
+    +handleError(): void
+    +completeProcess(): void
+}
+
+class ClientService {
+    -clientRepository: ClientRepository
+    -auditService: AuditService
+    --
+    +createClient(): Client
+    +updateClient(): Client
+    +getClientById(): Client
+    +searchClients(): List<Client>
+    +validateClient(): ValidationResult
+}
+
+class DocumentService {
+    -documentRepository: DocumentRepository
+    -storageService: StorageService
+    -ocrService: OCRService
+    --
+    +uploadDocument(): Document
+    +validateDocument(): ValidationResult
+    +processDocument(): ProcessingResult
+    +archiveDocument(): void
+}
+
+class ControlService {
+    -complianceEngine: ComplianceEngine
+    -sanctionsService: SanctionsService
+    -pepService: PEPService
+    --
+    +performAMLCheck(): AMLResult
+    +checkSanctions(): SanctionsResult
+    +verifyPEP(): PEPResult
+    +calculateRiskScore(): RiskScore
+}
+
+class ValidationService {
+    -validationRules: ValidationRules
+    -approvalWorkflow: ApprovalWorkflow
+    --
+    +validateApplication(): ValidationResult
+    +requestApproval(): ApprovalRequest
+    +finalizeApproval(): ApprovalResult
+    +rejectApplication(): RejectionResult
+}
+
+' === TECHNICAL SERVICES ===
+class AuthService {
+    -tokenManager: TokenManager
+    -userRepository: UserRepository
+    --
+    +authenticate(): AuthToken
+    +authorize(): AuthResult
+    +validateToken(): TokenValidation
+    +refreshToken(): AuthToken
+}
+
+class AuditService {
+    -auditRepository: AuditRepository
+    -eventPublisher: EventPublisher
+    --
+    +logAction(): void
+    +createAuditTrail(): AuditTrail
+    +publishEvent(): void
+    +generateReport(): AuditReport
+}
+
+class NotificationService {
+    -emailService: EmailService
+    -smsService: SMSService
+    -pushService: PushService
+    --
+    +sendEmail(): void
+    +sendSMS(): void
+    +sendPushNotification(): void
+    +notifyStatusChange(): void
+}
+
+class CacheService {
+    -redisClient: RedisClient
+    -cacheConfig: CacheConfiguration
+    --
+    +get(): Object
+    +set(): void
+    +delete(): void
+    +invalidate(): void
+}
+
+' === ENUMS ===
+enum ClientStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    SUSPENDED
+    ACTIVE
+    INACTIVE
+}
+
+enum DocumentType {
+    IDENTITY_CARD
+    PASSPORT
+    DRIVING_LICENSE
+    PROOF_OF_ADDRESS
+    BANK_STATEMENT
+    SALARY_CERTIFICATE
+}
+
+enum DocumentStatus {
+    UPLOADED
+    PENDING_VALIDATION
+    VALIDATED
+    REJECTED
+    ARCHIVED
+    EXPIRED
+}
+
+enum AccountStatus {
+    PENDING
+    ACTIVE
+    BLOCKED
+    SUSPENDED
+    CLOSED
+}
+
+' === RELATIONSHIPS ===
+Client ||--o{ Account : "owns"
+Client ||--o{ Document : "provides"
+Client ||--|| KYCOrchestrator : "processed by"
+
+KYCOrchestrator --> ClientService : "uses"
+KYCOrchestrator --> DocumentService : "uses"
+KYCOrchestrator --> ControlService : "uses"
+KYCOrchestrator --> ValidationService : "uses"
+
+ClientService --> AuthService : "secured by"
+DocumentService --> AuthService : "secured by"
+ControlService --> AuthService : "secured by"
+ValidationService --> AuthService : "secured by"
+
+ClientService --> AuditService : "logs to"
+DocumentService --> AuditService : "logs to"
+ControlService --> AuditService : "logs to"
+ValidationService --> AuditService : "logs to"
+
+ClientService --> NotificationService : "notifies via"
+DocumentService --> NotificationService : "notifies via"
+ValidationService --> NotificationService : "notifies via"
+
+ClientService --> CacheService : "caches with"
+DocumentService --> CacheService : "caches with"
+ControlService --> CacheService : "caches with"
+
+Client --> ClientStatus : "has"
+Document --> DocumentType : "type"
+Document --> DocumentStatus : "status"
+Account --> AccountStatus : "status"
+
+' === NOTES ===
+note right of KYCOrchestrator
+  Central coordinator for all
+  KYC processes and workflows.
+  Ensures proper sequencing
+  and error handling.
+end note
+
+note bottom of ControlService
+  Implements all compliance
+  checks including AML, PEP,
+  sanctions screening, and
+  risk assessment algorithms.
+end note
+
+note left of CacheService
+  Redis-based caching for
+  performance optimization.
+  Handles session data,
+  temporary results, and
+  frequently accessed data.
+end note
+
+@enduml

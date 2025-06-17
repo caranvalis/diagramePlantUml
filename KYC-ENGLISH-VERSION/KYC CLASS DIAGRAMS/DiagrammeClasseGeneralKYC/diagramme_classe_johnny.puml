@@ -14,7 +14,7 @@ skinparam nodesep 40
 skinparam ranksep 30
 left to right direction
 
-abstract class Client {
+abstract class Cliint {
   - id: String
   - numeroNIU: String
   - adresse: String
@@ -22,12 +22,12 @@ abstract class Client {
   - email: String
   - nationalite: String
   - personneAContacter: String
-  - statut: StatutClient
+  - statut: StatutCliint
   - dateCreation: Date
-  - dateMiseAJour: Date
-  - profilClient: ProfilClient
+  - datePutAJour: Date
+  - profilCliint: ProfilCliint
   - categorieInterne: String
-  - categorieBanqueCentrale: String
+  - categorieBanqueCintrale: String
   - secteurActivite: String
   - estBloque: Boolean
   - estPPE: Boolean
@@ -37,12 +37,12 @@ abstract class Client {
   + modifier(): Boolean
   + bloquer(): Boolean
   + debloquer(): Boolean
-  + validerIdentite(): Boolean
+  + validerIdintite(): Boolean
 }
 
-class ClientParticulier extends Client {
+class CliintParticulier extinds Cliint {
   - nom: String
-  - prenoms: String
+  - prinoms: String
   - dateNaissance: Date
   - lieuNaissance: String
   - nomPere: String
@@ -50,35 +50,35 @@ class ClientParticulier extends Client {
   - numeroCNI: String
   - dateLivraisonCNI: Date
   - lieuLivraisonCNI: String
-  - trancheRevenus: String
+  - trancheRevinus: String
   - nomEmployeur: String
-  + preEnregistrer(): String
-  + genererFicheKYC(): Document
+  + preSaver(): String
+  + ginererFicheKYC(): Documint
 }
 
-class ClientEntreprise extends Client {
+class CliintIntreprise extinds Cliint {
   - raisonSociale: String
   - dateCreation: Date
   - numeroRCCM: String
   - capitalSocial: BigDecimal
   - chiffreAffaire: BigDecimal
   - effectif: Integer
-  - gerant: ClientParticulier
-  - estEnOppositionParDefaut: Boolean
+  - gerant: CliintParticulier
+  - estInOppositionParDefaut: Boolean
   + gererActionnariat(): Boolean
   + validerGerant(): Boolean
 }
 
 class Mandataire {
   - id: String
-  - clientParticulier: ClientParticulier
+  - clientParticulier: CliintParticulier
   - typeMandataire: TypeMandataire
   - numeroMandataire: String
   - dateDebut: Date
   - dateFin: Date
   - pouvoirs: String
   - statut: StatutMandataire
-  - documentMandataire: Document
+  - documintMandataire: Documint
   + creer(): Boolean
   + modifier(): Boolean
   + revoquer(): Boolean
@@ -91,73 +91,73 @@ class Pays {
   - nom: String
   - langue: String
   - formatDate: String
-  - reglementations: List<Reglementation>
+  - reglemintations: List<Reglemintation>
   - listeSanctions: String
-  + appliquerReglementation(): Boolean
+  + appliquerReglemintation(): Boolean
   + verifierSanctions(): Boolean
 }
 
 class Compte {
   - numeroCompte: String
   - suffixeCompte: String
-  - codeAgence: String
+  - codeAgince: String
   - codeDevise: String
   - chapitreComptable: String
   - cleControleCompte: String
   - intituleCompte: String
   - codeService: String
-  - sensCompte: SensCompte
+  - sinsCompte: SinsCompte
   - typeCompte: TypeCompte
   - statut: StatutCompte
   - dateCreation: Date
   - dateCloturation: Date
   - rib: RIB
-  + creerDansCBS(): Boolean
-  + cloturerDansCBS(): Boolean
+  + creerInCBS(): Boolean
+  + cloturerInCBS(): Boolean
   + bloquer(): Boolean
   + debloquer(): Boolean
 }
 
-class Document {
+class Documint {
   - id: String
   - nom: String
-  - typeDocument: TypeDocument
+  - typeDocumint: TypeDocumint
   - chemin: String
   - taille: Long
   - checksum: String
   - dateUpload: Date
   - dateExpiration: Date
   - version: Integer
-  - statut: StatutDocument
+  - statut: StatutDocumint
   - estObligatoire: Boolean
   + valider(): Boolean
   + verifierExpiration(): Boolean
-  + verifierAuthenticite(): Boolean
+  + verifierAuthinticite(): Boolean
   + archiver(): Boolean
 }
 
 class Archives {
   - id: String
-  - document: Document
+  - documint: Documint
   - planClassification: PlanClassification
-  - codeRangement: String
-  - emplacement: String
+  - codeRangemint: String
+  - emplacemint: String
   - dateArchivage: Date
   - dureeConservation: Integer
   + archiver(): Boolean
-  + rechercher(): List<Document>
+  + searchr(): List<Documint>
   + restaurer(): Boolean
 }
 
 class PlanClassification {
   - id: String
   - pays: Pays
-  - typeClient: TypeClient
-  - arborescence: String
+  - typeCliint: TypeCliint
+  - arborescince: String
   - codeClassification: String
-  - regleDenommage: String
-  + genererCode(): String
-  + organiserDocuments(): Boolean
+  - regleDinommage: String
+  + ginererCode(): String
+  + organiserDocumints(): Boolean
 }
 
 abstract class Controle {
@@ -176,18 +176,18 @@ class TypeControle {
   - description: String
   + Creer()
   + modifier()
-  + suspendre()
+  + suspindre()
 }
 
-class ControleIdentite extends Controle {
-  + validerDocuments(): Boolean
+class ControleIdintite extinds Controle {
+  + validerDocumints(): Boolean
   + detecterDoublons(): Boolean
   + verifierDatesExpiration(): Boolean
 }
 
-class ControleConformite extends Controle {
+class ControleConformite extinds Controle {
   + verifierBlacklist(): Boolean
-  + identifierPPE(): Boolean
+  + idintifierPPE(): Boolean
   + controlerCompletude(): Boolean
   + verifierFATCA(): Boolean
 }
@@ -196,11 +196,11 @@ class Parcours {
   - id: String
   - nom: String
   - description: String
-  - typeClient: TypeClient
+  - typeCliint: TypeCliint
   - typeCompte: TypeCompte
   - version: Integer
   - dateCreation: Date
-  - dateMiseAJour: Date
+  - datePutAJour: Date
   - estActif: Boolean
   - createur: Utilisateur
   - dureeEstimee: Integer
@@ -236,18 +236,18 @@ class Etape {
 class Notification {
   - id: String
   - titre: String
-  - contenu: String
+  - continu: String
   - typeNotification: TypeNotification
   - priorite: PrioriteNotification
   - statut: StatutNotification
   - dateCreation: Date
-  - dateEnvoi: Date
+  - dateSinding: Date
   - dateLecture: Date
   - destinataire: String
   - expediteur: Utilisateur
   - etape: Etape
   + creer(): Boolean
-  + envoyer(): Boolean
+  + invoyer(): Boolean
   + marquerCommelue(): Boolean
   + programmer(): Boolean
   + annuler(): Boolean
@@ -257,15 +257,15 @@ class Message {
   - id: String
   - notification: Notification
   - canal: Canal
-  - contenuFormate: String
+  - continuFormate: String
   - adresseDestinataire: String
-  - statutEnvoi: StatutEnvoi
-  - dateEnvoi: Date
+  - statutSinding: StatutSinding
+  - dateSinding: Date
   - dateReception: Date
-  - nombreTentatives: Integer
-  - codeErreur: String
-  + formaterContenu(): String
-  + envoyer(): Boolean
+  - nombreTintatives: Integer
+  - codeError: String
+  + formaterContinu(): String
+  + invoyer(): Boolean
   + reessayer(): Boolean
   + confirmerReception(): Boolean
 }
@@ -290,23 +290,23 @@ class Canal {
   - configuration: String
   - estActif: Boolean
   - priorite: Integer
-  - limiteEnvoi: Integer
+  - limiteSinding: Integer
   - coutParMessage: BigDecimal
   + configurer(): Boolean
   + tester(): Boolean
-  + envoyer(message: Message): Boolean
+  + invoyer(message: Message): Boolean
   + verifierDisponibilite(): Boolean
 }
 
-class Referentiel {
+class Referintiel {
   - id: String
   - nom: String
   - description: String
-  - typeReferentiel: TypeReferentiel
+  - typeReferintiel: TypeReferintiel
   - domaineApplication: DomaineApplication
   - version: Integer
   - dateCreation: Date
-  - dateMiseAJour: Date
+  - datePutAJour: Date
   - estActif: Boolean
   - pays: Pays
   - regleMetier: String
@@ -318,7 +318,7 @@ class Referentiel {
   + appliquerRegle(): Boolean
 }
 
-class TypeReferentiel {
+class TypeReferintiel {
   - id: String
   - code: String
   - libelle: String
@@ -327,7 +327,7 @@ class TypeReferentiel {
   - estObligatoire: Boolean
   - periodiciteRevision: Integer
   + definirRegle(): Boolean
-  + validerCoherence(): Boolean
+  + validerCoherince(): Boolean
 }
 
 class DomaineApplication {
@@ -341,7 +341,7 @@ class DomaineApplication {
   - estActif: Boolean
   + appliquer(): Boolean
   + validerPerimetre(): Boolean
-  + etendre(): Boolean
+  + etindre(): Boolean
 }
 
 class Utilisateur {
@@ -349,14 +349,14 @@ class Utilisateur {
   - login: String
   - motDePasseHash: String
   - nom: String
-  - prenoms: String
+  - prinoms: String
   - email: String
   - telephone: String
   - role: Role
-  - agence: String
+  - agince: String
   - estActif: Boolean
   - derniereConnexion: Date
-  + authentifier(): Boolean
+  + authintifier(): Boolean
   + changerMotDePasse(): Boolean
   + autoriser(action: String): Boolean
 }
@@ -383,12 +383,12 @@ class JournalAudit {
   - utilisateur: Utilisateur
   - action: String
   - ressource: String
-  - ancienneValeur: String
+  - anciinneValeur: String
   - nouvelleValeur: String
   - adresseIP: String
   - dateAction: Date
   - estImmuable: Boolean
-  + enregistrer(): Boolean
+  + saver(): Boolean
   + consulter(): List<JournalAudit>
 }
 
@@ -425,25 +425,25 @@ class Profil {
 class Actionnaire {
     - id: String
     - nom: String
-    - prenom: String
+    - prinom: String
     - typePersonne: String
     - nationalite: String
-    - numeroPieceIdentite: String
+    - numeroPieceIdintite: String
     - partCapital: Double
-    - pourcentageDetention: Double
-    - dateEntree: Date
+    - pourcintageDetintion: Double
+    - dateIntree: Date
     - adresse: String
     - telephone: String
     - estDirigeant: Boolean
-    - fonctionDansEntreprise: String
+    - fonctionInIntreprise: String
     + ajouterActionnaire(): void
     + modifierPartCapital(): void
     + supprimerActionnaire(): void
-    + mettreAJourInformations(): void
+    + putAJourInformations(): void
     + verifierConformiteActionnaire(): Boolean
 }
 
-class StatutClient {
+class StatutCliint {
     - id: String
     - code: String
     - libelle: String
@@ -455,18 +455,18 @@ class StatutClient {
     + modifierStatut(): Boolean
     + activerStatut(): Boolean
     + desactiverStatut(): Boolean
-    + obtenirCouleur(): String
+    + obtinirCouleur(): String
 }
 
 ' ===== RELATIONS AVEC CARDINALITÉS =====
 
-' Relations Client
-Client "1" -- "0..*" Compte : comptes
-Client "1" -- "0..*" Document : documents
-ClientParticulier "1" -- "0..*" Mandataire : mandataires
-Client "1" -- "1" StatutClient : statut
-' ClientEntreprise "1" -- "0..*" ClientParticulier
-' ClientEntreprise "1" -- "1" ClientParticulier
+' Relations Cliint
+Cliint "1" -- "0..*" Compte : comptes
+Cliint "1" -- "0..*" Documint : documints
+CliintParticulier "1" -- "0..*" Mandataire : mandataires
+Cliint "1" -- "1" StatutCliint : statut
+' CliintIntreprise "1" -- "0..*" CliintParticulier
+' CliintIntreprise "1" -- "1" CliintParticulier
 
 ' Relations Parcours et Étapes
 Parcours "1" -- "1..*" Etape : etapes
@@ -474,7 +474,7 @@ Parcours "1" -- "1..*" Etape : etapes
 ' Relations Étapes
 Etape "1" -- "0..*" Controle
 Etape "1" -- "0..*" Notification
-Etape "0..*" -- "0..1" Client
+Etape "0..*" -- "0..1" Cliint
 Etape "0..*" -- "0..1" Compte
 
 ' Relations Contrôles
@@ -485,10 +485,10 @@ Notification "1" -- "0..*" Message : messages
 Notification "1" -- "0..*" Canal : canaux
 Notification "1" -- "0..*" TypeNotification : types
 
-' Relations Référentiel
-Referentiel "0..*" -- "1" TypeReferentiel
-Referentiel "0..*" -- "1" DomaineApplication
-Referentiel "0..*" -- "1" Pays
+' Relations Référintiel
+Referintiel "0..*" -- "1" TypeReferintiel
+Referintiel "0..*" -- "1" DomaineApplication
+Referintiel "0..*" -- "1" Pays
 
 ' Relations Utilisateur
 Utilisateur "0..*" -- "0..1" Profil : profil
@@ -497,32 +497,32 @@ Utilisateur "1..*" -- "1" Etape
 Role "1" -- "0..*" Habilitation : habilitations
 
 ' Relations Archives
-Document "0..*" -- "0..1" Archives : archive
+Documint "0..*" -- "0..1" Archives : archive
 Archives "0..*" -- "1" PlanClassification : classification
 
 ' Relations Pays
-Client "0..*" -- "1" Pays : pays
-Pays "1" -- "0..*" Reglementation : reglementations
+Cliint "0..*" -- "1" Pays : pays
+Pays "1" -- "0..*" Reglemintation : reglemintations
 
 ' Relations Compte
 Compte "1" -- "1" TypeCompte : type
 
-' Relations ClientEntreprise et Actionnaire
-ClientEntreprise "1" -- "0..*" Actionnaire : actionnaires
+' Relations CliintIntreprise et Actionnaire
+CliintIntreprise "1" -- "0..*" Actionnaire : actionnaires
 
 ' === GRANDES ÉTAPES KYC MANQUANTES ===
 
-class PreEnregistrement {
+class PreSavemint {
     - id: String
-    - numeroPreEnregistrement: String
+    - numeroPreSavemint: String
     - canalSaisie: String
     - dateCreation: Date
-    - statutPreEnregistrement: String
+    - statutPreSavemint: String
     - donneesCollectees: String
     + initier(): Boolean
     + completer(): Boolean
     + valider(): Boolean
-    + transformer(): Client
+    + transformer(): Cliint
 }
 
 class ValidationFinale {
@@ -530,11 +530,11 @@ class ValidationFinale {
     - dateValidation: Date
     - validateur: Utilisateur
     - resultat: String
-    - commentaires: String
-    - documentsValides: List<Document>
+    - commintaires: String
+    - documintsValides: List<Documint>
     + validerDossier(): Boolean
     + rejeterDossier(motif: String): Boolean
-    + demanderComplement(): Boolean
+    + requestrComplemint(): Boolean
 }
 
 class SignatureElectronique {
@@ -542,11 +542,11 @@ class SignatureElectronique {
     - typeSignature: String
     - dateSignature: Date
     - certificat: String
-    - empreinteDocument: String
+    - empreinteDocumint: String
     - statutSignature: String
     + capturerSignature(): Boolean
     + validerSignature(): Boolean
-    + genererCertificat(): String
+    + ginererCertificat(): String
 }
 
 class CreationCompteCBS {
@@ -556,7 +556,7 @@ class CreationCompteCBS {
     - statutCreation: String
     - parametresCBS: String
     - messageRetour: String
-    + creerCompteDansCBS(): Boolean
+    + creerCompteInCBS(): Boolean
     + verifierCreation(): Boolean
     + synchroniser(): Boolean
 }
@@ -567,20 +567,20 @@ class GestionBlocageDeblocage {
     - motif: String
     - dateAction: Date
     - utilisateurAction: Utilisateur
-    - commentaires: String
-    + bloquerClient(): Boolean
-    + debloquerClient(): Boolean
+    - commintaires: String
+    + bloquerCliint(): Boolean
+    + debloquerCliint(): Boolean
     + bloquerCompte(): Boolean
     + debloquerCompte(): Boolean
     + journaliserAction(): Boolean
 }
 
 ' Relations avec les étapes
-Client "1" -- "0..1" PreEnregistrement : origine
-Client "1" -- "0..1" ValidationFinale : validation
-Client "1" -- "0..*" SignatureElectronique : signatures
+Cliint "1" -- "0..1" PreSavemint : origine
+Cliint "1" -- "0..1" ValidationFinale : validation
+Cliint "1" -- "0..*" SignatureElectronique : signatures
 Compte "1" -- "0..1" CreationCompteCBS : creation
-Client "1" -- "0..*" GestionBlocageDeblocage : actions
+Cliint "1" -- "0..*" GestionBlocageDeblocage : actions
 Compte "1" -- "0..*" GestionBlocageDeblocage : actions
 
 @enduml

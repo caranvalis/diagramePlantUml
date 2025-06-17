@@ -1,0 +1,63 @@
+@startuml UC067-A
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Administrateur système" as Admin
+participant "Interface Admin Utilisateurs" as UI
+participant "System d'authentification" as Auth
+database "Base utilisateurs" as BDD
+participant "Service Email" as Email
+
+== Accès au module ==
+Admin -> UI : Accéder à "Gestion des utilisateurs"
+activate Admin
+activate UI
+
+== Formulaire de création ==
+Admin -> UI : Cliquer "Ajouter un utilisateur"
+UI -> Admin : Affiche formulaire
+Admin -> UI : Saisir infos : nom, prénom, email, matricule, agence, fonction
+Admin -> UI : Sélectionner statut initial et date expiration
+Admin -> UI : Validate création
+
+== Traitement système ==
+UI -> Auth : Verify unicité de l’email
+activate Auth
+alt Email déjà existant
+  Auth --> UI : Error "Utilisateur déjà existant"
+  UI --> Admin : Afficher erreur
+  deactivate Auth
+else Email unique
+  Auth --> UI : OK
+  deactivate Auth
+
+  UI -> BDD : Create utilisateur avec identifiant unique
+  activate BDD
+  BDD --> UI : Confirmation création
+  deactivate BDD
+
+  UI -> Email : Send identifiants par email sécurisé
+  activate Email
+  alt Envoi successful
+    Email --> UI : Email envoyé
+  else Failure d'envoi
+    Email --> UI : Failure envoi - Identifiants dispo en local
+  end
+  deactivate Email
+
+  UI --> Admin : Confirmation création + infos d'accès
+end
+deactivate UI
+deactivate Admin
+@enduml

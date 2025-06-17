@@ -1,0 +1,297 @@
+@startuml UC005
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC005 - Génération Fiche Cliint PDF
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nCliint" as CliintService #87CEEB
+    participant "Service\nDocumint" as DocumintService #4682B4
+    participant "Service\nTemplate" as TemplateService #4169E1
+    participant "Service\nPDF" as PDFService #87CEFA
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocumints" as Storage #A9A9A9
+    participant "Générateur\nPDF" as PDFIngine #A9A9A9
+ind box
+
+== Initialisation génération fiche ==
+
+Manager -> WebUI : Request génération\nfiche cliint
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /cliint/{id}/fiche/ginerate
+activate Gateway
+
+Gateway -> Orchestrator : ginererFicheCliint()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxGineration()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutGineration()
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux initialisé
+
+' Verification cache template
+Orchestrator -> CacheService : getTemplateFiche()
+activate CacheService
+
+alt Template in cache
+    CacheService --> Orchestrator : Template trouvé
+    deactivate CacheService
+    note over Orchestrator : Template récupéré\ndepuis le cache
+    
+else Template pas in cache
+    CacheService --> Orchestrator : Non trouvé
+    deactivate CacheService
+    
+    ' Récupération template depuis service
+    Orchestrator -> TemplateService : chargerTemplateFiche()
+    activate TemplateService
+    
+    TemplateService -> Storage : GET template_fiche_cliint.xml
+    activate Storage
+    
+    alt Template disponible
+        Storage --> TemplateService : Template chargé
+        deactivate Storage
+        
+        TemplateService -> TemplateService : Validate structure\ntemplate
+        TemplateService -> TemplateService : Compiler modèle
+        
+        TemplateService -> CacheService : cacheTemplate()
+        activate CacheService
+        CacheService --> TemplateService : Mis in cache
+        deactivate CacheService
+        
+        TemplateService --> Orchestrator : Template prêt
+        deactivate TemplateService
+        
+    else Template unavailable
+        Storage --> TemplateService : Template non trouvé
+        deactivate Storage
+        
+        TemplateService -> AuditService : logErrorTemplate()
+        activate AuditService
+        AuditService -> DB : INSERT audit_errors
+        AuditService --> TemplateService : OK
+        deactivate AuditService
+        
+        TemplateService --> Orchestrator : Template manquant
+        deactivate TemplateService
+        
+        Orchestrator --> Gateway : Error template
+        Gateway --> WebUI : Template unavailable
+        WebUI --> Manager : **Error**: Modèle fiche\nunavailable
+        
+        note over Manager : Génération impossible\nTemplate manquant
+    ind
+ind
+
+alt Template disponible
+    == Collecte données cliint ==
+    
+    Orchestrator -> CliintService : collecterDonneesCliint()
+    activate CliintService
+    
+    CliintService -> DB : SELECT données_cliint
+    activate DB
+    DB --> CliintService : Informations cliint
+    deactivate DB
+    
+    CliintService -> DocumintService : getDocumintsCliint()
+    activate DocumintService
+    
+    DocumintService -> DB : SELECT documints_associés
+    activate DB
+    DB --> DocumintService : Liste documints
+    deactivate DB
+    
+    DocumintService -> Storage : getMetadonnésDocumints()
+    activate Storage
+    Storage --> DocumintService : Métadonnées complètes
+    deactivate Storage
+    
+    DocumintService --> CliintService : Documints référincés
+    deactivate DocumintService
+    
+    CliintService -> CliintService : Consolider données\ncliint complètes
+    CliintService --> Orchestrator : Dataset cliint complet
+    deactivate CliintService
+    
+    == Génération PDF ==
+    
+    Orchestrator -> PDFService : ginererFichePDF()
+    activate PDFService
+    
+    PDFService -> TemplateService : getTemplateCompile()
+    activate TemplateService
+    TemplateService --> PDFService : Template compilé
+    deactivate TemplateService
+    
+    PDFService -> PDFService : Fusionner données\navec template
+    PDFService -> PDFService : Formater continu\npour génération
+    
+    PDFService -> PDFIngine : Ginerate PDF
+    activate PDFIngine
+    
+    alt Error génération PDF
+        PDFIngine --> PDFService : Error écriture/format
+        deactivate PDFIngine
+        
+        PDFService -> AuditService : logErrorGineration()
+        activate AuditService
+        AuditService -> DB : INSERT audit_errors
+        AuditService --> PDFService : OK
+        deactivate AuditService
+        
+        PDFService --> Orchestrator : Génération échouée
+        deactivate PDFService
+        
+        Orchestrator --> Gateway : Error PDF
+        Gateway --> WebUI : Failure génération
+        WebUI --> Manager : **Error**: Failure génération\nPDF - Réessayer
+        
+        note over Manager : Génération échouée\nProblème technical
+        
+    else Génération successfule
+        PDFIngine --> PDFService : PDF ginerated
+        deactivate PDFIngine
+        
+        PDFService -> Storage : Save PDF temporaire
+        activate Storage
+        Storage --> PDFService : URL PDF temporaire
+        deactivate Storage
+        
+        PDFService -> DocumintService : saverFicheGineree()
+        activate DocumintService
+        
+        DocumintService -> DB : INSERT documint_ginere
+        activate DB
+        DB --> DocumintService : Documint référincé
+        deactivate DB
+        
+        DocumintService --> PDFService : Fiche inregistrée
+        deactivate DocumintService
+        
+        PDFService --> Orchestrator : PDF prêt (URL: ${pdfUrl})
+        deactivate PDFService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logGinerationReussie()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierFichePrete()
+        activate NotificationService
+        NotificationService --> Orchestrator : Notification invoyée
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : Fiche ginerated
+        Gateway --> WebUI : PDF disponible
+        WebUI --> Manager : **Fiche ginerated**\nOptions: Télécharger/Imprimer/Sind
+        
+        note over Manager : Fiche cliint disponible\nActions possibles:\n- Télécharger\n- Imprimer\n- Sind par email
+        
+        == Actions optionnelles ==
+        
+        opt Manager choisit une action
+            alt Téléchargemint
+                Manager -> WebUI : Télécharger PDF
+                WebUI -> Gateway : GET /fiche/{id}/download
+                Gateway -> Storage : Récupérer PDF
+                activate Storage
+                Storage --> Gateway : Flux PDF
+                deactivate Storage
+                Gateway --> WebUI : PDF téléchargé
+                WebUI --> Manager : **Fichier téléchargé**
+                
+            else Impression
+                Manager -> WebUI : Imprimer PDF
+                WebUI -> Gateway : POST /fiche/{id}/print
+                Gateway -> PDFService : lancerImpression()
+                activate PDFService
+                PDFService --> Gateway : Impression lancée
+                deactivate PDFService
+                Gateway --> WebUI : Impression in cours
+                WebUI --> Manager : **Impression lancée**
+                
+            else Sinding email
+                Manager -> WebUI : Sind par email
+                WebUI -> Gateway : POST /fiche/{id}/sind
+                Gateway -> NotificationService : invoyerFicheEmail()
+                activate NotificationService
+                NotificationService --> Gateway : Email invoyé
+                deactivate NotificationService
+                Gateway --> WebUI : Email expédié
+                WebUI --> Manager : **Email invoyé**
+            ind
+        ind
+    ind
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxGineration()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over Storage : Fiches PDF ginerateds\net archivées pour\ntraçabilité et compliance
+
+@induml

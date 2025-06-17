@@ -1,0 +1,73 @@
+@startuml UC067-B
+skinparam actorStyle awesome
+
+actor "Administrateur système" as Admin
+participant "Interface Admin Utilisateurs" as UI
+participant "System d'authentification" as Auth
+database "Base utilisateurs" as BDD
+participant "Service Email" as Email
+participant "Journal Audit" as Audit
+participant "Service Connexion" as Connexion
+
+== Recherche de l'utilisateur ==
+Admin -> UI : Rechercher un utilisateur
+activate Admin
+activate UI
+UI -> BDD : Requête utilisateur par email/matricule
+activate BDD
+BDD --> UI : Fiche utilisateur
+deactivate BDD
+UI --> Admin : Afficher profil utilisateur
+
+== Modification ==
+Admin -> UI : Modify les infos (ex. agence, statut, email)
+
+
+UI -> Auth : Verify unicité du nouvel email (si modifié)
+activate Auth
+alt Email déjà existant
+  Auth --> UI : Error "Email déjà utilisé"
+  UI --> Admin : Afficher message d'erreur
+ 
+
+else Email unique ou inchangé
+  Auth --> UI : OK
+
+  UI -> BDD : Mettre à jour les infos utilisateur
+  activate BDD
+  BDD --> UI : Mise à jour confirmée
+  deactivate BDD
+
+  alt Statut modifié ET utilisateur connecté
+    UI -> Connexion : Forcer déconnexion utilisateur
+    activate Connexion
+    Connexion --> UI : Déconnexion effectuée
+    deactivate Connexion
+    UI -> Email : Send notification de déconnexion
+    activate Email
+    Email --> UI : Email de déconnexion envoyé
+    deactivate Email
+  else Statut inchangé ou utilisateur non connecté
+    UI -> Email : Send notification de modification
+    activate Email
+    Email --> UI : Email envoyé
+    deactivate Email
+  end
+
+  alt Modification critique (ex. email, fonction)
+    UI -> Email : Send notification de modification
+    activate Email
+    Email --> UI : Email envoyé
+    deactivate Email
+  end
+
+  UI -> Audit : Journaliser la modification
+  activate Audit
+  Audit --> UI : Journalisation OK
+  deactivate Audit
+
+  UI --> Admin : Confirmation modification
+end
+deactivate UI
+deactivate Admin
+@enduml

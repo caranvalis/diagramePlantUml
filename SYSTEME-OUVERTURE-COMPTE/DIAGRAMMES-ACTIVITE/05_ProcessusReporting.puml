@@ -10,15 +10,21 @@ skinparam activity {
     StartColor #4CAF50
     EndColor #F44336
 }
+skinparam actor {
+    BackgroundColor #FF7043
+    BorderColor #D84315
+    FontColor #FFFFFF
+}
 skinparam shadowing true
 
 title Diagramme d'Activité - Processus de Reporting et Indicateurs
 
+|Système de Reporting|
 start
-
 :Système déclenche
 génération reporting;
 
+|Moteur de Collecte|
 partition "Collecte Données" {
     :Extraire données
     dossiers en cours;
@@ -36,6 +42,7 @@ partition "Collecte Données" {
     des SLA;
 }
 
+|Service d'Analyse|
 partition "Calcul Indicateurs" {
     :Calculer KPI
     de performance;
@@ -53,6 +60,7 @@ partition "Calcul Indicateurs" {
     réglementaire;
 }
 
+|Générateur de Rapports|
 partition "Génération Rapports" {
     :Créer rapport
     opérationnel quotidien;
@@ -68,20 +76,27 @@ partition "Génération Rapports" {
 }
 
 if (Anomalies détectées?) then (oui)
+    |Service d'Alertes|
     :Générer alertes
     automatiques;
     
+    |Responsables|
     :Notifier responsables
     concernés;
     
+    |Service d'Alertes|
     :Proposer actions
     correctives;
+    |Générateur de Rapports|
 else (non)
 endif
 
+|Service de Distribution|
 partition "Distribution" {
+    |Managers|
     :Diffuser rapport
     aux managers;
+    |Service de Distribution|
     
     :Mettre à jour
     tableau de bord;
@@ -89,11 +104,14 @@ partition "Distribution" {
     :Archiver rapports
     historiques;
     
+    |Équipes Opérationnelles|
     :Notifier équipes
     si action requise;
+    |Service de Distribution|
 }
 
 if (Actions correctives nécessaires?) then (oui)
+    |Responsables|
     :Créer plan
     d'action;
     
@@ -102,9 +120,11 @@ if (Actions correctives nécessaires?) then (oui)
     
     :Programmer suivi
     des actions;
+    |Service de Distribution|
 else (non)
 endif
 
+|Système de Reporting|
 :Programmer prochaine
 génération reporting;
 

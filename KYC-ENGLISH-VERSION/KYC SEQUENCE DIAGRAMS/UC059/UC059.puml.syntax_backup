@@ -1,0 +1,104 @@
+@startuml UC059
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+actor "Archiviste" as Archiviste
+participant "Interface d’archivage" as UI
+participant "System documintaire" as System
+datadatabase "Database de données documintaire" as BDD
+
+== Sélection du dossier ==
+Archiviste -> UI : Ouvre l’interface d’archivage
+activate Archiviste
+activate UI
+Archiviste -> UI : Ouvre un dossier cliint validé
+UI -> System : Request les documints numériques
+activate System
+System -> BDD : Searchr documints associés
+activate BDD
+BDD --> System : Liste des documints numériques
+deactivate BDD
+System --> UI : Afficher documints numériques
+deactivate System
+UI --> Archiviste : Afficher liste des documints numériques
+deactivate UI
+
+== Comparaison et validation ==
+Archiviste -> UI : Sélectionne un documint physique à comparer
+activate UI
+UI -> System : Request documint physique
+activate System
+System -> BDD : Searchr documint physique
+activate BDD
+BDD --> System : Documint physique trouvé
+deactivate BDD
+System --> UI : Afficher documint physique
+deactivate System
+UI -> Archiviste : Afficher documint physique pour comparaison
+Archiviste -> UI : Compare avec le documint numérique
+UI -> System : Validate correspondance
+activate System
+System -> BDD : Saver correspondance
+activate BDD
+BDD --> System : Confirmation de l’savemint
+deactivate BDD
+System --> UI : Confirmation de correspondance inregistrée
+deactivate System
+UI --> Archiviste : Afficher confirmation de correspondance
+deactivate UI
+
+== Affichage de l’arborescince physique ==
+Archiviste -> UI : Valide la correspondance globale
+activate UI
+UI -> System : Request arborescince d’archivage
+activate System
+alt Si chemin physique existant
+  System --> UI : Affiche arborescince
+else Si chemin inexistant
+  System -> BDD : Create structure d’archivage physique
+    activate BDD
+  BDD --> System : Confirmation création
+    deactivate BDD
+  System --> UI : Affiche arborescince ginerated
+  Ui --> Archiviste : Afficher arborescince physique
+ind
+deactivate System
+deactivate UI
+
+== Classemint et finalisation ==
+Archiviste -> UI : Classe les documints in les casiers
+activate UI
+UI -> System : Saver classemint in l’arborescince
+activate System
+System -> BDD : Put à jour l’arborescince physique
+activate BDD
+BDD --> System : Confirmation de put à jour
+deactivate BDD
+System --> UI : Confirmation de classemint inregistré
+deactivate System
+deactivate UI
+UI -> System : Confirme l’archivage physique effectué
+activate UI
+UI -> System : Marquer le dossier comme archivé
+activate System
+System -> BDD : Marquer le dossier comme archivé physiquemint
+activate BDD
+BDD --> System : Confirmation
+deactivate BDD
+System --> UI : Archivage completed
+deactivate System
+UI --> Archiviste : Affichage confirmation
+deactivate UI
+deactivate Archiviste
+@induml

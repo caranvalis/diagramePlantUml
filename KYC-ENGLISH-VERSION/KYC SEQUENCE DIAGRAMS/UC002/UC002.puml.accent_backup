@@ -1,0 +1,268 @@
+@startuml UC002
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC002 - Création Client Particulier
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+actor "System Externe" as SysExt #LightGray
+
+' Couche présentation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface Web\nKYC" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+end box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+end box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nClient" as ClientService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nDocument" as DocumentService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+end box
+
+' Services techniques
+box "Services Techniques" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+end box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Base de Données\nKYC" as DB #C0C0C0
+    participant "Stockage\nDocuments" as Storage #A9A9A9
+end box
+
+== Initialisation de la session ==
+
+Manager -> WebUI : Connexion interface KYC
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : Authentification
+activate Gateway
+
+Gateway -> AuditService : Log connexion
+activate AuditService
+AuditService -> DB : Enregistrer événement
+AuditService --> Gateway : OK
+deactivate AuditService
+
+Gateway --> WebUI : Token valide
+WebUI --> Manager : Accès autorisé
+note over Manager : Manager connecté\nToken valide
+
+== Initialisation création client ==
+
+Manager -> WebUI : Request formulaire\ncréation client particulier
+WebUI -> Gateway : GET /client/particulier/form
+
+Gateway -> Orchestrator : initierCreationClient()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxCreation()
+activate FluxManager
+
+FluxManager -> CacheService : getFormulaireTemplate()
+activate CacheService
+CacheService --> FluxManager : Template formulaire
+deactivate CacheService
+
+FluxManager -> AuditService : logDébutFlux(CREATION_CLIENT)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Formulaire préparé
+Orchestrator --> Gateway : Formulaire client
+Gateway --> WebUI : Formulaire avec validations
+WebUI --> Manager : Affichage formulaire
+
+note over Manager : Formulaire avec champs\nobligatoires/optionnels\net règles de validation
+
+== Saisie et validation des données ==
+
+Manager -> WebUI : Saisir informations client\n(nom, prénom, CNI, etc.)
+Manager -> WebUI : Téléverser documents\n(CNI, justificatifs)
+
+WebUI -> Gateway : POST /client/particulier/validate
+note over Gateway : Données + documents\nen multipart
+
+Gateway -> Orchestrator : validerDonneesClient()
+
+Orchestrator -> ValidationService : validerFormatDonnees()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format\n(email, téléphone, CNI)
+ValidationService -> ValidationService : Validate cohérence\n(âge, adresse)
+
+alt Validation format réussie
+    ValidationService --> Orchestrator : Données valides
+    
+    Orchestrator -> DocumentService : validerDocuments()
+    activate DocumentService
+    
+    DocumentService -> Storage : Analyze documents
+    activate Storage
+    Storage --> DocumentService : Métadonnées documents
+    deactivate Storage
+    
+    DocumentService -> DocumentService : Verify format\n(PDF, JPEG, taille)
+    DocumentService -> DocumentService : Control intégrité
+    
+    alt Documents valides
+        DocumentService --> Orchestrator : Documents conformes
+        deactivate DocumentService
+        
+        ' Vérification des doublons
+        Orchestrator -> DoublonService : rechercherDoublons()
+        activate DoublonService
+        
+        DoublonService -> DB : SELECT clients similaires
+        activate DB
+        DB --> DoublonService : Résultats recherche
+        deactivate DB
+        
+        DoublonService -> DoublonService : Analyze similitudes\n(nom, CNI, adresse)
+        
+        alt Aucun doublon détecté
+            DoublonService --> Orchestrator : Pas de doublon
+            deactivate DoublonService
+            
+            ' Création du client
+            Orchestrator -> ClientService : creerClient()
+            activate ClientService
+            
+            ClientService -> DB : INSERT INTO clients
+            activate DB
+            DB --> ClientService : ID client généré
+            deactivate DB
+            
+            ClientService -> DocumentService : associerDocuments()
+            activate DocumentService
+            DocumentService -> Storage : Save documents
+            activate Storage
+            Storage --> DocumentService : URLs documents
+            deactivate Storage
+            
+            DocumentService -> DB : INSERT documents_client
+            activate DB
+            DB --> DocumentService : OK
+            deactivate DB
+            deactivate DocumentService
+            
+            ClientService -> CacheService : cacheClientInfo()
+            activate CacheService
+            CacheService --> ClientService : Mis en cache
+            deactivate CacheService
+            
+            ClientService --> Orchestrator : Client créé (ID: ${clientId})
+            deactivate ClientService
+            
+            ' Audit et notification
+            Orchestrator -> AuditService : logCreationClient()
+            activate AuditService
+            AuditService -> DB : INSERT audit_actions
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator -> NotificationService : notifierCreation()
+            activate NotificationService
+            NotificationService -> SysExt : Send notification\n(email, SMS)
+            activate SysExt
+            SysExt --> NotificationService : Envoyé
+            deactivate SysExt
+            NotificationService --> Orchestrator : Notification envoyée
+            deactivate NotificationService
+            
+            Orchestrator --> Gateway : Success création
+            Gateway --> WebUI : Client créé avec succès
+            WebUI --> Manager : **Confirmation création**\nClient ID: ${clientId}
+            
+            note over Manager : Client particulier créé\nDocuments associés\nNotifications envoyées
+            
+        else Doublon potentiel détecté
+            DoublonService --> Orchestrator : Doublon détecté
+            deactivate DoublonService
+            
+            Orchestrator -> AuditService : logTentativeDoublon()
+            activate AuditService
+            AuditService -> DB : INSERT audit_anomalies
+            AuditService --> Orchestrator : OK
+            deactivate AuditService
+            
+            Orchestrator --> Gateway : Error doublon
+            Gateway --> WebUI : Doublon détecté
+            WebUI --> Manager : **Error**: Client similaire existe\nVerify données
+        end
+        
+    else Documents invalides
+        DocumentService --> Orchestrator : Documents non conformes
+        deactivate DocumentService
+        
+        Orchestrator -> AuditService : logErrorDocuments()
+        activate AuditService
+        AuditService -> DB : INSERT audit_erreurs
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator --> Gateway : Error documents
+        Gateway --> WebUI : Documents non conformes
+        WebUI --> Manager : **Error**: Documents invalides\nCorrections requises
+    end
+    
+else Validation format échouée
+    ValidationService --> Orchestrator : Données invalides
+    deactivate ValidationService
+    
+    Orchestrator -> AuditService : logErrorValidation()
+    activate AuditService
+    AuditService -> DB : INSERT audit_erreurs
+    AuditService --> Orchestrator : OK
+    deactivate AuditService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Données non conformes
+    WebUI --> Manager : **Error**: Format de données incorrect\nCorrections requises
+end
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxCreation()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux terminé
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+note over DB : Toutes les actions\nsont tracées et auditées\npour conformité réglementaire
+
+@enduml

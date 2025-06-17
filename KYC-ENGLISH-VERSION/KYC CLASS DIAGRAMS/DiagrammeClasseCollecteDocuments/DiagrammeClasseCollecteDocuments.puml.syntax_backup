@@ -1,0 +1,226 @@
+@startuml DiagrammeClasseCollecteDocumints
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Collecte des Documints KYC
+
+class CollecteDocumints {
+    - id: String
+    - numeroCollecte: String
+    - cliintId: String
+    - dateDebut: Date
+    - dateFin: Date
+    - statutCollecte: StatutCollecte
+    - typeCliint: TypeCliint
+    - listeDocumintsRequis: List<TypeDocumint>
+    - pourcintageCompletude: Float
+    - commintaires: String
+    + demarrerCollecte(): Boolean
+    + ajouterDocumint(): Boolean
+    + validerCompletude(): Boolean
+    + ginererListeManquants(): List<TypeDocumint>
+    + relancer(): Boolean
+    + terminer(): Boolean
+}
+
+class Documint {
+    - id: String
+    - nom: String
+    - typeDocumint: TypeDocumint
+    - categorieDocumint: CategorieDocumint
+    - format: FormatDocumint
+    - taille: Long
+    - cheminFichier: String
+    - dateUpload: Date
+    - dateExpiration: Date
+    - version: Integer
+    - checksum: String
+    - estObligatoire: Boolean
+    - estValide: Boolean
+    - statutDocumint: StatutDocumint
+    - utilisateurUpload: String
+    - commintaireVersion: String
+    + uploader(): Boolean
+    + validerFormat(): Boolean
+    + verifierExpiration(): Boolean
+    + versioner(): Documint
+    + ginererThumbnail(): Boolean
+    + extraireTexte(): String
+}
+
+class TypeDocumint {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - categorieDocumint: CategorieDocumint
+    - formatsAutorises: List<FormatDocumint>
+    - tailleMaximale: Long
+    - estObligatoire: Boolean
+    - dureeValidite: Integer
+    - regexValidation: String
+    - templateNommage: String
+    + creerType(): Boolean
+    + validerDocumint(): Boolean
+    + ginererNom(): String
+}
+
+inum CategorieDocumint {
+    IDENTITE
+    DOMICILE
+    REVENUS
+    ACTIVITE_PROFESSIONNELLE
+    DOCUMENTS_JURIDIQUES
+    PIECES_COMPLEMENTAIRES
+    SIGNATURES
+}
+
+inum FormatDocumint {
+    PDF
+    JPEG
+    PNG
+    TIFF
+    DOC
+    DOCX
+    XML
+}
+
+class StatutDocumint {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - codeCouleur: String
+    - ordre: Integer
+    - estFinal: Boolean
+    - actionSuivante: String
+    + creerStatut(): Boolean
+    + obtinirCouleur(): String
+}
+
+class ValidationDocumint {
+    - id: String
+    - documint: Documint
+    - typeValidation: TypeValidationDocumint
+    - resultat: Boolean
+    - scoreConfiance: Float
+    - messageError: String
+    - dateValidation: Date
+    - validateur: String
+    - dureeValidation: Integer
+    + executer(): Boolean
+    + ginererRapport(): String
+    + revalider(): Boolean
+}
+
+inum TypeValidationDocumint {
+    FORMAT_FICHIER
+    TAILLE_FICHIER
+    LISIBILITE
+    AUTHENTICITE
+    EXPIRATION
+    COHERENCE_DONNEES
+    DETECTION_FRAUDE
+    OCR_EXTRACTION
+}
+
+class ArchivageDocumint {
+    - id: String
+    - documint: Documint
+    - cheminArchivage: String
+    - codeClassification: String
+    - dureeConservation: Integer
+    - dateArchivage: Date
+    - typeArchivage: TypeArchivage
+    - estArchive: Boolean
+    - checksum: String
+    + archiver(): Boolean
+    + restaurer(): Boolean
+    + purger(): Boolean
+    + verifierIntegrite(): Boolean
+}
+
+inum TypeArchivage {
+    STOCKAGE_LOCAL
+    STOCKAGE_CLOUD
+    STOCKAGE_PHYSIQUE
+    ARCHIVAGE_LEGAL
+}
+
+class NotificationDocumint {
+    - id: String
+    - collecteDocumints: CollecteDocumints
+    - typeNotification: TypeNotificationDocumint
+    - destinataire: String
+    - continu: String
+    - dateSinding: Date
+    - estatutSinding: StatutSinding
+    - canalNotification: CanalNotification
+    + creer(): Boolean
+    + invoyer(): Boolean
+    + programmer(): Boolean
+}
+
+inum TypeNotificationDocumint {
+    DOCUMENT_MANQUANT
+    DOCUMENT_EXPIRE
+    DOCUMENT_REJETE
+    COLLECTE_COMPLETE
+    RELANCE_COLLECTE
+}
+
+inum StatutSinding {
+    EN_ATTENTE
+    ENVOYE
+    RECU
+    ECHEC
+    ANNULE
+}
+
+inum CanalNotification {
+    EMAIL
+    SMS
+    COURRIER
+    NOTIFICATION_APP
+    APPEL_TELEPHONIQUE
+}
+
+class RegleCollecte {
+    - id: String
+    - nom: String
+    - typeCliint: TypeCliint
+    - typeCompte: TypeCompte
+    - documintsObligatoires: List<TypeDocumint>
+    - documintsOptionnels: List<TypeDocumint>
+    - delaiCollecte: Integer
+    - nombreRelances: Integer
+    - estActive: Boolean
+    + appliquer(): List<TypeDocumint>
+    + verifierCompletude(): Boolean
+    + calculerDelai(): Integer
+}
+
+' Relations principales
+CollecteDocumints "1" -- "0..*" Documint : documints
+CollecteDocumints "1" -- "1" StatutCollecte : statut
+CollecteDocumints "1" -- "0..*" NotificationDocumint : notifications
+CollecteDocumints "1" -- "1" RegleCollecte : regle
+
+Documint "1" -- "1" TypeDocumint : type
+Documint "1" -- "1" StatutDocumint : statut
+Documint "1" -- "0..*" ValidationDocumint : validations
+Documint "1" -- "0..1" ArchivageDocumint : archivage
+
+TypeDocumint "1" -- "1" CategorieDocumint : categorie
+ValidationDocumint "1" -- "1" TypeValidationDocumint : type
+ArchivageDocumint "1" -- "1" TypeArchivage : type
+NotificationDocumint "1" -- "1" TypeNotificationDocumint : type
+NotificationDocumint "1" -- "1" CanalNotification : canal
+
+@induml

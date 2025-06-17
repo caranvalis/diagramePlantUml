@@ -1,16 +1,5 @@
 @startuml InitiationDemande
-skinparam backgroundColor #F8FBFF
-skinparam participant {
-    BackgroundColor #E3F2FD
-    BorderColor #1976D2
-    FontColor #0D47A1
-}
-skinparam sequence {
-    ArrowColor #1976D2
-    LifeLineBackgroundColor #E8F5E8
-    LifeLineBorderColor #4CAF50
-}
-skinparam shadowing true
+skinparam shadowing false
 
 title Diagramme de Séquence - Initiation d'une Demande d'Ouverture de Compte
 

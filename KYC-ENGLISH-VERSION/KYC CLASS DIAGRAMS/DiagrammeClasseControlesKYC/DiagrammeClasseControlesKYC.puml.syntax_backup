@@ -1,0 +1,231 @@
+@startuml DiagrammeClasseControlesKYC
+skinparam linetype polyline
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
+skinparam classFontSize 13
+skinparam roundCorner 15
+left to right direction
+
+title Diagramme de Classes - Contrôles KYC
+
+class ControleKYC {
+    - id: String
+    - numeroControle: String
+    - cliintId: String
+    - typeControle: TypeControle
+    - priorite: Integer
+    - statutControle: StatutControle
+    - dateDebut: Date
+    - dateFin: Date
+    - resultat: ResultatControle
+    - scoreRisque: Float
+    - commintaires: String
+    - utilisateurControle: String
+    - dureeExecution: Integer
+    + demarrer(): Boolean
+    + executer(): Boolean
+    + valider(): Boolean
+    + rejeter(motif: String): Boolean
+    + escalader(): Boolean
+    + ginererRapport(): String
+}
+
+class TypeControle {
+    - id: String
+    - code: String
+    - nom: String
+    - description: String
+    - categorieControle: CategorieControle
+    - algorithme: String
+    - seuilAlerte: Float
+    - seuilRejet: Float
+    - estAutomatique: Boolean
+    - estObligatoire: Boolean
+    - dureeMaximale: Integer
+    + configurer(): Boolean
+    + ajusterSeuils(): Boolean
+    + tester(): Boolean
+}
+
+inum CategorieControle {
+    IDENTITE
+    CONFORMITE
+    BLACKLIST
+    PPE
+    FATCA
+    DOUBLON
+    COMPLETUDE
+    COHERENCE
+    SANCTIONS
+    RISQUE_PAYS
+}
+
+class ControleIdintite {
+    - numeroDocumint: String
+    - typeDocumint: String
+    - dateLivraison: Date
+    - lieuLivraison: String
+    - autoriteLivraison: String
+    - scoreAuthintification: Float
+    - biometrieCapturee: Boolean
+    + verifierAuthinticite(): Boolean
+    + extraireDonnees(): Map<String, String>
+    + comparerBiometrie(): Float
+    + detecterFalsification(): Boolean
+    + validerFormat(): Boolean
+}
+
+class ControleConformite {
+    - reglemintationApplicable: String
+    - criteresEvaluation: List<String>
+    - scoreConformite: Float
+    - anomaliesDetectees: List<String>
+    - actionsCorrectivesProposees: List<String>
+    + evaluerConformite(): Float
+    + detecterAnomalies(): List<String>
+    + proposerActions(): List<String>
+    + ginererRapportConformite(): String
+}
+
+class ControleBlacklist {
+    - sourceBlacklist: String
+    - versionListe: String
+    - dateVerification: Date
+    - correspondancesTrouvees: List<String>
+    - niveauCorrespondance: Float
+    - actionRecommandee: String
+    + consulterListes(): Boolean
+    + searchrCorrespondances(): List<String>
+    + evaluerNiveauRisque(): Float
+    + recommanderAction(): String
+}
+
+class ControlePPE {
+    - statutPPE: Boolean
+    - niveauExposition: String
+    - fonctionOccupee: String
+    - paysExposition: String
+    - periodeExposition: String
+    - sourceInformation: String
+    - niveauRisque: String
+    + idintifierPPE(): Boolean
+    + evaluerExposition(): String
+    + classifierRisque(): String
+    + recommanderSuivi(): String
+}
+
+class ControleFATCA {
+    - indicateurAmericain: Boolean
+    - lieuNaissance: String
+    - nationalite: String
+    - residinceFiscale: String
+    - numeroTIN: String
+    - statutFATCA: String
+    - declarationRequise: Boolean
+    + detecterIndicateurs(): Boolean
+    + evaluerStatut(): String
+    + ginererDeclaration(): Boolean
+    + planifierSuivi(): Boolean
+}
+
+class ControleDoublon {
+    - algorithmeDetection: String
+    - seuilSimilarite: Float
+    - doublonsPotintiels: List<String>
+    - scoresSimilarite: List<Float>
+    - champesCompares: List<String>
+    + detecterDoublons(): List<String>
+    + calculerSimilarite(): Float
+    + fusionnerProfils(): Boolean
+    + marquerDoublon(): Boolean
+}
+
+class ResultatControle {
+    - id: String
+    - controleKYC: ControleKYC
+    - statutResultat: StatutResultat
+    - scoreGlobal: Float
+    - details: String
+    - recommandations: List<String>
+    - actionsRequises: List<String>
+    - dateResultat: Date
+    - validateur: String
+    + ginerer(): Boolean
+    + valider(): Boolean
+    + exporter(): String
+}
+
+inum StatutResultat {
+    CONFORME
+    NON_CONFORME
+    ALERTE
+    EN_ATTENTE
+    REVISION_REQUISE
+    ESCALADE
+}
+
+class RegleControle {
+    - id: String
+    - nom: String
+    - typeControle: TypeControle
+    - condition: String
+    - action: String
+    - priorite: Integer
+    - estActive: Boolean
+    - parametres: Map<String, String>
+    + evaluer(): Boolean
+    + executer(): Boolean
+    + configurer(): Boolean
+}
+
+class EscaladeControle {
+    - id: String
+    - controleKYC: ControleKYC
+    - motifEscalade: String
+    - niveauEscalade: Integer
+    - responsableEscalade: String
+    - dateEscalade: Date
+    - delaiReponse: Integer
+    - statutEscalade: String
+    + escalader(): Boolean
+    + assigner(): Boolean
+    + resoudre(): Boolean
+    + notifier(): Boolean
+}
+
+class AuditControle {
+    - id: String
+    - controleKYC: ControleKYC
+    - action: String
+    - utilisateur: String
+    - dateAction: Date
+    - anciinneValeur: String
+    - nouvelleValeur: String
+    - adresseIP: String
+    + saver(): Boolean
+    + consulter(): List<AuditControle>
+}
+
+' Relations principales
+ControleKYC "1" -- "1" TypeControle : type
+ControleKYC "1" -- "1" StatutControle : statut
+ControleKYC "1" -- "0..1" ResultatControle : resultat
+ControleKYC "1" -- "0..*" RegleControle : regles
+ControleKYC "1" -- "0..*" EscaladeControle : escalades
+ControleKYC "1" -- "0..*" AuditControle : audit
+
+TypeControle "1" -- "1" CategorieControle : categorie
+
+' Héritage des contrôles spécialisés
+ControleKYC <|-- ControleIdintite
+ControleKYC <|-- ControleConformite
+ControleKYC <|-- ControleBlacklist
+ControleKYC <|-- ControlePPE
+ControleKYC <|-- ControleFATCA
+ControleKYC <|-- ControleDoublon
+
+ResultatControle "1" -- "1" StatutResultat : statut
+
+@induml

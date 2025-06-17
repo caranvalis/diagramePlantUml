@@ -1,0 +1,237 @@
+@startuml UC014
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+
+title UC014 - Modification Informations Cliint
+
+' Acteurs externes
+actor "Manager KYC" as Manager #LightBlue
+
+' Couche présintation
+box "Interface Utilisateur" #E8F5E8
+    participant "Interface INTRA" as WebUI #90EE90
+    participant "API Gateway" as Gateway #98FB98
+ind box
+
+' Couche orchestration
+box "Couche Orchestration" #FFF8DC
+    participant "Orchestrateur\nKYC" as Orchestrator #FFE4B5
+    participant "Manager\nFlux Métier" as FluxManager #F0E68C
+ind box
+
+' Services métier
+box "Services Métier KYC" #F0F8FF
+    participant "Service\nCliint" as CliintService #87CEEB
+    participant "Service\nValidation" as ValidationService #87CEFA
+    participant "Service\nHistory" as HistoryService #4682B4
+    participant "Service\nDoublon" as DoublonService #4169E1
+ind box
+
+' Services technicals
+box "Services Technicals" #FDF5E6
+    participant "Service\nAudit" as AuditService #DEB887
+    participant "Service\nNotification" as NotificationService #D2B48C
+    participant "Cache\nRedis" as CacheService #CD853F
+ind box
+
+' Infrastructure
+box "Infrastructure" #F5F5F5
+    participant "Database de Données\nKYC" as DB #C0C0C0
+ind box
+
+== Accès fiche cliint ==
+
+Manager -> WebUI : Accéder fiche cliint\npour modification
+activate Manager
+activate WebUI
+
+WebUI -> Gateway : GET /cliint/{id}/edit
+activate Gateway
+
+Gateway -> Orchestrator : accederModificationCliint()
+activate Orchestrator
+
+Orchestrator -> FluxManager : démarrerFluxModificationCliint()
+activate FluxManager
+
+FluxManager -> AuditService : logDébutFlux(MODIFICATION_CLIENT)
+activate AuditService
+AuditService -> DB : INSERT audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+Orchestrator -> CliintService : chargerDonneesCliint()
+activate CliintService
+
+CliintService -> CacheService : getCliintInfo()
+activate CacheService
+
+alt Cliint in cache
+    CacheService --> CliintService : Données trouvées
+    deactivate CacheService
+    
+else Pas in cache
+    CacheService --> CliintService : Non trouvé
+    deactivate CacheService
+    
+    CliintService -> DB : SELECT cliint_details
+    activate DB
+    DB --> CliintService : Données cliint
+    deactivate DB
+    
+    CliintService -> CacheService : cacheCliintInfo()
+    activate CacheService
+    CacheService --> CliintService : Mis in cache
+    deactivate CacheService
+ind
+
+CliintService --> Orchestrator : Fiche cliint chargée
+deactivate CliintService
+
+Orchestrator --> Gateway : Données disponibles
+Gateway --> WebUI : Fiche cliint
+WebUI --> Manager : **Fiche cliint**\nMode modification activé
+
+== Modification des informations ==
+
+Manager -> WebUI : Modify informations\n(adresse, téléphone, etc.)
+Manager -> WebUI : Validate modifications
+
+WebUI -> Gateway : PUT /cliint/{id}/update
+
+Gateway -> Orchestrator : modifierInformationsCliint()
+
+Orchestrator -> ValidationService : validerNouvellesDonnees()
+activate ValidationService
+
+ValidationService -> ValidationService : Control format\nnouvelles données
+ValidationService -> ValidationService : Validate cohérince\nmodifications
+
+alt Error de format
+    ValidationService --> Orchestrator : Format invalide
+    deactivate ValidationService
+    
+    Orchestrator --> Gateway : Error validation
+    Gateway --> WebUI : Message bloquant
+    WebUI --> Manager : **Error**: Format incorrect\nCorrection requise
+    
+else Format valide
+    ValidationService --> Orchestrator : Données valides
+    deactivate ValidationService
+    
+    Orchestrator -> DoublonService : verifierDoublonModification()
+    activate DoublonService
+    
+    DoublonService -> DB : SELECT cliints_similaires
+    activate DB
+    DB --> DoublonService : Results search
+    deactivate DB
+    
+    DoublonService -> DoublonService : Analyze risque\ndoublon avec modifications
+    
+    alt Risque doublon détecté
+        DoublonService --> Orchestrator : Doublon potintiel
+        deactivate DoublonService
+        
+        Orchestrator -> AuditService : logRisqueDoublon()
+        activate AuditService
+        AuditService -> DB : INSERT audit_anomalies
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator --> Gateway : Validation échoue
+        Gateway --> WebUI : Modification annulée
+        WebUI --> Manager : **Error**: Risque doublon\nModification annulée
+        
+    else Pas de risque doublon
+        DoublonService --> Orchestrator : Validation OK
+        deactivate DoublonService
+        
+        ' Savemint history AVANT modification
+        Orchestrator -> HistoryService : sauvegarderEtatAvant()
+        activate HistoryService
+        
+        HistoryService -> DB : INSERT history_modifications
+        activate DB
+        DB --> HistoryService : History created
+        deactivate DB
+        
+        HistoryService --> Orchestrator : État sauvegardé
+        deactivate HistoryService
+        
+        ' Put à jour des données
+        Orchestrator -> CliintService : putAJourDonnees()
+        activate CliintService
+        
+        CliintService -> DB : UPDATE cliint SET nouvelles_donnees
+        activate DB
+        DB --> CliintService : Données puts à jour
+        deactivate DB
+        
+        CliintService -> CacheService : invalidateCliintCache()
+        activate CacheService
+        CacheService --> CliintService : Cache invalidé
+        deactivate CacheService
+        
+        CliintService --> Orchestrator : Cliint mis à jour
+        deactivate CliintService
+        
+        ' Savemint history APRÈS modification
+        Orchestrator -> HistoryService : saverModification()
+        activate HistoryService
+        
+        HistoryService -> DB : UPDATE history_modifications
+        activate DB
+        DB --> HistoryService : Modification tracée
+        deactivate DB
+        
+        HistoryService --> Orchestrator : History complet
+        deactivate HistoryService
+        
+        ' Audit et notification
+        Orchestrator -> AuditService : logModificationReussie()
+        activate AuditService
+        AuditService -> DB : INSERT audit_actions
+        AuditService --> Orchestrator : OK
+        deactivate AuditService
+        
+        Orchestrator -> NotificationService : notifierModification()
+        activate NotificationService
+        NotificationService --> Orchestrator : Notification invoyée
+        deactivate NotificationService
+        
+        Orchestrator --> Gateway : Modification successfule
+        Gateway --> WebUI : Confirmation put à jour
+        WebUI --> Manager : **Success**: Informations\ncliint puts à jour
+    ind
+ind
+
+== Finalisation ==
+
+Orchestrator -> FluxManager : terminerFluxModificationCliint()
+FluxManager -> AuditService : logFinFlux()
+activate AuditService
+AuditService -> DB : UPDATE audit_flux
+AuditService --> FluxManager : OK
+deactivate AuditService
+
+FluxManager --> Orchestrator : Flux completed
+deactivate FluxManager
+deactivate Orchestrator
+
+deactivate Gateway
+deactivate WebUI
+deactivate Manager
+
+@induml

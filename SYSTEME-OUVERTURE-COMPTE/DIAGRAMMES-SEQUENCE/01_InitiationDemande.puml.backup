@@ -1,0 +1,60 @@
+@startuml InitiationDemande
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequence {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+title Diagramme de Séquence - Initiation d'une Demande d'Ouverture de Compte
+
+actor Client
+participant "Agent\nInitiateur" as Agent
+participant "Système\nOuverture" as Systeme
+participant "Service\nSIRH" as SIRH
+participant "Base\nDocuments" as BDD
+participant "Service\nNotifications" as Notif
+
+== Authentification Agent ==
+Agent -> SIRH : authentifier(matricule, motDePasse)
+SIRH --> Agent : agentAuthentifie
+
+== Création de la Demande ==
+Client -> Agent : demandeOuvertureCompte(typeClient, produit)
+Agent -> Systeme : creerDemande(clientPotentiel, typeProduit)
+
+Systeme -> Systeme : genererNumeroReference()
+Systeme -> Systeme : initialiserEtapes()
+Systeme -> BDD : determinerDocumentsRequis(typeClient, typeProduit)
+BDD --> Systeme : listeDocuments
+
+== Configuration du Workflow ==
+Systeme -> Systeme : creerTableauConformite()
+Systeme -> Systeme : assignerUniteGestion(agent.unite)
+Systeme -> Systeme : definirPriorite(typeClient, montant)
+
+== Notification et Suivi ==
+Systeme -> Notif : notifierCreationDemande(agent, demande)
+Systeme --> Agent : demandeCreee(numeroReference, etapesRequises)
+Agent --> Client : confirmationDemande(numeroReference, documentsAFournir)
+
+== Logging ==
+Systeme -> Systeme : enregistrerAuditTrail("CREATION_DEMANDE", agent, demande)
+
+note right of Systeme
+  La demande est créée avec le statut "BROUILLON"
+  et l'étape "INITIATION" est marquée comme active
+end note
+
+note left of Agent
+  L'agent reçoit immédiatement la liste
+  des documents à collecter auprès du client
+end note
+
+@enduml

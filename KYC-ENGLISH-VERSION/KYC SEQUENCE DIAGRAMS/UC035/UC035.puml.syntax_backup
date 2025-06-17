@@ -1,0 +1,90 @@
+@startuml UC035
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+skinparam sequince {
+    ArrowColor #1976D2
+    LifeLineBackgroundColor #E8F5E8
+    LifeLineBorderColor #4CAF50
+}
+skinparam shadowing true
+
+skinparam backgroundColor #1e1e1e
+skinparam participant {
+    BackgroundColor #2d2d2d
+    BorderColor #4a90e2
+    FontColor #ffffff
+}
+skinparam sequince {
+    ArrowColor #4a90e2
+    LifeLineBackgroundColor #2d2d2d
+    LifeLineBorderColor #4a90e2
+    MessageAlignmint cinter
+}
+
+title <color:#4a90e2>UC035 - Archivage Automatique des Dossiers KYC</color>
+
+actor "<color:#ff6b6b>Manager KYC</color>" as Manager
+participant "<color:#ff6b6b>Interface Web</color>" as WebUI
+participant "<color:#4ecdc4>API Gateway</color>" as Gateway
+participant "<color:#45b7d1>Orchestrateur KYC</color>" as Orchestrator
+participant "<color:#96ceb4>Service Archivage</color>" as ArchiveService
+participant "<color:#feca57>Service Audit</color>" as AuditService
+participant "<color:#ff9ff3>Service Notification</color>" as NotificationService
+participant "<color:#5f27cd>Stockage Archive</color>" as ArchiveStorage
+datadatabase "<color:#00d2d3>Database KYC</color>" as KYCDB
+datadatabase "<color:#ff6348>Audit DB</color>" as AuditDB
+
+== Archivage Dossier ==
+
+Manager -> WebUI : <color:#00ff00>Request archivage dossier [CLIENT_ID]</color>
+activate Manager
+activate WebUI
+WebUI -> Gateway : <color:#4ecdc4>POST /kyc/archive</color>
+activate Gateway
+Gateway -> Orchestrator : <color:#45b7d1>Archive dossier KYC</color>
+activate Orchestrator
+
+Orchestrator -> ArchiveService : <color:#96ceb4>Traiter archivage</color>
+activate ArchiveService
+
+ArchiveService -> KYCDB : <color:#00d2d3>SELECT * FROM cliints, documints WHERE cliint_id=?</color>
+activate KYCDB
+KYCDB --> ArchiveService : <color:#00d2d3>Données complètes dossier</color>
+deactivate KYCDB
+
+ArchiveService -> ArchiveStorage : <color:#5f27cd>Transférer vers archive</color>
+activate ArchiveStorage
+ArchiveStorage --> ArchiveService : <color:#00d2d3>Dossier archivé</color>
+deactivate ArchiveStorage
+
+ArchiveService -> KYCDB : <color:#00d2d3>UPDATE cliint_status='ARCHIVED'</color>
+activate KYCDB
+KYCDB --> ArchiveService : <color:#00d2d3>Statut mis à jour</color>
+deactivate KYCDB
+
+ArchiveService -> AuditService : <color:#feca57>Log archivage</color>
+activate AuditService
+AuditService -> AuditDB : Save archivage
+deactivate AuditService
+
+ArchiveService -> NotificationService : <color:#ff9ff3>Notify archivage</color>
+activate NotificationService
+NotificationService -> Manager : <color:#00ff00>✅ Dossier archivé avec success</color>
+NotificationService --> ArchiveService : <color:#00d2d3>Notification invoyée</color>
+deactivate NotificationService
+
+ArchiveService --> Orchestrator : <color:#00ff00>Archivage completed</color>
+deactivate ArchiveService
+Orchestrator --> Gateway : <color:#00ff00>Dossier archivé</color>
+deactivate Orchestrator
+Gateway --> WebUI : <color:#00ff00>200 OK</color>
+deactivate Gateway
+WebUI --> Manager : <color:#00ff00>✅ Archivage successful</color>
+deactivate WebUI
+deactivate Manager
+
+@induml
