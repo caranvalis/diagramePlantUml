@@ -1,7 +1,7 @@
 @startuml ControlesReglementaires
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13
@@ -15,7 +15,7 @@ skinparam ranksep 30
 
 title Package - Contrôles Réglementaires
 
-package "Contrôles de Base" #FFDDDD {
+package "Contrôles de Base" {
   abstract class ControleReglementaire {
     - id: String
     - demande: DemandeOuvertureCompte
@@ -53,7 +53,7 @@ package "Contrôles de Base" #FFDDDD {
   }
 }
 
-package "Contrôles Spécialisés" #FFF0E0 {
+package "Contrôles Spécialisés" {
   class ControleBlacklist extends ControleReglementaire {
     - listesConsultees: List<String>
     - correspondances: List<CorrespondanceBlacklist>
@@ -113,7 +113,7 @@ package "Contrôles Spécialisés" #FFF0E0 {
   }
 }
 
-package "Données de Contrôle" #F0F8FF {
+package "Données de Contrôle" {
   class CorrespondanceBlacklist {
     - id: String
     - liste: String
@@ -158,7 +158,7 @@ package "Données de Contrôle" #F0F8FF {
   }
 }
 
-package "Énumérations Contrôles" #FFFACD {
+package "Énumérations Contrôles" {
   enum TypeControle {
     BLACKLIST
     PPE

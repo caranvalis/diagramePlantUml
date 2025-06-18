@@ -1,7 +1,7 @@
 @startuml RegulatoryControls
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13
@@ -15,7 +15,7 @@ skinparam ranksep 30
 
 title Package - Regulatory Controls
 
-package "Base Controls" #FFDDDD {
+package "Base Controls" {
   abstract class RegulatoryControl {
     - id: String
     - request: AccountOpeningRequest
@@ -53,7 +53,7 @@ package "Base Controls" #FFDDDD {
   }
 }
 
-package "Specialized Controls" #FFF0E0 {
+package "Specialized Controls" {
   class BlacklistControl extends RegulatoryControl {
     - consultedLists: List<String>
     - matches: List<BlacklistMatch>
@@ -100,7 +100,7 @@ package "Specialized Controls" #FFF0E0 {
   }
 }
 
-package "Control Configuration" #E8F8FF {
+package "Control Configuration" {
   enum ControlType {
     BLACKLIST_CHECK
     PPE_VERIFICATION

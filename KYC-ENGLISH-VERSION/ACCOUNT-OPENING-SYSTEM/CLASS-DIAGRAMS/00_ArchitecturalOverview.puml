@@ -3,7 +3,7 @@ skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classFontSize 14
 skinparam packageFontSize 16
 skinparam shadowing true
@@ -13,14 +13,14 @@ skinparam ranksep 40
 
 title Architectural Overview - Modular Account Opening System
 
-package "01. Workflow Management" as Workflow #E8F5E8 {
+package "01. Workflow Management" as Workflow {
   class AccountOpeningRequest
   class ValidationStep  
   class ComplianceBoard
   class ComplianceLine
 }
 
-package "02. Regulatory Controls" as Controls #FFE8E8 {
+package "02. Regulatory Controls" as Controls {
   class RegulatoryControl
   class BlacklistControl
   class PPEControl
@@ -29,7 +29,7 @@ package "02. Regulatory Controls" as Controls #FFE8E8 {
   class ControlAlert
 }
 
-package "03. Document Management" as Documents #F0F8E8 {
+package "03. Document Management" as Documents {
   class RequiredDocument
   class ClientRecord
   class OpeningAgreement
@@ -37,7 +37,7 @@ package "03. Document Management" as Documents #F0F8E8 {
   class FileAttachment
 }
 
-package "04. Agents and Units" as Agents #FFF8E1 {
+package "04. Agents and Units" as Agents {
   class Agent
   class ManagementUnit
   class Delegation
@@ -46,7 +46,7 @@ package "04. Agents and Units" as Agents #FFF8E1 {
   class AgentStatistics
 }
 
-package "05. Client and Data" as Client #F3E5F5 {
+package "05. Client and Data" as Client {
   class PotentialClient
   class PersonalData
   class ProfessionalData
@@ -55,7 +55,7 @@ package "05. Client and Data" as Client #F3E5F5 {
   class IdentityDocument
 }
 
-package "06. External Integrations" as Integration #E1F5FE {
+package "06. External Integrations" as Integration {
   class CBSInterface
   class ExternalAPI
   class NotificationService
@@ -64,7 +64,7 @@ package "06. External Integrations" as Integration #E1F5FE {
   class QueueManager
 }
 
-package "07. Configuration and Rules" as Config #FFF3E0 {
+package "07. Configuration and Rules" as Config {
   class BusinessRule
   class ValidationCriteria
   class SystemConfiguration

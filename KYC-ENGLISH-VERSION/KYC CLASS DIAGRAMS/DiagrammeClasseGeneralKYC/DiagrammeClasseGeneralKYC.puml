@@ -1,6 +1,6 @@
 @startuml DiagrammeClasseGineralKYC
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13

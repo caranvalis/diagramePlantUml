@@ -1,7 +1,7 @@
 @startuml ClientEtDonnees
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13
@@ -15,7 +15,7 @@ skinparam ranksep 30
 
 title Package - Client et Données
 
-package "Client et Identité" #F3E5F5 {
+package "Client et Identité" {
   class ClientPotentiel {
     - id: String
     - numeroReference: String
@@ -109,7 +109,7 @@ package "Client et Identité" #F3E5F5 {
   }
 }
 
-package "Revenus et Patrimoine" #F8BBD9 {
+package "Revenus et Patrimoine" {
   class RevenuClient {
     - id: String
     - client: ClientPotentiel
@@ -159,7 +159,7 @@ package "Revenus et Patrimoine" #F8BBD9 {
   }
 }
 
-package "Représentation Légale" #E1BEE7 {
+package "Représentation Légale" {
   class RepresentantLegal {
     - id: String
     - client: ClientPotentiel
@@ -218,7 +218,7 @@ package "Représentation Légale" #E1BEE7 {
   }
 }
 
-package "Évaluation des Risques" #FCE4EC {
+package "Évaluation des Risques" {
   class ProfileRisqueClient {
     - id: String
     - client: ClientPotentiel
@@ -268,7 +268,7 @@ package "Évaluation des Risques" #FCE4EC {
   }
 }
 
-package "Comptes et Produits" #F48FB1 {
+package "Comptes et Produits" {
   class RIB {
     - id: String
     - demande: DemandeOuvertureCompte
@@ -318,7 +318,7 @@ package "Comptes et Produits" #F48FB1 {
   }
 }
 
-package "Énumérations Client" #FFFACD {
+package "Énumérations Client" {
   enum TypePersonne {
     PHYSIQUE
     MORALE

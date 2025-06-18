@@ -1,81 +1,90 @@
 @startuml TemplateStandardClasse
 ' ========================================
-' TEMPLATE STANDARD DIAGRAMME DE CLASSE
-' Style minimaliste sans couleurs
+' TEMPLATE STANDARD DIAGRAMME DE CLASSE KYC
+' Structure standardisée - NE PAS modifier les couleurs
 ' ========================================
 
-' Configuration du style minimaliste
+' Configuration du style standard bleu
 skinparam linetype polyline
-skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam classFontColor black
+skinparam backgroundColor #F8FBFF
+skinparam classBackgroundColor #E3F2FD    ' OBLIGATOIRE: Bleu clair
+skinparam classBorderColor #1976D2
+skinparam classFontColor #0D47A1
 skinparam classFontSize 12
 skinparam classAttributeFontSize 11
 skinparam classMethodFontSize 11
 skinparam classAttributeIconSize 0
-skinparam shadowing false
-skinparam roundCorner 0
-skinparam nodesep 50
-skinparam ranksep 40
-skinparam packageBackgroundColor white
-skinparam packageBorderColor black
-skinparam packageFontColor black
+skinparam shadowing true
+skinparam roundCorner 15
+skinparam nodesep 40
+skinparam ranksep 30
 
-' Orientation par défaut
-left to right direction
+title Template Standard - Diagramme de Classes
 
 ' ========================================
-' EXEMPLE DE CLASSES
+' PACKAGES (SANS couleur de fond)
+' Syntaxe: package "Nom" { ... }
+' NE PAS ajouter de couleur: package "Nom" #XXXXXX { 
 ' ========================================
 
-abstract class ClasseAbstraite {
-  - attributPrive: Type
-  # attributProtege: Type
-  + attributPublic: Type
-  + methodePublique(): Type
-  - methodePrivee(): Type
+package "Package Principal" {
+  class ClasseExemple {
+    - id: String
+    - nom: String
+    - actif: Boolean
+    + executer(): Boolean
+    + valider(): ResultatValidation
+    # methodeProtegee(): void
+  }
+
+  abstract class ClasseAbstraite {
+    - attributCommun: String
+    + {abstract} methodeAbstraite(): Boolean
+  }
 }
 
-class ClasseConcrete extends ClasseAbstraite {
-  - attributSpecifique: Type
-  + methodeSpecifique(): Type
-}
+package "Énumérations" {
+  enum StatutEnum {
+    ACTIF
+    INACTIF
+    EN_ATTENTE
+    SUSPENDU
+  }
 
-interface MonInterface {
-  + methodeInterface(): Type
-}
-
-class ClasseImplementation implements MonInterface {
-  + methodeInterface(): Type
-}
-
-enum MonEnumeration {
-  VALEUR1
-  VALEUR2
-  VALEUR3
+  enum TypeEnum {
+    TYPE_A
+    TYPE_B
+    TYPE_C
+  }
 }
 
 ' ========================================
-' EXEMPLES DE RELATIONS
+' RELATIONS
 ' ========================================
+ClasseExemple ||--|| StatutEnum : "a un"
+ClasseAbstraite <|-- ClasseExemple : "hérite de"
+ClasseExemple ||--o{ TypeEnum : "utilise"
 
-' Héritage
-ClasseConcrete --|> ClasseAbstraite
+' ========================================
+' NOTES ET DOCUMENTATION
+' ========================================
+note right of ClasseExemple
+  Cette classe illustre
+  la structure standard
+end note
 
-' Implémentation
-ClasseImplementation ..|> MonInterface
+note top of StatutEnum
+  Énumération des statuts
+  possibles pour les objets
+end note
 
-' Association
-ClasseAbstraite "1" -- "0..*" ClasseConcrete : association
-
-' Composition
-ClasseAbstraite *-- MonEnumeration : composition
-
-' Agrégation
-ClasseAbstraite o-- ClasseImplementation : agrégation
-
-' Dépendance
-ClasseConcrete ..> MonInterface : dépendance
+' ========================================
+' RÈGLES À RESPECTER :
+'
+' 1. Fond des classes : #E3F2FD (bleu clair) OBLIGATOIRE
+' 2. Packages : SANS couleur de fond
+' 3. Utiliser ce template pour tout nouveau diagramme
+' 4. Vérifier avec: ./verifier_structure_classes.sh
+' ========================================
 
 @enduml

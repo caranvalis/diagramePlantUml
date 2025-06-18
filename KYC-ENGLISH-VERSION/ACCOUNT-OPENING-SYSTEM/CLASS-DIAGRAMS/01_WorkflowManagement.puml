@@ -1,7 +1,7 @@
 @startuml WorkflowManagement
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13
@@ -15,7 +15,7 @@ skinparam ranksep 30
 
 title Package - Account Opening Workflow Management
 
-package "Main Workflow" #DDFFDD {
+package "Main Workflow" {
   class AccountOpeningRequest {
     - id: String
     - referenceNumber: String
@@ -119,7 +119,7 @@ package "Main Workflow" #DDFFDD {
   }
 }
 
-package "Workflow Configuration" #E8F8FF {
+package "Workflow Configuration" {
   enum ClientType {
     INDIVIDUAL
     PROFESSIONAL
@@ -232,7 +232,7 @@ package "Workflow Configuration" #E8F8FF {
   }
 }
 
-package "Workflow Rules" #FFF8E8 {
+package "Workflow Rules" {
   class WorkflowRule {
     - id: String
     - name: String

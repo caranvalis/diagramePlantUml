@@ -1,7 +1,7 @@
 @startuml GestionDocuments
 skinparam linetype polyline
 skinparam backgroundColor #F8FBFF
-skinparam classBackgroundColor #E8F5E8
+skinparam classBackgroundColor #E3F2FD
 skinparam classBorderColor #1976D2
 skinparam classFontColor #0D47A1
 skinparam classFontSize 13
@@ -15,7 +15,7 @@ skinparam ranksep 30
 
 title Package - Gestion Documentaire
 
-package "Documents Principaux" #E8F5E8 {
+package "Documents Principaux" {
   class DocumentRequis {
     - id: String
     - demande: DemandeOuvertureCompte
@@ -94,7 +94,7 @@ package "Documents Principaux" #E8F5E8 {
   }
 }
 
-package "Documents Générés" #F0F8E8 {
+package "Documents Générés" {
   class FicheClient {
     - id: String
     - demande: DemandeOuvertureCompte
@@ -154,7 +154,7 @@ package "Documents Générés" #F0F8E8 {
   }
 }
 
-package "Signature et Sécurité" #E8F8F0 {
+package "Signature et Sécurité" {
   class SignatureElectronique {
     - id: String
     - signataire: String
@@ -223,7 +223,7 @@ package "Signature et Sécurité" #E8F8F0 {
   }
 }
 
-package "Énumérations Documents" #FFFACD {
+package "Énumérations Documents" {
   enum TypeDocument {
     PIECE_IDENTITE
     JUSTIFICATIF_DOMICILE
