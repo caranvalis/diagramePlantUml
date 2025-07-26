@@ -1,0 +1,88 @@
+@startuml Classe_SystemeGestionCourrier_Compact
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam note FontSize 7
+
+title Classes - Gestion Courrier (Format A4)
+
+class CourrierPhysique {
+    - id: String
+    - dateReception: Date
+    - expediteur: String
+    - type: TypeDocument
+    - statut: StatutCourrier
+    + scanner()
+    + extraireDonnees()
+}
+
+class Document {
+    - id: String
+    - contenu: Byte[]
+    - format: FormatDocument
+    + extraireTexte()
+    + validerIntegrite()
+}
+
+class DonneesOCR {
+    - texteExtrait: String
+    - fiabilite: Double
+    + validerQualite()
+}
+
+class MoteurRoutage {
+    - regles: List<RegleRoutage>
+    + classifier()
+    + router()
+}
+
+class RegleRoutage {
+    - motsCles: List<String>
+    - service: ServiceDestination
+    - priorite: Integer
+    + evaluer()
+}
+
+class ServiceKYC {
+    - dossiers: List<DossierClient>
+    + traiterDocument()
+    + assignerGestionnaire()
+}
+
+class ServiceReclamation {
+    - reclamations: List<Reclamation>
+    + evaluerGravite()
+    + escalader()
+}
+
+class Agent {
+    - nom: String
+    - service: String
+    - charge: Integer
+    + traiterCourrier()
+}
+
+' Relations
+CourrierPhysique ||--|| Document
+Document ||--|| DonneesOCR
+DonneesOCR ||--|| MoteurRoutage
+MoteurRoutage ||--o{ RegleRoutage
+MoteurRoutage ||--|| ServiceKYC
+MoteurRoutage ||--|| ServiceReclamation
+Agent ||--o{ CourrierPhysique
+
+note top of MoteurRoutage
+Cœur du système
+de routage intelligent
+end note
+
+note bottom of ServiceKYC
+Intégration avec
+dossiers clients
+end note
+
+@enduml

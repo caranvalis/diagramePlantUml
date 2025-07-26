@@ -1,0 +1,122 @@
+@startuml Sequence_ModifierRegimeMatrimonial
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier un Régime Matrimonial
+
+participant "Agent" as agent
+participant "Interface\nRégime" as ui
+participant "Contrôleur\nRégime" as ctrl
+participant "Service\nJuridique" as juridique
+participant "Validateur\nDocuments" as valid_doc
+participant "Analyseur\nImpact" as impact
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Sélection Régime ==
+agent -> ui : Modifier régime matrimonial
+activate ui
+ui -> agent : Rechercher régime
+agent -> ui : Sélectionner régime
+ui -> ctrl : Charger régime sélectionné
+activate ctrl
+ctrl -> bdd : Récupérer données actuelles
+activate bdd
+bdd -> ctrl : Configuration régime
+deactivate bdd
+ctrl -> ui : Formulaire pré-rempli
+ui -> agent : Afficher régime actuel
+
+== Modification Régime ==
+agent -> ui : Modifier paramètres
+note right : Type régime, date effet,\nnotaire, clauses spéciales
+ui -> ctrl : Valider modifications
+
+== Validation Juridique ==
+ctrl -> juridique : Contrôler changements
+activate juridique
+juridique -> juridique : Analyser cohérence juridique
+juridique -> juridique : Vérifier compatibilité temporelle
+juridique -> juridique : Contrôler implications légales
+
+alt Changement majeur de régime
+    juridique -> ctrl : Documents officiels requis
+    ctrl -> ui : Demander acte modificatif
+    ui -> agent : Fournir acte notarié
+    agent -> ui : Télécharger documents
+    
+    ui -> ged : Traiter nouveaux documents
+    activate ged
+    ged -> valid_doc : Valider authenticité
+    activate valid_doc
+    valid_doc -> valid_doc : Contrôler signatures notaire
+    valid_doc -> valid_doc : Vérifier dates cohérentes
+    valid_doc -> valid_doc : Valider timbres/cachets
+    valid_doc -> ged : Documents authentifiés
+    deactivate valid_doc
+    ged -> ctrl : Documents validés
+    deactivate ged
+    
+else Modification mineure
+    juridique -> ctrl : Modification directe autorisée
+end
+deactivate juridique
+
+== Analyse d'Impact ==
+ctrl -> impact : Évaluer impact modification
+activate impact
+impact -> bdd : Rechercher clients utilisant régime
+activate bdd
+bdd -> impact : Clients concernés
+deactivate bdd
+
+impact -> impact : Analyser implications financières
+impact -> impact : Évaluer impact sur comptes joints
+
+alt Impact significatif
+    impact -> ctrl : Notification clients requise
+    ctrl -> ctrl : Préparer communication
+else Impact mineur
+    impact -> ctrl : Modification transparente
+end
+deactivate impact
+
+== Enregistrement Modifications ==
+ctrl -> bdd : Mettre à jour régime
+activate bdd
+bdd -> bdd : Historiser ancien régime
+bdd -> bdd : Sauvegarder nouveaux paramètres
+bdd -> bdd : Lier nouveaux documents
+bdd -> bdd : Dater modification
+bdd -> bdd : Tracer agent modificateur
+bdd -> ctrl : Régime mis à jour
+deactivate bdd
+
+== Application aux Clients ==
+ctrl -> bdd : Appliquer aux clients concernés
+activate bdd
+bdd -> bdd : Mettre à jour profils clients
+bdd -> bdd : Recalculer implications comptes
+bdd -> bdd : Notifier changements si requis
+bdd -> ctrl : Clients mis à jour
+deactivate bdd
+
+== Notification ==
+ctrl -> ui : Modification confirmée
+ui -> agent : Régime matrimonial mis à jour
+note right : Modifications sauvegardées\nDocuments mis à jour\nClients notifiés
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Régime matrimonial modifié\navec validations juridiques\net impact sur les clients
+
+@enduml

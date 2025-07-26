@@ -1,0 +1,115 @@
+@startuml EFC05_IntegrationSI
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC05 - Intégration Système d'Information
+
+package "Connecteurs Métier" {
+  component [Connecteur KYC] as ConnKYC
+  component [Connecteur GED] as ConnGED
+  component [Connecteur CRM] as ConnCRM
+}
+
+package "APIs et Services" {
+  component [API REST Courrier] as API
+  component [Service Notifications] as ServiceNotif
+  component [Service Workflow] as ServiceWF
+}
+
+package "Systèmes Externes" {
+  cloud [Système KYC] as SysKYC
+  cloud [GED Alfresco/SharePoint] as SysGED
+  cloud [CRM Bancaire] as SysCRM
+  cloud [Amplitude Analytics] as SysAmplitude
+  cloud [FIRST BANK Absence] as SysAbsence
+}
+
+' Intégrations bidirectionnelles
+ConnKYC <--> SysKYC : synchronisation
+ConnGED <--> SysGED : archivage
+ConnCRM <--> SysCRM : données client
+
+' Services centraux
+API --> ConnKYC
+API --> ConnGED
+API --> ConnCRM
+ServiceNotif --> SysAmplitude : analytics
+ServiceWF --> SysAbsence : gestion équipes
+
+note right of ConnKYC
+**Intégration KYC:**
+- Synchronisation dossiers
+- Mise à jour statuts
+- Validation documents
+- Workflow approbation
+
+**Formats échangés:**
+- JSON dossiers clients
+- XML documents signés
+- PDF avec métadonnées
+- Images haute résolution
+end note
+
+note right of ConnGED
+**Intégration GED:**
+- Stockage automatique
+- Indexation intelligente
+- Recherche full-text
+- Archivage légal
+
+**Fonctionnalités:**
+- Versioning documents
+- Contrôle accès
+- Audit trail complet
+- Sauvegarde sécurisée
+end note
+
+@enduml
+skinparam actorStyle awesome
+skinparam usecase {
+  ArrowColor #1976D2
+  BorderColor #1976D2
+}
+left to right direction
+
+title EFC05 - Intégration SI & BI des courriers
+
+actor "SI Bancaire" as SI
+actor "Utilisateur" as U
+actor "Administrateur" as ADM
+actor "Outil BI" as BI
+
+rectangle "Intégration SI & BI" {
+  usecase "Rattachement courrier\nà client/compte bancaire" as UC30
+  usecase "Envoi de notifications\net alertes automatiques" as UC31
+  usecase "Accès aux données\npour analyses BI" as UC32
+  usecase "Partage sécurisé\nvia liens temporaires" as UC33
+}
+
+SI --> UC30
+U --> UC31
+BI --> UC32
+ADM --> UC33
+
+' ========================================
+' NOTES EXPLICATIVES
+' ========================================
+note top of UC30 : Association automatique des courriers aux clients ou comptes bancaires
+note right of UC31 : Notifications et alertes envoyées aux utilisateurs concernés
+note left of UC32 : Accès sécurisé aux données pour analyses décisionnelles
+note bottom of UC33 : Partage sécurisé via liens temporaires pour consultation externe
+
+@enduml

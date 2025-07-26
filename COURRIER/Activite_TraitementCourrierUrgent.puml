@@ -1,0 +1,123 @@
+@startuml Activite_TraitementCourrierUrgent
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Traitement Courrier Urgent
+
+|Système de Détection|
+start
+:Détecter courrier marqué "URGENT";
+note right: Déclencheur automatique
+:Analyser indicateurs d'urgence;
+:Évaluer niveau de priorité;
+
+|Système de Routage|
+:Prioriser dans file d'attente;
+:Appliquer règles de classification;
+
+if (Type urgence?) then (Réclamation client)
+    |Service Réclamation|
+    :Analyser nature de la réclamation;
+    :Évaluer gravité et impact;
+    
+    |Manager Service Client|
+    :Notifier service réclamation;
+    :Escalader vers manager si critique;
+    :Définir délai de traitement (2h max);
+    
+    |Gestionnaire Réclamation|
+    :Prendre en charge dossier;
+    :Investiguer réclamation;
+    :Préparer réponse appropriée;
+    
+else (Opposition/Fraude)
+    |Système de Sécurité|
+    :Déclencher alerte sécurité;
+    :Analyser risque de fraude;
+    
+    |Service Sécurité Bancaire|
+    :Alerter sécurité bancaire;
+    :Évaluer mesures à prendre;
+    :Bloquer comptes concernés si nécessaire;
+    
+    |Expert Sécurité|
+    :Traiter immédiatement;
+    :Appliquer procédures d'urgence;
+    :Coordonner avec autorités si requis;
+    
+else (Régulateur/Autorité)
+    |Service Juridique|
+    :Analyser provenance autorité;
+    :Évaluer implications légales;
+    
+    |Direction Juridique|
+    :Notifier direction juridique;
+    :Mobiliser équipe spécialisée;
+    :Définir stratégie de réponse;
+    
+    |Expert Juridique|
+    :Traiter sous 24h maximum;
+    :Préparer réponse officielle;
+    :Coordonner avec direction;
+    
+else (Échéance légale)
+    |Système de Planification|
+    :Vérifier délais restants;
+    :Calculer criticité échéance;
+    
+    |Manager Opérationnel|
+    :Mobiliser équipe dédiée;
+    :Allouer ressources nécessaires;
+    
+    |Équipe Spécialisée|
+    :Traiter selon deadline légale;
+    :Prioriser absolument;
+    :Valider conformité délais;
+endif
+
+|Gestionnaire Senior|
+:Assigner gestionnaire senior;
+:Superviser traitement prioritaire;
+:Valider chaque étape critique;
+
+|Gestionnaire Assigné|
+:Effectuer traitement prioritaire;
+:Respecter procédures d'urgence;
+:Documenter chaque action;
+
+|Manager|
+:Valider réponse avec hiérarchie;
+:Contrôler qualité réponse;
+:Approuver envoi final;
+
+|Service Expédition|
+:Envoyer réponse client/autorité;
+:Utiliser canal approprié (express, recommandé);
+:Confirmer réception si requis;
+
+|Système de Traçabilité|
+:Documenter traitement complet;
+note left: Traçabilité obligatoire
+:Enregistrer délais respectés;
+:Archiver correspondances;
+
+|Système de Contrôle|
+:Mettre à jour SLA;
+:Calculer performance équipe;
+:Générer métriques qualité;
+
+|Système d'Archivage|
+:Archiver dossier complet;
+:Indexer pour recherche;
+:Appliquer rétention légale;
+
+stop
+
+@enduml

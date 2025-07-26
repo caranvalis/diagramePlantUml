@@ -1,0 +1,177 @@
+@startuml Sequence_SupprimerMandataire
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Mandataire
+
+participant "Gestionnaire\nMandats" as admin
+participant "Interface\nMandataires" as ui
+participant "Contrôleur\nMandat" as ctrl
+participant "Validateur\nJuridique" as valid_juridique
+participant "Analyseur\nProcurations" as proc
+participant "Service\nTransfert" as transfer
+participant "Base\nDonnées" as bdd
+parameter "Archive\nJuridique" as archive
+
+== Sélection Mandataire ==
+admin -> ui : Supprimer mandataire
+activate ui
+ui -> admin : Liste mandataires actifs
+admin -> ui : Sélectionner mandataire à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse Procurations Actives ==
+ctrl -> proc : Analyser procurations en cours
+activate proc
+proc -> bdd : Lister procurations actives
+activate bdd
+bdd -> proc : Procurations du mandataire
+deactivate bdd
+
+proc -> proc : Analyser types de pouvoirs
+proc -> proc : Contrôler échéances
+proc -> proc : Vérifier opérations en cours
+
+alt Procurations actives trouvées
+    proc -> ctrl : Procurations actives détectées
+    ctrl -> ui : Mandataire a des procurations actives
+    ui -> admin : Gestion procurations requise
+    note right : "Mandataire a X procurations actives\nTransfert ou révocation nécessaire"
+    
+    == Gestion Procurations ==
+    admin -> ui : Choisir action procurations
+    ui -> admin : Options : Transférer / Révoquer
+    
+    alt Transférer procurations
+        admin -> ui : Transférer vers autre mandataire
+        ui -> transfer : Interface transfert
+        activate transfer
+        transfer -> ui : Liste mandataires disponibles
+        ui -> admin : Sélectionner nouveau mandataire
+        admin -> ui : Confirmer transfert
+        
+        ui -> transfer : Nouveau mandataire validé
+        transfer -> bdd : Transférer procurations
+        activate bdd
+        bdd -> bdd : Mettre à jour mandataire
+        bdd -> bdd : Notifier transfert
+        bdd -> bdd : Tracer changement
+        bdd -> transfer : Transfert effectué
+        deactivate bdd
+        transfer -> ctrl : Procurations transférées
+        deactivate transfer
+        
+    else Révoquer procurations
+        admin -> ui : Révoquer toutes procurations
+        ui -> proc : Révoquer procurations mandataire
+        proc -> bdd : Révoquer procurations
+        activate bdd
+        bdd -> bdd : Statut = REVOQUEE
+        bdd -> bdd : Date révocation
+        bdd -> bdd : Notifier clients
+        bdd -> proc : Procurations révoquées
+        deactivate bdd
+        proc -> ctrl : Révocations effectuées
+    end
+    
+else Aucune procuration active
+    proc -> ctrl : Suppression directe possible
+    deactivate proc
+end
+
+== Validation Juridique ==
+ctrl -> valid_juridique : Valider suppression juridique
+activate valid_juridique
+valid_juridique -> valid_juridique : Contrôler capacité juridique
+valid_juridique -> valid_juridique : Vérifier notifications légales
+valid_juridique -> valid_juridique : Analyser impact contrats
+
+alt Obligations juridiques en cours
+    valid_juridique -> ctrl : Obligations en cours
+    ctrl -> ui : Obligations juridiques détectées
+    ui -> admin : Résolution obligations requise
+    note right : "Mandataire a des obligations\nen cours nécessitant résolution"
+    
+    admin -> ui : Résoudre obligations
+    ui -> valid_juridique : Confirmer résolution
+    valid_juridique -> ctrl : Obligations résolues
+else Aucune obligation
+    valid_juridique -> ctrl : Suppression validée juridiquement
+end
+
+deactivate valid_juridique
+
+== Contrôle Capacité ==
+ctrl -> ctrl : Vérifier capacité résiduelle
+alt Incapacité juridique du mandataire
+    ctrl -> ui : Mandataire en incapacité
+    ui -> admin : Suppression automatique recommandée
+    note right : "Incapacité légale détectée\nSuppression recommandée"
+end
+
+== Confirmation Admin ==
+ctrl -> ui : Demander confirmation finale
+ui -> admin : Confirmer suppression définitive
+note right : "Supprimer mandataire ?\nProcurations transférées/révoquées"
+
+admin -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Archivage Mandataire ==
+ctrl -> archive : Archiver mandataire
+activate archive
+archive -> bdd : Récupérer dossier complet
+activate bdd
+bdd -> archive : Identité + procurations + historique
+deactivate bdd
+
+archive -> archive : Créer archive avec pièces justificatives
+archive -> archive : Sauvegarder signatures
+archive -> archive : Horodater suppression
+archive -> archive : Référencer actes juridiques
+archive -> ctrl : Mandataire archivé
+deactivate archive
+
+== Suppression Logique ==
+ctrl -> bdd : Marquer mandataire supprimé
+activate bdd
+bdd -> bdd : Statut = SUPPRIME
+bdd -> bdd : Date suppression
+bdd -> bdd : Conserver historique juridique
+bdd -> bdd : Désactiver accès système
+bdd -> bdd : Tracer suppression réglementaire
+bdd -> ctrl : Mandataire supprimé
+deactivate bdd
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider accès mandataire
+ctrl -> ctrl : Nettoyer autorisations
+ctrl -> ctrl : Purger sessions actives
+
+== Notifications ==
+ctrl -> ctrl : Notifier clients concernés
+ctrl -> ctrl : Informer services juridiques
+ctrl -> ui : Suppression réussie
+ui -> admin : Mandataire supprimé
+note right : Mandataire supprimé\nProcurations gérées\nArchive juridique créée
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec détails juridiques
+note right : Mandataire supprimé\nProcurations transférées\nConformité maintenue
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Mandataire supprimé\navec gestion procurations\net archivage juridique
+
+@enduml

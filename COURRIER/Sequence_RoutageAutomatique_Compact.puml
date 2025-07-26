@@ -1,0 +1,59 @@
+@startuml Sequence_RoutageAutomatique_Compact
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Routage Automatique - Compact
+
+participant "Scanner" as S
+participant "OCR" as O
+participant "Routage" as R
+participant "KYC" as K
+participant "Réclamation" as RC
+participant "Gestionnaire" as G
+
+S -> O: analyserDocument()
+activate O
+
+O -> O: extraireTexte()
+O -> R: donneesExtraites()
+deactivate O
+activate R
+
+R -> R: appliquerRegles()
+
+alt Type = KYC
+    R -> K: routerKYC()
+    activate K
+    K -> G: notifierMiseAJour()
+    deactivate K
+
+else Type = Réclamation
+    R -> RC: routerReclamation()
+    activate RC
+    RC -> G: assignerGestionnaire()
+    deactivate RC
+
+else Type non identifié
+    R -> G: analyseManuelle()
+    activate G
+    G -> R: mettreAJourRegles()
+    deactivate G
+end
+
+deactivate R
+
+note over O
+**Précision OCR > 95%**
+end note
+
+note over R
+**SLA:** <5min urgent, <30min standard
+end note
+
+@enduml

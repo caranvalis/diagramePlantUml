@@ -1,0 +1,147 @@
+@startuml Sequence_ModifierDocument
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier un Document
+
+participant "Agent" as agent
+participant "Interface\nGED" as ui
+participant "Contrôleur\nDoc" as ctrl
+participant "Service\nVersioning" as version
+participant "Validateur\nChangement" as valid
+participant "Moteur\nOCR" as ocr
+participant "Service\nArchivage" as arch
+participant "Base\nIndex" as index
+participant "Stockage\nSécurisé" as stock
+
+== Sélection Document ==
+agent -> ui : Modifier document existant
+activate ui
+ui -> agent : Rechercher document
+agent -> ui : Sélectionner document
+ui -> ctrl : Charger document sélectionné
+activate ctrl
+ctrl -> index : Récupérer métadonnées actuelles
+activate index
+index -> ctrl : Informations document
+deactivate index
+ctrl -> ui : Afficher document actuel
+ui -> agent : Document et métadonnées
+
+== Type de Modification ==
+agent -> ui : Type modification
+note right : Métadonnées seulement\nou remplacement fichier
+
+alt Modification métadonnées uniquement
+    agent -> ui : Modifier métadonnées
+    note right : Catégorie, confidentialité,\ndescription, mots-clés
+    
+    ui -> ctrl : Valider métadonnées
+    ctrl -> valid : Contrôler cohérence
+    activate valid
+    valid -> valid : Vérifier format métadonnées
+    valid -> valid : Contrôler autorisations
+    valid -> ctrl : Métadonnées validées
+    deactivate valid
+    
+    ctrl -> index : Mettre à jour index
+    activate index
+    index -> index : Actualiser métadonnées
+    index -> index : Réindexer mots-clés
+    index -> ctrl : Index mis à jour
+    deactivate index
+
+else Remplacement fichier
+    == Versioning ==
+    ctrl -> version : Créer nouvelle version
+    activate version
+    version -> arch : Archiver version actuelle
+    activate arch
+    arch -> stock : Déplacer vers historique
+    activate stock
+    stock -> arch : Archivage confirmé
+    deactivate stock
+    arch -> version : Version archivée
+    deactivate arch
+    
+    version -> version : Incrémenter numéro version
+    version -> ctrl : Version préparée
+    deactivate version
+    
+    == Téléchargement Nouveau Fichier ==
+    ui -> agent : Télécharger nouveau fichier
+    agent -> ui : Fournir fichier mis à jour
+    ui -> ctrl : Traiter nouveau fichier
+    
+    ctrl -> valid : Valider nouveau fichier
+    activate valid
+    valid -> valid : Contrôler format/taille
+    valid -> valid : Scanner virus
+    valid -> valid : Vérifier cohérence avec ancien
+    
+    alt Fichier incompatible
+        valid -> ctrl : Fichier rejeté
+        ctrl -> ui : Erreur validation
+        ui -> agent : Corriger fichier
+    else Fichier valide
+        valid -> ctrl : Fichier validé
+        deactivate valid
+        
+        == Extraction Métadonnées ==
+        ctrl -> ocr : Analyser nouveau contenu
+        activate ocr
+        ocr -> ocr : Reconnaissance texte
+        ocr -> ocr : Extraire métadonnées
+        ocr -> ocr : Comparer avec version précédente
+        ocr -> ctrl : Analyse terminée
+        deactivate ocr
+        
+        == Stockage Nouvelle Version ==
+        ctrl -> stock : Stocker nouvelle version
+        activate stock
+        stock -> stock : Chiffrer nouveau contenu
+        stock -> stock : Générer empreinte
+        stock -> stock : Organiser stockage
+        stock -> ctrl : Stockage confirmé
+        deactivate stock
+        
+        == Mise à Jour Index ==
+        ctrl -> index : Indexer nouvelle version
+        activate index
+        index -> index : Créer index fulltext
+        index -> index : Actualiser métadonnées
+        index -> index : Lier versions
+        index -> ctrl : Indexation terminée
+        deactivate index
+    end
+end
+
+== Enregistrement Modification ==
+ctrl -> index : Sauvegarder modification
+activate index
+index -> index : Historiser changement
+index -> index : Tracer agent/date/motif
+index -> index : Mettre à jour statut
+index -> ctrl : Modification enregistrée
+deactivate index
+
+== Notification ==
+ctrl -> ctrl : Notifier entités liées
+ctrl -> ui : Modification confirmée
+ui -> agent : Document mis à jour
+note right : Nouvelle version active\nAncienne version archivée\nIndex actualisé
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Document modifié avec\nversioning automatique et\ntraçabilité complète
+
+@enduml

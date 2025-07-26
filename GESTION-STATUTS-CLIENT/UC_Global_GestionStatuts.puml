@@ -1,0 +1,88 @@
+@startuml UC_Global_GestionStatuts
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Gestion Statuts Client - Vue Globale
+
+left to right direction
+
+actor "GFC" as G
+actor "Conformité" as C
+actor "DA" as D
+actor "DG" as DG
+
+rectangle "Système Gestion Statuts" {
+  
+  package "Définition Statuts" {
+    usecase "Créer\nStatut" as UC1
+    usecase "Modifier\nStatut" as UC2
+    usecase "Consulter\nHistorique" as UC3
+  }
+  
+  package "Attribution" {
+    usecase "Attribuer\nStatut Initial" as UC4
+    usecase "Modifier\nStatut Client" as UC5
+    usecase "Calculer\nStatut Auto" as UC6
+  }
+  
+  package "Contrôles" {
+    usecase "Valider\nTransition" as UC7
+    usecase "Appliquer\nRestrictions" as UC8
+    usecase "Gérer\nExceptions" as UC9
+  }
+  
+  package "Surveillance" {
+    usecase "Surveiller\nConformité" as UC10
+    usecase "Notifier\nChangements" as UC11
+    usecase "Générer\nRapports" as UC12
+  }
+}
+
+' Relations
+G --> UC4
+G --> UC5
+G --> UC3
+
+C --> UC1
+C --> UC2
+C --> UC7
+C --> UC10
+C --> UC11
+
+D --> UC5
+D --> UC8
+D --> UC9
+
+DG --> UC9
+DG --> UC12
+
+' Inclusions
+UC4 .> UC6 : <<include>>
+UC5 .> UC7 : <<include>>
+UC7 .> UC8 : <<include>>
+UC5 .> UC11 : <<include>>
+
+note right of UC6
+**Calcul Automatique**
+Basé sur règles métier,
+historique, profil risque
+end note
+
+note bottom of UC8
+**Types Restrictions**
+Services, montants,
+fréquence, géographie
+end note
+
+@enduml

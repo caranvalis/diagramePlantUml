@@ -1,0 +1,155 @@
+@startuml UC_DetailGestionTiers
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 7
+
+title Gestion Tiers - Détaillé
+
+left to right direction
+
+actor "GFC" as G
+actor "AOB" as A
+actor "DA" as D
+actor "Conformité" as C
+
+rectangle "Gestion Tiers" {
+  usecase "Ajouter\nTiers" as UC1
+  usecase "Saisir\nInfos" as UC1_1
+  usecase "Contrôler\nPPE/OFAC" as UC1_2
+  usecase "Générer\nIBU" as UC1_3
+  
+  usecase "Modifier\nTiers" as UC2
+  usecase "Mettre à jour\nInfos" as UC2_1
+  usecase "Relancer\nContrôles" as UC2_2
+  
+  usecase "Rechercher\nTiers" as UC3
+  usecase "Filtrer\nCritères" as UC3_1
+  
+  usecase "Lier au\nClient" as UC4
+  usecase "Définir\nRôle" as UC4_1
+}
+  }
+
+' Relations
+G --> UC1
+G --> UC2
+G --> UC3
+G --> UC4
+
+A --> UC3
+C --> UC1_2
+D --> UC2_2
+
+' Inclusions
+UC1 .> UC1_1 : <<include>>
+UC1 .> UC1_2 : <<include>>
+UC1 .> UC1_3 : <<include>>
+
+UC2 .> UC2_1 : <<include>>
+UC2 .> UC2_2 : <<include>>
+
+UC3 .> UC3_1 : <<include>>
+UC4 .> UC4_1 : <<include>>
+
+note right of UC1
+**Types:** Mandataire,
+Bénéficiaire, Garant
+end note
+
+@enduml
+}
+
+' Relations principales
+GFC --> UC01
+GFC --> UC02
+GFC --> UC04
+GFC --> UC05
+
+Conf --> UC03
+Conf --> UC01_3
+Conf --> UC02_2
+
+DA --> UC02_3
+DA --> UC05_3
+
+AOB --> UC01_2
+AOB --> UC04
+
+Client --> UC05 : demande
+Tiers --> UC02 : information
+
+' Inclusions
+UC01 .> UC01_1 : <<include>>
+UC01 .> UC01_2 : <<include>>
+UC01 .> UC01_3 : <<include>>
+UC01 .> UC01_4 : <<include>>
+UC01 .> UC01_5 : <<include>>
+
+UC02 .> UC02_1 : <<include>>
+UC02 .> UC02_2 : <<include>>
+UC02 .> UC02_3 : <<include>>
+
+UC03 .> UC03_1 : <<include>>
+UC03 .> UC03_2 : <<include>>
+UC03 .> UC03_3 : <<include>>
+
+UC04 .> UC04_1 : <<include>>
+UC04 .> UC04_2 : <<include>>
+
+UC05 .> UC05_1 : <<include>>
+UC05 .> UC05_2 : <<include>>
+UC05 .> UC05_3 : <<include>>
+UC05 .> UC05_4 : <<include>>
+
+note right of UC01
+**Objectif:** Créer et enregistrer 
+un nouveau tiers dans le système
+
+**Types de tiers:**
+- Mandataire/Représentant légal
+- Bénéficiaire effectif
+- Actionnaire/Associé
+- Garant/Caution
+- Partenaire commercial
+
+**Déclencheur:** Besoin d'identifier
+une partie prenante KYC
+end note
+
+note right of UC01_3
+**Contrôles Obligatoires:**
+- Vérification PPE automatique
+- Contrôle listes sanctions OFAC
+- Vérification FATCA si applicable
+- Scoring de risque géopolitique
+
+**Seuils d'alerte:**
+- PPE: Validation manuelle obligatoire
+- OFAC: Blocage immédiat
+- FATCA: Documents spécialisés
+end note
+
+note bottom of UC05
+**Types de Liaisons:**
+- Mandataire: Procuration, représentation
+- Actionnaire: Détention capital
+- Garant: Caution, aval, garantie
+- Bénéficiaire: Ayant droit, héritier
+
+**Validation reqise:**
+- Cohérence statuts conformité
+- Absence conflit d'intérêt
+- Respect limites réglementaires
+end note
+
+@enduml

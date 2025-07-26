@@ -1,0 +1,198 @@
+@startuml Classe_GestionCategories
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+    AttributeFontSize 7
+    MethodFontSize 7
+}
+
+title Modèle de Classes - Gestion des Catégories Internes
+
+package "Référentiel Catégories" {
+    class CategorieInterne {
+        - id: String
+        - code: String
+        - libelle: String
+        - description: String
+        - niveauRisque: NiveauRisque
+        - seuilCA: BigDecimal
+        - seuilAnciennete: Integer
+        - actif: Boolean
+        - dateCreation: LocalDateTime
+        - dateModification: LocalDateTime
+        --
+        + getReglesTarification(): List<RegleTarif>
+        + getServicesAutorises(): List<Service>
+        + getLimitesApplicables(): List<Limite>
+        + isCompatibleAvec(autre: CategorieInterne): Boolean
+    }
+    
+    class RegleClassification {
+        - id: String
+        - version: String
+        - criteres: List<Critere>
+        - ponderation: Map<String,Double>
+        - seuilValidation: Double
+        - actif: Boolean
+        --
+        + evaluerClient(client: Client): ScoreClassification
+        + determinerCategorie(score: ScoreClassification): CategorieInterne
+        + validerCoherence(): Boolean
+    }
+    
+    class Critere {
+        - nom: String
+        - type: TypeCritere
+        - poids: Double
+        - valeurMin: Object
+        - valeurMax: Object
+        - obligatoire: Boolean
+        --
+        + evaluer(valeur: Object): Double
+        + estSatisfait(valeur: Object): Boolean
+    }
+}
+
+package "Classification" {
+    class MoteurClassification {
+        - regleActive: RegleClassification
+        - cache: Map<String,CategorieInterne>
+        --
+        + classerClient(client: Client): ResultatClassification
+        + recalculerCategorie(clientId: String): ResultatClassification
+        + simulerChangementRegle(nouvelleRegle: RegleClassification): List<Impact>
+        + migrerMassive(criteres: CriteresMigration): StatutMigration
+    }
+    
+    class ResultatClassification {
+        - clientId: String
+        - categorieActuelle: CategorieInterne
+        - categorieProposee: CategorieInterne
+        - score: ScoreClassification
+        - motifs: List<String>
+        - dateCalcul: LocalDateTime
+        - niveauConfiance: Double
+        --
+        + necessiteValidation(): Boolean
+        + getImpactFinancier(): BigDecimal
+        + getChangementsPolitiques(): List<ChangementPolitique>
+    }
+    
+    class ScoreClassification {
+        - scoreCA: Double
+        - scoreSecteur: Double
+        - scoreAnciennete: Double
+        - scoreComportement: Double
+        - scoreGlobal: Double
+        - details: Map<String,Object>
+        --
+        + calculerScoreGlobal(): Double
+        + getFacteursInfluents(): List<String>
+    }
+}
+
+package "Application Politiques" {
+    class MoteurPolitiques {
+        - matricePolitiques: MatricePolitiques
+        - gestionnaireTarifs: GestionnaireTarifs
+        --
+        + appliquerChangementCategorie(changement: ChangementCategorie): ResultatApplication
+        + calculerImpactTarifaire(ancien: CategorieInterne, nouveau: CategorieInterne): ImpactTarifaire
+        + definirPlanTransition(changement: ChangementCategorie): PlanTransition
+    }
+    
+    class MatricePolitiques {
+        - politiques: Map<CategorieInterne,PolitiqueCategorie>
+        - version: String
+        - dateApplication: LocalDate
+        --
+        + getPolitique(categorie: CategorieInterne): PolitiqueCategorie
+        + calculerDifferences(cat1: CategorieInterne, cat2: CategorieInterne): List<Difference>
+        + validerCoherence(): List<Anomalie>
+    }
+    
+    class PolitiqueCategorie {
+        - categorie: CategorieInterne
+        - grilleTarifaire: GrilleTarifaire
+        - servicesInclus: List<Service>
+        - limites: List<Limite>
+        - niveauService: NiveauService
+        - conditionsAcces: List<Condition>
+        --
+        + appliquerSur(client: Client): ResultatApplication
+        + comparer(autre: PolitiqueCategorie): ComparaisonPolitique
+    }
+}
+
+package "Validation et Gouvernance" {
+    class ProcessusValidation {
+        - niveauValidation: NiveauValidation
+        - validateurs: List<Validateur>
+        - delaiValidation: Duration
+        --
+        + validerChangement(changement: ChangementCategorie): DecisionValidation
+        + escaladerValidation(changement: ChangementCategorie): Boolean
+        + notifierDecision(decision: DecisionValidation): void
+    }
+    
+    class ChangementCategorie {
+        - clientId: String
+        - categorieActuelle: CategorieInterne
+        - categorieProposee: CategorieInterne
+        - motifs: List<String>
+        - impactFinancier: BigDecimal
+        - statut: StatutChangement
+        - demandeur: String
+        - dateCreation: LocalDateTime
+        --
+        + necessiteValidation(): Boolean
+        + getNiveauValidationRequis(): NiveauValidation
+        + calculerUrgence(): NiveauUrgence
+    }
+    
+    class HistoriqueCategorie {
+        - clientId: String
+        - changements: List<ChangementCategorie>
+        --
+        + ajouterChangement(changement: ChangementCategorie): void
+        + obtenirEvolution(): List<EvolutionCategorie>
+        + calculerStabilite(): Double
+        + detecterAnomalies(): List<Anomalie>
+    }
+}
+
+package "Pilotage et Contrôle" {
+    class TableauBordCategories {
+        - metriques: Map<String,Metrique>
+        - alertes: List<Alerte>
+        --
+        + genererRapportRepartition(): RapportRepartition
+        + detecterTendances(): List<Tendance>
+        + calculerIndicateursPerformance(): List<KPI>
+        + surveillerDerivesRisque(): List<AlerteRisque>
+    }
+    
+    class ControleCoherence {
+        --
+        + verifierCoherenceGlobale(): List<Anomalie>
+        + validerRespecReglementaire(): List<NonConformite>
+        + detecterInconsistances(): List<Inconsistance>
+        + genererRapportControle(): RapportControle
+    }
+}
+
+' Relations principales
+CategorieInterne ||--o{ PolitiqueCategorie : "applique"
+RegleClassification ||--o{ Critere : "utilise"
+MoteurClassification --> RegleClassification : "utilise"
+MoteurClassification ..> ResultatClassification : "produit"
+ResultatClassification --> ScoreClassification : "contient"
+MoteurPolitiques --> MatricePolitiques : "utilise"
+ChangementCategorie --> CategorieInterne : "source/cible"
+ProcessusValidation --> ChangementCategorie : "valide"
+HistoriqueCategorie ||--o{ ChangementCategorie : "trace"
+
+@enduml

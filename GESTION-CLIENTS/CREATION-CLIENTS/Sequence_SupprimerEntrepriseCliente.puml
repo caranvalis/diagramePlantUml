@@ -1,0 +1,159 @@
+@startuml Sequence_SupprimerEntrepriseCliente
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer une Entreprise Cliente
+
+participant "Agent" as agent
+participant "Interface\nEntreprise" as ui
+participant "Contrôleur\nSuppression" as ctrl
+participant "Analyseur\nDépendances" as dep
+participant "Service\nComptes" as comptes
+participant "Gestionnaire\nActionnaires" as action
+participant "Service\nArchivage" as arch
+participant "Base\nDonnées" as bdd
+
+== Sélection Entreprise ==
+agent -> ui : Supprimer entreprise cliente
+activate ui
+ui -> agent : Rechercher entreprise
+agent -> ui : Sélectionner entreprise
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse Complète Dépendances ==
+ctrl -> dep : Analyser dépendances entreprise
+activate dep
+
+== Vérification Comptes ==
+dep -> comptes : Contrôler comptes entreprise
+activate comptes
+comptes -> comptes : Lister comptes ouverts
+comptes -> comptes : Vérifier soldes
+comptes -> comptes : Contrôler engagements
+comptes -> dep : État comptes
+deactivate comptes
+
+== Vérification Structure ==
+dep -> action : Contrôler structure capitalistique
+activate action
+action -> action : Vérifier actionnaires liés
+action -> action : Contrôler participations croisées
+action -> dep : Structure analysée
+deactivate action
+
+== Analyse Relations ==
+dep -> bdd : Vérifier relations complexes
+activate bdd
+bdd -> dep : Mandataires, garanties, cautions
+deactivate bdd
+
+dep -> dep : Évaluer impact suppression
+
+alt Comptes actifs ou engagements
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - comptes/engagements actifs
+    ui -> agent : Régulariser situation d'abord
+    note right : Solder comptes\nLever engagements
+    
+else Structure capitalistique complexe
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - participations actives
+    ui -> agent : Démanteler structure d'abord
+    
+else Relations garanties actives
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - garanties en cours
+    ui -> agent : Lever garanties d'abord
+    
+else Aucune dépendance bloquante
+    dep -> ctrl : Suppression autorisée
+    deactivate dep
+    
+    == Validation Réglementaire ==
+    ctrl -> ctrl : Contrôler obligations légales
+    ctrl -> ctrl : Vérifier période conservation
+    ctrl -> ctrl : Valider autorisations agent
+    
+    == Confirmation Multi-Niveaux ==
+    ctrl -> ui : Demander validation hiérarchique
+    ui -> agent : Validation N+1 requise pour entreprise
+    agent -> ui : Obtenir approbation superviseur
+    ui -> ctrl : Validation hiérarchique obtenue
+    
+    ctrl -> ui : Confirmation finale agent
+    ui -> agent : Confirmer suppression définitive
+    note right : "Suppression entreprise\nAction irréversible"
+    
+    agent -> ui : Confirmer suppression
+    ui -> ctrl : Suppression confirmée
+    
+    == Archivage Structure Complète ==
+    ctrl -> arch : Archiver entreprise complète
+    activate arch
+    arch -> bdd : Récupérer structure complète
+    activate bdd
+    bdd -> arch : Entreprise + actionnaires + mandataires
+    deactivate bdd
+    
+    arch -> arch : Créer archive structurée
+    arch -> arch : Inclure documents juridiques
+    arch -> arch : Chiffrer archive entreprise
+    arch -> arch : Horodater suppression
+    arch -> ctrl : Archive entreprise créée
+    deactivate arch
+    
+    == Suppression Cascade ==
+    ctrl -> action : Supprimer actionnaires liés
+    activate action
+    action -> bdd : Nettoyer structure capitalistique
+    action -> ctrl : Structure nettoyée
+    deactivate action
+    
+    ctrl -> bdd : Supprimer mandataires
+    activate bdd
+    bdd -> bdd : Nettoyer délégations pouvoir
+    bdd -> ctrl : Mandataires supprimés
+    deactivate bdd
+    
+    == Anonymisation Entreprise ==
+    ctrl -> bdd : Anonymiser données entreprise
+    activate bdd
+    bdd -> bdd : Remplacer raison sociale
+    bdd -> bdd : Anonymiser SIRET (partiel)
+    bdd -> bdd : Conserver traces réglementaires
+    bdd -> bdd : Marquer statut SUPPRIME
+    bdd -> bdd : Tracer suppression complète
+    bdd -> ctrl : Entreprise anonymisée
+    deactivate bdd
+    
+    == Nettoyage Système ==
+    ctrl -> ctrl : Purger caches entreprise
+    ctrl -> ctrl : Invalider références
+    ctrl -> ctrl : Nettoyer index recherche
+    
+    == Notification ==
+    ctrl -> ui : Suppression entreprise réussie
+    ui -> agent : Entreprise supprimée
+    note right : Structure complète supprimée\nArchivage sécurisé\nConformité réglementaire
+end
+
+== Rapport Suppression Entreprise ==
+ctrl -> ui : Générer rapport détaillé
+ui -> agent : Rapport suppression entreprise
+note right : Structure supprimée\nActionnaires/mandataires\nArchives créées
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Entreprise supprimée avec\nstructure complète et\narchivage réglementaire
+
+@enduml

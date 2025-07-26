@@ -1,0 +1,142 @@
+@startuml EFC01_ReceptionNumerisation
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC01 - Réception et Numérisation du Courrier
+
+package "Réception Physique" {
+  component [Poste Agent] as Poste
+  component [Scanner Haute Performance] as Scanner
+  component [Station Tri] as Tri
+}
+
+package "Numérisation et OCR" {
+  component [Moteur OCR] as OCR
+  component [Extracteur Métadonnées] as Meta
+  component [Validateur Qualité] as Valid
+}
+
+package "Stockage Temporaire" {
+  component [Cache Documents] as Cache
+  component [File Traitement] as File
+  component [Gestionnaire Erreurs] as Erreur
+}
+
+' Flux de données
+Poste --> Tri : courrier physique
+Tri --> Scanner : documents triés
+Scanner --> OCR : images numérisées
+OCR --> Meta : texte extrait
+Meta --> Valid : données structurées
+Valid --> Cache : documents validés
+Valid --> Erreur : [erreurs détectées]
+Cache --> File : prêt pour routage
+
+' Interfaces externes
+cloud "Système Central" as Central
+File --> Central : documents traités
+
+database "Logs Réception" as Logs
+Poste --> Logs : traçabilité
+Scanner --> Logs : métriques numérisation
+OCR --> Logs : résultats extraction
+
+note right of Scanner
+**Caractéristiques Scanner:**
+- Vitesse: 120 pages/minute
+- Résolution: 600 DPI minimum
+- Formats: A4, A3, enveloppes
+- Détection automatique couleur/N&B
+- Alimentation automatique 500 feuilles
+end note
+
+note right of OCR
+**Moteur OCR:**
+- Précision: >95% texte imprimé
+- Langues: FR, EN, DE, ES, IT
+- Types: manuscrit, imprimé, formulaires
+- Temps traitement: <10s par page
+end note
+
+@enduml
+
+skinparam backgroundColor #F8FBFF
+skinparam usecaseBackgroundColor #E3F2FD
+skinparam usecaseBorderColor #1976D2
+skinparam usecaseFontColor #0D47A1
+skinparam usecaseFontSize 13
+skinparam actorStyle awesome
+skinparam usecase {
+    ArrowColor #1976D2
+    BorderColor #1976D2
+}
+left to right direction
+
+title EF01 - Gestion des courriers entrants (Processus GED)
+
+actor "Agent Courrier" as AC
+actor "Système GED" as GED
+actor "Destinataire Interne" as DI
+actor "Responsable Service" as RS
+
+package "Réception et Enregistrement" {
+    usecase "EF01 - Scanner les courriers papier" as UC01
+    usecase "EF02 - Intégrer les courriers électroniques" as UC02
+    usecase "EF03 - Générer une référence unique" as UC03
+    usecase "EF04 - Enregistrer dans le registre central" as UC04
+    usecase "EF05 - Indexer avec horodatage" as UC05
+}
+
+package "Traitement et Dispatch" {
+    usecase "EF06 - Routage automatique selon règles" as UC06
+    usecase "EF07 - Notification en temps réel" as UC07
+    usecase "EF08 - Workflows dynamiques" as UC08
+    usecase "EF09 - Historique des actions" as UC09
+}
+
+AC --> UC01
+AC --> UC02
+UC01 --> UC03
+UC02 --> UC03
+UC03 --> UC04
+UC04 --> UC05
+GED --> UC04
+GED --> UC05
+
+UC04 --> UC06
+UC06 --> UC07
+UC06 --> UC08
+UC08 --> UC09
+
+GED --> UC06
+DI --> UC07
+RS --> UC08
+RS --> UC09
+
+' ========================================
+' NOTES EXPLICATIVES
+' ========================================
+note top of UC01 : Numérisation initiale des courriers papier entrants
+note top of UC02 : Intégration automatique des emails reçus
+note right of UC03 : Génération d'une référence unique pour chaque courrier
+note right of UC04 : Enregistrement centralisé dans la GED
+note left of UC05 : Indexation et horodatage pour la traçabilité
+note top of UC06 : Routage automatique selon des règles métiers
+note right of UC07 : Notification immédiate des destinataires
+note left of UC08 : Déclenchement de workflows dynamiques selon le type de courrier
+note bottom of UC09 : Historique complet des actions et accès
+
+@enduml

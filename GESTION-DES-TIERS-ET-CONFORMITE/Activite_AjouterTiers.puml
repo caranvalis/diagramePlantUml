@@ -1,0 +1,88 @@
+@startuml Activite_AjouterTiers
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Ajouter un Tiers
+
+|GFC|
+start
+:Accéder interface;
+:Cliquer "Ajouter tiers";
+
+|Système|
+:Vérifier droits;
+:Afficher formulaire;
+
+|GFC|
+:Sélectionner type;
+note right: PP/PM, Mandataire, etc.
+
+:Saisir infos obligatoires;
+note right: Nom, CNI, adresse
+
+:Joindre documents;
+:Valider saisie;
+
+|Système|
+:Vérifier données;
+
+if (Données OK?) then (oui)
+    :Générer IBU;
+    
+    |Contrôles|
+    :Vérifier PPE;
+    
+    if (PPE?) then (oui)
+        |Conformité|
+        :Analyser PPE;
+        :Demander validation;
+        
+        if (Accepté?) then (oui)
+            :Surveillance renforcée;
+        else (non)
+            :Rejeter;
+            stop
+        endif
+    endif
+    
+    :Contrôle OFAC;
+    
+    if (Sanctions?) then (oui)
+        :Bloquer immédiatement;
+        stop
+    endif
+    
+    :Contrôle doublons;
+    
+    if (Doublon?) then (oui)
+        |GFC|
+        if (Même tiers?) then (oui)
+            :Lier existant;
+            stop
+        endif
+    endif
+    
+    |Système|
+    :Enregistrer tiers;
+    :Notifier création;
+    
+    |GFC|
+    :Recevoir confirmation;
+    
+else (non)
+    :Corriger erreurs;
+endif
+
+stop
+
+@enduml

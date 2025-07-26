@@ -1,0 +1,188 @@
+@startuml Sequence_SupprimerAnalyseRisque
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer une Analyse de Risque
+
+participant "Analyste\nRisques" as analyst
+participant "Interface\nAnalyses" as ui
+participant "Contrôleur\nAnalyse" as ctrl
+participant "Validateur\nRéglementaire" as reg_valid
+participant "Moteur\nRecalcul" as recalc
+participant "Service\nNotification" as notif
+participant "Gestionnaire\nArchives" as archive
+participant "Base\nDonnées" as bdd
+
+== Sélection Analyse ==
+analyst -> ui : Supprimer analyse de risque
+activate ui
+ui -> analyst : Liste analyses existantes
+analyst -> ui : Sélectionner analyse à supprimer
+ui -> ctrl : Demander suppression analyse
+activate ctrl
+
+== Contrôle Réglementaire ==
+ctrl -> reg_valid : Valider suppression réglementaire
+activate reg_valid
+reg_valid -> bdd : Récupérer contexte analyse
+activate bdd
+bdd -> reg_valid : Type + date + conformité
+deactivate bdd
+
+reg_valid -> reg_valid : Contrôler obligations LAB-FT
+reg_valid -> reg_valid : Vérifier délais conservation
+reg_valid -> reg_valid : Analyser impact conformité
+
+alt Analyse réglementaire obligatoire
+    reg_valid -> ctrl : Suppression interdite
+    ctrl -> ui : Analyse protégée réglementairement
+    ui -> analyst : Suppression impossible - conformité
+    note right : "Analyse LAB-FT obligatoire\nconservation minimale 5 ans"
+    deactivate reg_valid
+    deactivate ctrl
+    deactivate ui
+else Suppression autorisée
+    reg_valid -> ctrl : Suppression validée
+    deactivate reg_valid
+end
+
+== Analyse Impact Client ==
+ctrl -> ctrl : Analyser impact sur profil client
+alt Analyse utilisée pour scoring actuel
+    ctrl -> ui : Analyse impacte scoring client
+    ui -> analyst : Recalcul scoring nécessaire
+    note right : "Analyse utilisée pour\nscoring client actuel"
+    
+    analyst -> ui : Confirmer recalcul scoring
+    ui -> recalc : Préparer recalcul scoring
+    activate recalc
+    recalc -> recalc : Identifier analyses alternatives
+    recalc -> recalc : Calculer nouveau scoring
+    recalc -> bdd : Mettre à jour scoring client
+    activate bdd
+    bdd -> recalc : Scoring mis à jour
+    deactivate bdd
+    recalc -> ctrl : Scoring recalculé
+    deactivate recalc
+end
+
+== Contrôle Dépendances ==
+ctrl -> ctrl : Vérifier analyses dépendantes
+alt Analyses liées trouvées
+    ctrl -> ui : Analyses dépendantes détectées
+    ui -> analyst : Gestion analyses liées requise
+    note right : "X analyses dépendent\nde cette analyse"
+    
+    analyst -> ui : Options analyses dépendantes
+    ui -> analyst : Supprimer en cascade / Conserver
+    
+    alt Suppression en cascade
+        analyst -> ui : Supprimer analyses dépendantes
+        ui -> ctrl : Suppression cascade autorisée
+    else Conserver analyses dépendantes
+        analyst -> ui : Mettre à jour références
+        ui -> ctrl : Nettoyer références seulement
+    end
+end
+
+== Validation Métier ==
+ctrl -> ctrl : Contrôler cohérence portefeuille
+alt Impact cohérence portefeuille
+    ctrl -> ui : Impact sur cohérence détecté
+    ui -> analyst : Validation responsable requise
+    note right : "Suppression peut impacter\ncohérence du portefeuille"
+    
+    analyst -> ui : Obtenir validation responsable
+    ui -> ctrl : Validation responsable obtenue
+end
+
+== Confirmation Analyste ==
+ctrl -> ui : Demander confirmation finale
+ui -> analyst : Confirmer suppression définitive
+note right : "Supprimer analyse de risque ?\nImpact sur scoring client"
+
+analyst -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Notification Préalable ==
+ctrl -> notif : Notifier suppression imminente
+activate notif
+notif -> notif : Préparer notifications services
+notif -> notif : Alerter gestionnaires concernés
+notif -> notif : Informer direction risques
+notif -> ctrl : Notifications envoyées
+deactivate notif
+
+== Archivage Analyse ==
+ctrl -> archive : Archiver analyse complète
+activate archive
+archive -> bdd : Récupérer analyse complète
+activate bdd
+bdd -> archive : Données + calculs + justifications
+deactivate bdd
+
+archive -> archive : Créer archive avec contexte
+archive -> archive : Sauvegarder modèles utilisés
+archive -> archive : Horodater suppression
+archive -> archive : Justifier suppression
+archive -> archive : Générer empreinte archive
+archive -> ctrl : Analyse archivée
+deactivate archive
+
+== Suppression Contrôlée ==
+ctrl -> bdd : Supprimer analyse
+activate bdd
+bdd -> bdd : Marquer analyse supprimée
+bdd -> bdd : Date suppression
+bdd -> bdd : Analyste suppresseur
+bdd -> bdd : Motif suppression
+bdd -> bdd : Conserver références audit
+bdd -> bdd : Tracer suppression conformité
+bdd -> ctrl : Analyse supprimée
+deactivate bdd
+
+== Recalcul Post-Suppression ==
+ctrl -> recalc : Recalculer métriques portefeuille
+activate recalc
+recalc -> recalc : Recalculer distribution risques
+recalc -> recalc : Ajuster métriques globales
+recalc -> recalc : Valider cohérence résiduelle
+recalc -> ctrl : Métriques recalculées
+deactivate recalc
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider cache analyses
+ctrl -> ctrl : Nettoyer modèles liés
+ctrl -> ctrl : Purger références temporaires
+
+== Notification Finale ==
+ctrl -> notif : Notifier suppression effective
+activate notif
+notif -> notif : Informer services impactés
+notif -> notif : Notifier nouveau scoring si modifié
+notif -> ctrl : Notifications finales envoyées
+deactivate notif
+
+ctrl -> ui : Suppression réussie
+ui -> analyst : Analyse de risque supprimée
+note right : Analyse supprimée\nScoring recalculé\nArchive créée
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> analyst : Rapport avec impact risques
+note right : Analyse supprimée\nConformité maintenue\nImpact mesuré
+
+deactivate ctrl
+deactivate ui
+
+note over analyst : Analyse de risque supprimée\navec recalcul scoring\net conformité préservée
+
+@enduml

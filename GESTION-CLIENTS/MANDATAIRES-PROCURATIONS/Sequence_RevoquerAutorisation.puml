@@ -1,0 +1,172 @@
+@startuml Sequence_RevoquerAutorisation
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Révoquer une Autorisation
+
+participant "Responsable\nAutorisations" as admin
+participant "Interface\nAutorisations" as ui
+participant "Contrôleur\nAutorisation" as ctrl
+participant "Validateur\nSécurité" as security
+participant "Service\nNotification" as notif
+participant "Gestionnaire\nSessions" as session
+parameter "Auditeur\nSécurité" as audit
+participant "Base\nDonnées" as bdd
+
+== Sélection Autorisation ==
+admin -> ui : Révoquer autorisation
+activate ui
+ui -> admin : Liste autorisations actives
+admin -> ui : Sélectionner autorisation à révoquer
+ui -> ctrl : Demander révocation
+activate ctrl
+
+== Validation Droits ==
+ctrl -> security : Valider droits révocation
+activate security
+security -> security : Contrôler niveau autorisation admin
+security -> security : Vérifier délégations
+security -> security : Analyser restrictions révocation
+
+alt Droits insuffisants
+    security -> ctrl : Révocation non autorisée
+    ctrl -> ui : Droits insuffisants
+    ui -> admin : Escalade hiérarchique requise
+    note right : "Vous ne pouvez pas révoquer\ncette autorisation"
+    deactivate security
+    deactivate ctrl
+    deactivate ui
+else Droits validés
+    security -> ctrl : Révocation autorisée
+    deactivate security
+end
+
+== Analyse Impact ==
+ctrl -> ctrl : Analyser impact révocation
+alt Autorisation critique
+    ctrl -> ui : Autorisation critique détectée
+    ui -> admin : Impact majeur sur utilisateur
+    note right : "Révocation bloquera\naccès complet utilisateur"
+    
+    admin -> ui : Confirmer malgré impact
+    ui -> ctrl : Révocation confirmée malgré impact
+end
+
+== Vérification Sessions ==
+ctrl -> session : Vérifier sessions actives
+activate session
+session -> bdd : Lister sessions utilisant autorisation
+activate bdd
+bdd -> session : Sessions actives trouvées
+deactivate bdd
+
+alt Sessions actives détectées
+    session -> ctrl : X sessions actives
+    ctrl -> ui : Sessions actives utilisant autorisation
+    ui -> admin : Forcer déconnexion ou attendre
+    
+    admin -> ui : Choisir action sessions
+    ui -> admin : Options : Forcer / Attendre / Annuler
+    
+    alt Forcer déconnexion
+        admin -> ui : Forcer déconnexion immédiate
+        ui -> session : Terminer sessions
+        session -> session : Invalider sessions actives
+        session -> session : Notifier utilisateurs déconnectés
+        session -> ctrl : Sessions terminées
+    else Attendre fin sessions
+        admin -> ui : Attendre fin naturelle
+        ui -> session : Surveiller sessions
+        session -> ctrl : Surveillance activée
+    else Annuler révocation
+        admin -> ui : Annuler révocation
+        ui -> admin : Révocation annulée
+        deactivate session
+        deactivate ctrl
+        deactivate ui
+    end
+    
+else Aucune session active
+    session -> ctrl : Pas de session active
+end
+
+deactivate session
+
+== Confirmation Admin ==
+ctrl -> ui : Demander confirmation finale
+ui -> admin : Confirmer révocation définitive
+note right : "Révoquer autorisation ?\nUtilisateur perdra accès"
+
+admin -> ui : Confirmer révocation
+ui -> ctrl : Révocation confirmée
+
+== Révocation Effective ==
+ctrl -> bdd : Révoquer autorisation
+activate bdd
+bdd -> bdd : Statut = REVOQUEE
+bdd -> bdd : Date révocation
+bdd -> bdd : Responsable révocation
+bdd -> bdd : Motif révocation
+bdd -> bdd : Invalider tokens associés
+bdd -> bdd : Tracer révocation sécurité
+bdd -> ctrl : Autorisation révoquée
+deactivate bdd
+
+== Nettoyage Sécurisé ==
+ctrl -> security : Nettoyer accès sécurisés
+activate security
+security -> security : Invalider certificats
+security -> security : Purger caches autorisations
+security -> security : Nettoyer clés d'accès
+security -> ctrl : Nettoyage sécurisé effectué
+deactivate security
+
+== Notification Utilisateur ==
+ctrl -> notif : Notifier utilisateur révocation
+activate notif
+notif -> notif : Préparer notification révocation
+notif -> notif : Expliquer motifs si autorisé
+notif -> notif : Indiquer procédure recours
+notif -> notif : Envoyer notification
+notif -> ctrl : Utilisateur notifié
+deactivate notif
+
+== Audit Sécurité ==
+ctrl -> audit : Tracer révocation audit
+activate audit
+audit -> audit : Enregistrer événement sécurité
+audit -> audit : Horodater précisément
+audit -> audit : Contextualiser révocation
+audit -> audit : Analyser pattern révocations
+audit -> ctrl : Audit tracé
+deactivate audit
+
+== Notification Services ==
+ctrl -> ctrl : Notifier services impactés
+ctrl -> ctrl : Mettre à jour matrices autorisations
+ctrl -> ctrl : Invalider permissions dérivées
+
+== Finalisation ==
+ctrl -> ui : Révocation réussie
+ui -> admin : Autorisation révoquée
+note right : "Autorisation révoquée\nUtilisateur notifié\nAudit tracé"
+
+== Rapport Révocation ==
+ctrl -> ui : Générer rapport révocation
+ui -> admin : Rapport avec détails sécurité
+note right : "Révocation effectuée\nSessions terminées\nSécurité maintenue"
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Autorisation révoquée\navec nettoyage sécurisé\net traçabilité complète
+
+@enduml

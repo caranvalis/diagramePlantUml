@@ -1,0 +1,140 @@
+@startuml Sequence_ModifierEntrepriseCliente
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier une Entreprise Cliente
+
+participant "Agent" as agent
+participant "Interface\nEntreprise" as ui
+participant "Contrôleur\nModification" as ctrl
+participant "Service\nRCS" as rcs
+participant "Moteur\nSectoriel" as secteur
+parameter "Gestionnaire\nActionnaires" as action
+participant "Service\nMandataires" as mand
+participant "Base\nDonnées" as bdd
+
+== Sélection Entreprise ==
+agent -> ui : Modifier entreprise cliente
+activate ui
+ui -> agent : Rechercher entreprise
+agent -> ui : Sélectionner entreprise
+ui -> ctrl : Charger données entreprise
+activate ctrl
+ctrl -> bdd : Récupérer informations actuelles
+activate bdd
+bdd -> ctrl : Profil entreprise complet
+deactivate bdd
+ctrl -> ui : Formulaire pré-rempli
+ui -> agent : Afficher données actuelles
+
+== Modification Informations Société ==
+agent -> ui : Modifier données société
+note right : Raison sociale, adresse,\ncapital, forme juridique
+ui -> ctrl : Valider modifications
+
+alt Changement majeur (raison sociale, capital)
+    ctrl -> rcs : Vérifier au RCS
+    activate rcs
+    rcs -> rcs : Contrôler modifications officielles
+    rcs -> ctrl : Données RCS mises à jour
+    deactivate rcs
+else Modification mineure
+    ctrl -> ctrl : Validation directe
+end
+
+== Secteur d'Activité ==
+alt Changement code NAF
+    ctrl -> secteur : Analyser nouveau secteur
+    activate secteur
+    secteur -> secteur : Recalculer niveau risque
+    secteur -> secteur : Identifier nouvelles restrictions
+    
+    alt Secteur plus risqué
+        secteur -> ctrl : Validation hiérarchique requise
+        ctrl -> ui : Escalader modification
+    else Secteur équivalent/moins risqué
+        secteur -> ctrl : Modification autorisée
+        ctrl -> ctrl : Appliquer nouvelles restrictions
+    end
+    deactivate secteur
+end
+
+== Structure Capitalistique ==
+agent -> ui : Modifier actionnaires
+ui -> action : Gestion actionnaires
+activate action
+action -> ui : Interface actionnaires
+ui -> agent : Modifier participations
+note right : Nouveaux actionnaires,\nchangement pourcentages
+
+agent -> ui : Confirmer changements
+ui -> action : Valider nouvelle structure
+action -> action : Contrôler cohérence 100%
+action -> action : Recalculer bénéficiaires effectifs
+
+alt Structure incohérente
+    action -> ctrl : Erreur répartition capital
+    ctrl -> ui : Corriger structure
+else Structure cohérente
+    action -> ctrl : Structure validée
+end
+deactivate action
+
+== Représentants Légaux ==
+agent -> ui : Modifier dirigeants
+ui -> mand : Gestion mandataires
+activate mand
+mand -> ui : Interface dirigeants
+ui -> agent : Modifier pouvoirs/fonctions
+
+alt Nouveau dirigeant
+    agent -> ui : Ajouter dirigeant
+    ui -> mand : Contrôler nouveau mandataire
+    mand -> mand : Vérifier éligibilité
+    mand -> mand : Valider pouvoirs
+else Modification pouvoirs
+    agent -> ui : Ajuster attributions
+    ui -> mand : Valider nouveaux pouvoirs
+end
+
+mand -> ctrl : Mandataires mis à jour
+deactivate mand
+
+== Contrôles KYC Entreprise ==
+ctrl -> ctrl : Relancer due diligence
+ctrl -> ctrl : Contrôler nouveaux dirigeants
+ctrl -> ctrl : Réévaluer bénéficiaires effectifs
+
+== Enregistrement Modifications ==
+ctrl -> bdd : Sauvegarder changements
+activate bdd
+bdd -> bdd : Historiser modifications
+bdd -> bdd : Mettre à jour structure société
+bdd -> bdd : Sauvegarder nouveaux actionnaires
+bdd -> bdd : Mettre à jour mandataires
+bdd -> bdd : Appliquer restrictions sectorielles
+bdd -> bdd : Tracer modifications
+bdd -> ctrl : Entreprise mise à jour
+deactivate bdd
+
+== Notifications ==
+ctrl -> ctrl : Notifier changements importants
+ctrl -> ctrl : Alerter gestionnaire commercial
+ctrl -> ui : Modification confirmée
+ui -> agent : Entreprise mise à jour
+note right : Structure capitalistique\nà jour, dirigeants validés,\nrestrictions appliquées
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Entreprise modifiée avec\nvalidation structure et\ncontrôles KYC actualisés
+
+@enduml

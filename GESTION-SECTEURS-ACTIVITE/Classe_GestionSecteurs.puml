@@ -1,0 +1,133 @@
+@startuml Classe_GestionSecteurs
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam note FontSize 7
+
+title Classes - Gestion Secteurs d'Activité
+
+class SecteurActivite {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - niveauRisque: NiveauRisque
+    - actif: Boolean
+    + creer()
+    + modifier()
+    + evaluerRisque()
+}
+
+class NiveauRisque {
+    - MINIMAL: 1
+    - MODERE: 2
+    - ELEVE: 3
+    - CRITIQUE: 4
+    + calculerScore()
+}
+
+class MatriceRisque {
+    - secteur: SecteurActivite
+    - facteurs: List<FacteurRisque>
+    - scoreBase: Integer
+    - coefficients: Map<String,Double>
+    + evaluer()
+    + appliquerFacteurs()
+}
+
+class FacteurRisque {
+    - type: TypeFacteur
+    - valeur: String
+    - coefficient: Double
+    - actif: Boolean
+    + calculerImpact()
+}
+
+class ClassificationClient {
+    - client: Client
+    - secteur: SecteurActivite
+    - dateClassification: Date
+    - valideur: Agent
+    - scoreRisque: Integer
+    + classer()
+    + reclasser()
+    + valider()
+}
+
+class RestrictionSectorielle {
+    - secteur: SecteurActivite
+    - typeRestriction: String
+    - valeurLimite: Double
+    - actif: Boolean
+    + appliquer()
+    + verifier()
+}
+
+class SurveillanceSectorielle {
+    - secteur: SecteurActivite
+    - seuils: Map<String,Double>
+    - frequenceControle: Integer
+    + surveiller()
+    + alerter()
+}
+
+class AlerteSectorielle {
+    - type: TypeAlerte
+    - secteur: SecteurActivite
+    - description: String
+    - niveau: NiveauUrgence
+    - dateCreation: Date
+    + generer()
+    + traiter()
+}
+
+class Client {
+    - id: String
+    - nom: String
+    - activiteDeclaree: String
+    - chiffreAffaires: Montant
+    + getClassification()
+}
+
+class RapportSectoriel {
+    - periode: Periode
+    - repartition: Map<String,Integer>
+    - evolution: Map<String,Double>
+    - alertes: List<AlerteSectorielle>
+    + generer()
+    + analyser()
+}
+
+' Relations
+SecteurActivite ||--|| NiveauRisque
+SecteurActivite ||--o{ MatriceRisque
+MatriceRisque ||--o{ FacteurRisque
+SecteurActivite ||--o{ ClassificationClient
+SecteurActivite ||--o{ RestrictionSectorielle
+SecteurActivite ||--o{ SurveillanceSectorielle
+SecteurActivite ||--o{ AlerteSectorielle
+
+Client ||--|| ClassificationClient
+ClassificationClient ||--o{ RestrictionSectorielle
+SurveillanceSectorielle ||--o{ AlerteSectorielle
+
+note top of SecteurActivite
+Référentiel central des
+secteurs d'activité économique
+end note
+
+note right of MatriceRisque
+Calcul automatique du score
+basé sur facteurs multiples
+end note
+
+note bottom of SurveillanceSectorielle
+Surveillance temps réel avec
+seuils d'alerte configurables
+end note
+
+@enduml

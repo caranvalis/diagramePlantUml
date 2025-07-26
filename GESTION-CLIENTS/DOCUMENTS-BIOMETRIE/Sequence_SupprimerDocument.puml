@@ -1,0 +1,199 @@
+@startuml Sequence_SupprimerDocument
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Document
+
+participant "Utilisateur\nAutorisé" as user
+participant "Interface\nDocuments" as ui
+participant "Contrôleur\nDocument" as ctrl
+participant "Validateur\nSécurité" as security
+participant "Analyseur\nDépendances" as dep
+participant "Service\nArchivage" as archiving
+participant "Gestionnaire\nVersions" as version
+participant "Base\nDonnées" as bdd
+
+== Sélection Document ==
+user -> ui : Supprimer document
+activate ui
+ui -> user : Liste documents disponibles
+user -> ui : Sélectionner document à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Contrôle Autorisations ==
+ctrl -> security : Vérifier autorisations suppression
+activate security
+security -> security : Contrôler droits utilisateur
+security -> security : Analyser niveau accès document
+security -> security : Vérifier restrictions légales
+
+alt Autorisations insuffisantes
+    security -> ctrl : Accès refusé
+    ctrl -> ui : Droits insuffisants
+    ui -> user : Suppression non autorisée
+    note right : "Vous n'avez pas les droits\npour supprimer ce document"
+    deactivate security
+    deactivate ctrl
+    deactivate ui
+else Autorisations validées
+    security -> ctrl : Suppression autorisée
+    deactivate security
+end
+
+== Analyse Dépendances ==
+ctrl -> dep : Analyser dépendances document
+activate dep
+dep -> bdd : Rechercher références document
+activate bdd
+bdd -> dep : Documents liés + processus + dossiers
+deactivate bdd
+
+dep -> dep : Analyser impact suppression
+dep -> dep : Contrôler processus métier
+dep -> dep : Vérifier obligations légales
+
+alt Document référencé
+    dep -> ctrl : Document utilisé ailleurs
+    ctrl -> ui : Document référencé dans système
+    ui -> user : Suppression risquée - références trouvées
+    note right : "Document utilisé dans :\n- X dossiers clients\n- Y processus"
+    
+    user -> ui : Forcer suppression ou annuler
+    ui -> user : Options : Forcer / Archiver / Annuler
+    
+    alt Forcer suppression
+        user -> ui : Confirmer suppression forcée
+        ui -> dep : Ignorer dépendances
+        dep -> ctrl : Suppression forcée autorisée
+    else Archiver au lieu de supprimer
+        user -> ui : Archiver document
+        ui -> ctrl : Demander archivage
+        ctrl -> archiving : Archiver document
+        activate archiving
+        archiving -> ctrl : Document archivé
+        deactivate archiving
+        ctrl -> ui : Document archivé
+        ui -> user : Document archivé avec succès
+        deactivate dep
+        deactivate ctrl
+        deactivate ui
+    else Annuler suppression
+        user -> ui : Annuler suppression
+        ui -> user : Suppression annulée
+        deactivate dep
+        deactivate ctrl
+        deactivate ui
+    end
+    
+else Aucune dépendance
+    dep -> ctrl : Suppression sûre
+    deactivate dep
+end
+
+== Gestion Versions ==
+ctrl -> version : Analyser versions document
+activate version
+version -> bdd : Lister versions document
+activate bdd
+bdd -> version : Historique versions
+deactivate bdd
+
+alt Versions multiples
+    version -> ctrl : Versions multiples détectées
+    ctrl -> ui : Document a plusieurs versions
+    ui -> user : Supprimer toutes versions ou version actuelle ?
+    
+    user -> ui : Choisir action versions
+    ui -> user : Options : Toutes / Actuelle seulement
+    
+    alt Supprimer toutes versions
+        user -> ui : Supprimer toutes versions
+        ui -> version : Supprimer historique complet
+        version -> ctrl : Toutes versions à supprimer
+    else Supprimer version actuelle
+        user -> ui : Supprimer version actuelle
+        ui -> version : Supprimer version courante
+        version -> ctrl : Version courante à supprimer
+    end
+    
+else Version unique
+    version -> ctrl : Version unique
+end
+
+deactivate version
+
+== Validation Juridique ==
+ctrl -> ctrl : Contrôler obligations légales
+alt Document obligatoire légalement
+    ctrl -> ui : Document protégé légalement
+    ui -> user : Suppression interdite par réglementation
+    note right : "Document requis par\nréglementation bancaire"
+    deactivate ctrl
+    deactivate ui
+end
+
+== Confirmation Utilisateur ==
+ctrl -> ui : Demander confirmation finale
+ui -> user : Confirmer suppression définitive
+note right : "Supprimer document définitivement ?\nAction irréversible"
+
+user -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Archivage Sécurisé ==
+ctrl -> archiving : Créer archive avant suppression
+activate archiving
+archiving -> bdd : Récupérer document complet
+activate bdd
+bdd -> archiving : Contenu + métadonnées + historique
+deactivate bdd
+
+archiving -> archiving : Créer archive sécurisée
+archiving -> archiving : Chiffrer contenu sensible
+archiving -> archiving : Horodater suppression
+archiving -> archiving : Sauvegarder empreinte numérique
+archiving -> ctrl : Archive créée
+deactivate archiving
+
+== Suppression Sécurisée ==
+ctrl -> bdd : Supprimer document
+activate bdd
+bdd -> bdd : Marquer document supprimé
+bdd -> bdd : Date suppression
+bdd -> bdd : Utilisateur suppresseur
+bdd -> bdd : Purger contenu binaire
+bdd -> bdd : Effacement sécurisé fichiers
+bdd -> bdd : Tracer suppression audit
+bdd -> ctrl : Document supprimé
+deactivate bdd
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider cache documents
+ctrl -> ctrl : Nettoyer index recherche
+ctrl -> ctrl : Purger références temporaires
+
+== Notification ==
+ctrl -> ui : Suppression réussie
+ui -> user : Document supprimé avec succès
+note right : Document supprimé\nArchive créée\nEffacement sécurisé
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> user : Rapport avec détails sécurité
+note right : Document supprimé\nArchivage effectué\nAudit traçé
+
+deactivate ctrl
+deactivate ui
+
+note over user : Document supprimé\navec archivage sécurisé\net audit complet
+
+@enduml

@@ -1,0 +1,76 @@
+@startuml Sequence_ValidationSectorielle
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Validation Sectorielle
+
+participant "GFC" as G
+participant "Système" as S
+participant "Moteur Secteur" as M
+participant "Conformité" as C
+participant "Risques" as R
+
+G -> S: proposerSecteur()
+activate S
+
+S -> M: validerSecteur()
+activate M
+
+M -> M: consulterReferentiel()
+M -> M: evaluerCoherence()
+
+alt Secteur standard
+    M -> S: validationAutomatique()
+    S -> S: appliquerReglesStandard()
+    S -> G: confirmerValidation()
+    
+else Secteur sensible
+    M -> C: demanderValidation()
+    activate C
+    
+    C -> C: analyserJustification()
+    C -> R: consulterMatriceRisque()
+    activate R
+    
+    R -> R: calculerScore()
+    R -> C: retournerEvaluation()
+    deactivate R
+    
+    alt Validation accordée
+        C -> S: approuverSecteur()
+        S -> S: appliquerRestrictions()
+        S -> G: confirmerAvecRestrictions()
+    else Validation refusée
+        C -> S: rejeterSecteur()
+        S -> G: demanderReClassement()
+    end
+    
+    deactivate C
+
+else Secteur interdit
+    M -> S: secteurInterdit()
+    S -> G: refuserClassement()
+end
+
+deactivate M
+deactivate S
+
+note over M
+**Référentiel Secteurs**
+Codes NAF, classification
+interne, niveaux risque
+end note
+
+note over C
+**Validation Manuelle**
+Justification obligatoire
+pour secteurs sensibles
+end note
+
+@enduml

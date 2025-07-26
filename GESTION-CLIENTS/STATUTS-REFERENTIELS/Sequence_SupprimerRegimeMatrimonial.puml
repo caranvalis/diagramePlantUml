@@ -1,0 +1,154 @@
+@startuml Sequence_SupprimerRegimeMatrimonial
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Régime Matrimonial
+
+participant "Admin\nJuridique" as admin
+participant "Interface\nRégimes" as ui
+participant "Contrôleur\nRégime" as ctrl
+participant "Validateur\nJuridique" as valid_juridique
+participant "Analyseur\nImpact" as impact
+participant "Service\nMigration" as migration
+participant "Base\nDonnées" as bdd
+parameter "Archive\nJuridique" as archive
+
+== Sélection Régime ==
+admin -> ui : Supprimer régime matrimonial
+activate ui
+ui -> admin : Liste régimes existants
+admin -> ui : Sélectionner régime à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Contrôle Juridique ==
+ctrl -> valid_juridique : Valider suppression juridique
+activate valid_juridique
+valid_juridique -> valid_juridique : Vérifier légalité suppression
+valid_juridique -> valid_juridique : Contrôler conformité Code Civil
+valid_juridique -> valid_juridique : Analyser impact réglementaire
+
+alt Régime obligatoire légalement
+    valid_juridique -> ctrl : Suppression interdite
+    ctrl -> ui : Régime protégé par la loi
+    ui -> admin : Suppression impossible - statut légal
+    note right : Régimes comme "Communauté réduite\naux acquêts" sont obligatoires
+    deactivate valid_juridique
+else Suppression juridiquement possible
+    valid_juridique -> ctrl : Suppression autorisée légalement
+    deactivate valid_juridique
+end
+
+== Analyse d'Impact ==
+ctrl -> impact : Analyser impact suppression
+activate impact
+impact -> bdd : Compter clients utilisant régime
+activate bdd
+bdd -> impact : Nombre clients concernés
+deactivate bdd
+
+impact -> impact : Analyser contrats affectés
+impact -> impact : Contrôler produits spécifiques
+impact -> impact : Vérifier actes notariés liés
+
+alt Régime utilisé activement
+    impact -> ctrl : Migration nécessaire
+    ctrl -> ui : Clients utilisent ce régime
+    ui -> admin : Migration requise avant suppression
+    
+    == Migration Régimes ==
+    ctrl -> migration : Proposer migration
+    activate migration
+    migration -> ui : Interface migration juridique
+    ui -> admin : Sélectionner régime de remplacement
+    admin -> ui : Confirmer nouveau régime
+    ui -> migration : Régime destination validé
+    
+    migration -> bdd : Migrer clients vers nouveau régime
+    activate bdd
+    bdd -> bdd : Mettre à jour régimes clients
+    bdd -> bdd : Valider cohérence juridique
+    bdd -> bdd : Notifier changements contrats
+    bdd -> migration : Migration effectuée
+    deactivate bdd
+    migration -> ctrl : Clients migrés
+    deactivate migration
+    
+else Régime non utilisé
+    impact -> ctrl : Suppression directe possible
+    deactivate impact
+end
+
+== Validation Notariale ==
+ctrl -> ctrl : Contrôler actes notariés
+alt Actes notariés référencent régime
+    ctrl -> ui : Actes notariés utilisent ce régime
+    ui -> admin : Consultation notaire recommandée
+    note right : Vérification avec étude\nnotariale avant suppression
+    
+    admin -> ui : Confirmer après consultation
+    ui -> ctrl : Validation notariale obtenue
+end
+
+== Confirmation Admin ==
+ctrl -> ui : Demander confirmation finale
+ui -> admin : Confirmer suppression définitive
+note right : "Supprimer régime matrimonial ?\nImpact sur actes juridiques"
+
+admin -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Archivage Juridique ==
+ctrl -> archive : Archiver régime matrimonial
+activate archive
+archive -> bdd : Récupérer définition juridique
+activate bdd
+bdd -> archive : Textes + références + historique
+deactivate bdd
+
+archive -> archive : Créer archive avec références légales
+archive -> archive : Horodater suppression
+archive -> archive : Associer actes notariés
+archive -> ctrl : Régime archivé
+deactivate archive
+
+== Suppression Contrôlée ==
+ctrl -> bdd : Marquer régime supprimé
+activate bdd
+bdd -> bdd : Statut = SUPPRIME
+bdd -> bdd : Date suppression juridique
+bdd -> bdd : Conserver références historiques
+bdd -> bdd : Désactiver pour nouveaux clients
+bdd -> bdd : Tracer suppression réglementaire
+bdd -> ctrl : Régime supprimé
+deactivate bdd
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider cache régimes
+ctrl -> ctrl : Nettoyer formulaires
+ctrl -> ctrl : Purger références actives
+
+== Notification ==
+ctrl -> ui : Suppression réussie
+ui -> admin : Régime matrimonial supprimé
+note right : Régime supprimé\nClients migrés\nArchive juridique créée
+
+== Rapport Juridique ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec impact juridique
+note right : Régime supprimé\nConformité maintenue\nArchivage réglementaire
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Régime matrimonial supprimé\navec validation juridique\net archivage conforme
+
+@enduml

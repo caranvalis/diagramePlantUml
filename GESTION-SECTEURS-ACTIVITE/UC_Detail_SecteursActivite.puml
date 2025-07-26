@@ -1,0 +1,102 @@
+@startuml UC_Detail_SecteursActivite
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 7
+
+title Secteurs d'Activité - Cas d'Usage Détaillés
+
+left to right direction
+
+actor "GFC" as G
+actor "Conformité" as C
+actor "Risques" as R
+actor "Système" as S
+
+rectangle "Gestion Secteurs Activité" {
+  
+  usecase "Créer\nSecteur" as UC1
+  usecase "Définir\nCode" as UC1_1
+  usecase "Paramétrer\nRisque" as UC1_2
+  usecase "Configurer\nRègles" as UC1_3
+  
+  usecase "Classer\nClient" as UC2
+  usecase "Analyser\nActivité" as UC2_1
+  usecase "Appliquer\nMatrice" as UC2_2
+  usecase "Valider\nClassement" as UC2_3
+  
+  usecase "Contrôler\nRisque" as UC3
+  usecase "Calculer\nScore" as UC3_1
+  usecase "Appliquer\nRestrictions" as UC3_2
+  usecase "Notifier\nÉquipes" as UC3_3
+  
+  usecase "Surveiller\nPortefeuille" as UC4
+  usecase "Analyser\nConcentration" as UC4_1
+  usecase "Détecter\nDérives" as UC4_2
+  usecase "Alerter\nManagement" as UC4_3
+}
+
+' Relations
+G --> UC2
+G --> UC2_3
+
+C --> UC1
+C --> UC2_3
+C --> UC3
+C --> UC4
+
+R --> UC1_2
+R --> UC3
+R --> UC4
+
+S --> UC3_1
+S --> UC4_1
+S --> UC4_2
+
+' Inclusions
+UC1 .> UC1_1 : <<include>>
+UC1 .> UC1_2 : <<include>>
+UC1 .> UC1_3 : <<include>>
+
+UC2 .> UC2_1 : <<include>>
+UC2 .> UC2_2 : <<include>>
+UC2 .> UC2_3 : <<include>>
+
+UC3 .> UC3_1 : <<include>>
+UC3 .> UC3_2 : <<include>>
+UC3 .> UC3_3 : <<include>>
+
+UC4 .> UC4_1 : <<include>>
+UC4 .> UC4_2 : <<include>>
+UC4 .> UC4_3 : <<include>>
+
+note right of UC1
+**Secteurs Types:**
+- Standard: Commerce, Industrie
+- Sensibles: Finance, Crypto
+- Interdits: Armement
+end note
+
+note bottom of UC2
+**Critères Classification:**
+Activité déclarée, CA,
+géolocalisation, produits
+end note
+
+note left of UC4
+**Seuils Surveillance:**
+- Concentration > 20%
+- Évolution > ±50%
+- Nouveaux secteurs
+end note
+
+@enduml

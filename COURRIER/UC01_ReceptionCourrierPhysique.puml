@@ -1,0 +1,117 @@
+@startuml UC01_ReceptionCourrierPhysique
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title Cas d'Usage - UC01 Réception Courrier Physique
+
+left to right direction
+
+actor "Agent Accueil" as Agent
+actor "Gestionnaire KYC" as Gest
+actor "Expert OCR" as Expert
+actor "Client" as Client
+
+rectangle "Système Gestion Courrier" {
+  usecase "UC01: Réceptionner\nCourrier Physique" as UC01
+  usecase "Scanner Documents" as UC01_1
+  usecase "Extraire Données OCR" as UC01_2
+  usecase "Identifier Client" as UC01_3
+  usecase "Créer Dossier Client" as UC01_4
+  usecase "Associer Documents" as UC01_5
+  usecase "Notifier Gestionnaire" as UC01_6
+  usecase "Traiter Erreur OCR" as UC01_7
+  usecase "Archiver Original" as UC01_8
+  usecase "Router vers Service" as UC01_9
+  
+  ' Cas d'usage externes
+  usecase "Traitement Urgent" as UC_EXT_1
+  usecase "Gestion Doublons" as UC_EXT_2
+}
+
+' Relations principales
+Agent --> UC01 : démarre
+
+' Inclusions obligatoires
+UC01 .> UC01_1 : <<include>>
+UC01 .> UC01_8 : <<include>>
+
+' Extensions conditionnelles
+UC01 <.. UC01_2 : <<extend>>\n[documents KYC détectés]
+UC01 <.. UC01_3 : <<extend>>\n[données OCR valides]
+UC01 <.. UC01_4 : <<extend>>\n[nouveau client]
+UC01 <.. UC01_5 : <<extend>>\n[client existant]
+UC01 <.. UC01_6 : <<extend>>\n[documents KYC traités]
+UC01 <.. UC01_7 : <<extend>>\n[erreur OCR]
+UC01 <.. UC01_9 : <<extend>>\n[courrier non-KYC]
+
+' Relations avec cas externes
+UC01 <.. UC_EXT_1 : <<extend>>\n[courrier urgent]
+UC01_5 <.. UC_EXT_2 : <<extend>>\n[doublon détecté]
+
+' Relations acteurs secondaires
+Gest --> UC01_6 : reçoit notification
+Expert --> UC01_7 : traite erreurs
+Client <-- UC01_6 : informé (indirect)
+
+note right of UC01
+**Objectif:** Traiter efficacement 
+tout courrier physique reçu
+
+**Déclencheur:** Réception physique 
+de courrier/colis
+
+**Préconditions:**
+- Agent identifié et connecté
+- Scanner opérationnel
+- Système OCR disponible
+
+**Postconditions:**
+- Courrier scanné et archivé
+- Documents intégrés au dossier approprié
+- Gestionnaire notifié si nécessaire
+end note
+
+note right of UC01_2
+**Extraction OCR:**
+- Reconnaissance texte automatique
+- Détection numéro de compte
+- Identification type document
+- Extraction métadonnées
+
+**Seuil qualité:** 95% minimum
+end note
+
+note right of UC01_3
+**Identification Client:**
+- Recherche par numéro compte
+- Recherche par nom/prénom
+- Recherche par pièce identité
+- Algorithme de correspondance floue
+end note
+
+note bottom of UC01_4
+**Nouveau Dossier Client:**
+- Création identifiant unique
+- Attribution gestionnaire selon charge
+- Initialisation workflow KYC
+- Configuration alertes et rappels
+end note
+
+@enduml

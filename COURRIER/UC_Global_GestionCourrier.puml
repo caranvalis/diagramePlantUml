@@ -1,0 +1,191 @@
+@startuml UC_Global_GestionCourrier
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Gestion Courrier
+
+left to right direction
+
+actor "Agent" as A
+actor "Gestionnaire" as G
+actor "Manager" as M
+
+rectangle "Système Courrier" {
+  
+  package "Réception" {
+    usecase "Réceptionner\nCourrier" as UC1
+    usecase "Scanner\nDocuments" as UC2
+    usecase "Extraire\nDonnées OCR" as UC3
+  }
+  
+  package "Routage" {
+    usecase "Router\nAutomatique" as UC4
+    usecase "Classifier\nType" as UC5
+    usecase "Détecter\nDoublons" as UC6
+  }
+  
+  package "Traitement Métier" {
+    usecase "UC07: Traiter\nDocuments KYC" as UC07
+    usecase "UC08: Traiter\nCourrier Urgent" as UC08
+    usecase "UC09: Gérer\nRéclamations" as UC09
+  }
+  
+  package "Gestion et Suivi" {
+    usecase "UC10: Suivre\nTraitements" as UC10
+    usecase "UC11: Générer\nRapports" as UC11
+    usecase "UC12: Archiver\nDocuments" as UC12
+  }
+}
+
+  
+  package "Traitement" {
+    usecase "Traiter
+Documents KYC" as UC7
+    usecase "Traiter
+Courrier Urgent" as UC8
+    usecase "Traiter
+Réclamation" as UC9
+  }
+  
+  package "Suivi" {
+    usecase "Suivre
+Traitement" as UC10
+    usecase "Archiver
+Documents" as UC11
+  }
+}
+
+' Relations
+A --> UC1
+A --> UC2
+G --> UC7
+G --> UC9
+M --> UC8
+M --> UC10
+
+' Flux
+UC1 --> UC2
+UC2 --> UC3
+UC3 --> UC4
+UC4 --> UC5
+
+UC5 --> UC7 : [KYC]
+UC5 --> UC8 : [urgent]
+UC5 --> UC9 : [réclamation]
+
+UC7 --> UC10
+UC8 --> UC10
+UC9 --> UC10
+UC10 --> UC11
+
+note right of UC4
+**Routage intelligent**
+basé sur contenu OCR
+end note
+
+@enduml
+Agent --> UC01
+Agent --> UC02
+Agent --> UC08
+
+Gest --> UC07
+Gest --> UC10
+Gest --> UC09
+
+Manager --> UC11
+Manager --> UC08
+
+Expert --> UC03
+Expert --> UC06
+
+Client --> UC09 : initie (indirect)
+
+' Relations Systèmes
+Scanner --> UC02
+Scanner --> UC03
+
+GED --> UC12
+GED --> UC07
+
+Notif --> UC07
+Notif --> UC08
+Notif --> UC09
+
+' Flux de processus principal
+UC01 --> UC02 : démarre
+UC02 --> UC03 : puis
+UC03 --> UC04 : puis
+UC04 --> UC05 : inclut
+UC04 --> UC06 : inclut
+
+' Branchements selon type
+UC05 --> UC07 : [documents KYC]
+UC05 --> UC08 : [courrier urgent]
+UC05 --> UC09 : [réclamation]
+
+' Finalisation
+UC07 --> UC10 : suivi
+UC08 --> UC10 : suivi
+UC09 --> UC10 : suivi
+
+UC10 --> UC11 : reporting
+UC10 --> UC12 : archivage
+
+note top of UC01
+**Point d'entrée du système**
+Démarre tout le processus
+end note
+
+note right of UC04
+**Cœur du système**
+Routage intelligent basé sur:
+- Contenu OCR
+- Règles métier
+- Historique
+- Priorités
+end note
+
+note bottom of UC07
+**Processus KYC**
+Intégration avec:
+- Dossiers clients existants
+- Workflow de validation
+- Règles de complétude
+end note
+
+note left of UC11
+**Pilotage et Contrôle**
+- SLA de traitement
+- Volumes traités
+- Taux d'erreur OCR
+- Performance des agents
+end note
+
+' Relations d'extension et d'inclusion
+UC01 .> UC02 : <<include>>
+UC02 .> UC03 : <<include>>
+UC04 .> UC05 : <<include>>
+UC04 .> UC06 : <<include>>
+
+UC05 <.. UC07 : <<extend>>
+UC05 <.. UC08 : <<extend>>
+UC05 <.. UC09 : <<extend>>
+
+UC07 .> UC10 : <<include>>
+UC08 .> UC10 : <<include>>
+UC09 .> UC10 : <<include>>
+
+UC10 .> UC12 : <<include>>
+
+@enduml

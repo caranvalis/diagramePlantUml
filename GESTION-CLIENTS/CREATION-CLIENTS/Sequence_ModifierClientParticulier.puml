@@ -1,0 +1,125 @@
+@startuml Sequence_ModifierClientParticulier
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier un Client Particulier
+
+participant "Agent" as agent
+participant "Interface\nClient" as ui
+participant "Contrôleur\nModification" as ctrl
+participant "Service\nValidation" as valid
+participant "Moteur\nKYC" as kyc
+participant "Service\nBiométrie" as bio
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Sélection Client ==
+agent -> ui : Modifier client particulier
+activate ui
+ui -> agent : Rechercher client
+agent -> ui : Sélectionner client
+ui -> ctrl : Charger données client
+activate ctrl
+ctrl -> bdd : Récupérer informations actuelles
+activate bdd
+bdd -> ctrl : Profil client complet
+deactivate bdd
+ctrl -> ui : Formulaire pré-rempli
+ui -> agent : Afficher données actuelles
+
+== Modification Informations ==
+agent -> ui : Modifier données personnelles
+note right : Adresse, téléphone, email,\nsituation familiale, revenus
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler changements
+activate valid
+valid -> valid : Vérifier cohérence données
+valid -> valid : Contrôler format contacts
+
+alt Changement d'adresse
+    valid -> kyc : Réévaluer risque géographique
+    activate kyc
+    kyc -> kyc : Analyser nouveau pays/région
+    kyc -> kyc : Contrôler listes sanctions
+    kyc -> valid : Nouveau niveau risque
+    deactivate kyc
+    
+    alt Risque dégradé
+        valid -> ctrl : Validation hiérarchique requise
+        ctrl -> ui : Escalader modification
+    else Risque acceptable
+        valid -> ctrl : Modification autorisée
+    end
+else Modification standard
+    valid -> ctrl : Changements validés
+end
+deactivate valid
+
+== Mise à Jour Documents ==
+ctrl -> ui : Documents à actualiser ?
+ui -> agent : Télécharger nouveaux documents
+agent -> ui : Fournir pièces mises à jour
+ui -> ged : Traiter nouveaux documents
+activate ged
+ged -> ged : Numériser et indexer
+ged -> ged : Versionner documents existants
+ged -> ctrl : Documents actualisés
+deactivate ged
+
+== Données Biométriques ==
+alt Renouvellement biométrie requis
+    ctrl -> bio : Capturer nouvelles données
+    activate bio
+    bio -> agent : Nouvelle photo/empreinte
+    bio -> bio : Comparer avec anciennes
+    bio -> bio : Valider cohérence
+    bio -> ctrl : Biométrie mise à jour
+    deactivate bio
+end
+
+== Contrôles KYC ==
+ctrl -> kyc : Relancer contrôles KYC
+activate kyc
+kyc -> kyc : Vérifier nouvelles informations
+kyc -> kyc : Contrôler changements significatifs
+kyc -> kyc : Recalculer score risque
+
+alt Score risque modifié
+    kyc -> ctrl : Nouveau profil risque
+    ctrl -> ctrl : Appliquer nouvelles restrictions
+else Score inchangé
+    kyc -> ctrl : Profil risque maintenu
+end
+deactivate kyc
+
+== Enregistrement Modifications ==
+ctrl -> bdd : Sauvegarder changements
+activate bdd
+bdd -> bdd : Historiser modifications
+bdd -> bdd : Tracer agent/date/motifs
+bdd -> bdd : Mettre à jour profil client
+bdd -> bdd : Appliquer nouveaux paramètres
+bdd -> ctrl : Client mis à jour
+deactivate bdd
+
+== Notifications ==
+ctrl -> ctrl : Notifier changements
+ctrl -> ctrl : Alerter gestionnaire si requis
+ctrl -> ui : Modification confirmée
+ui -> agent : Client mis à jour
+note right : Modifications sauvegardées\nContrôles KYC actualisés\nDocuments versionnés
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Client particulier modifié\navec validation complète et\ntraçabilité des changements
+
+@enduml

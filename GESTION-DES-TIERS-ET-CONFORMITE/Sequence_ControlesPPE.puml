@@ -1,0 +1,76 @@
+@startuml Sequence_ControlesPPE
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontSize 8
+}
+skinparam sequenceMessageAlign center
+
+title Contrôles PPE
+
+participant "GFC" as G
+participant "KYC" as K
+participant "Moteur PPE" as P
+participant "Bases PPE" as B
+participant "Conformité" as C
+
+G -> K: saisirClient()
+activate K
+
+K -> P: controlePPE()
+activate P
+
+P -> P: normaliserDonnees()
+note over P: Normalisation nom,\ndate, nationalité
+
+P -> B: interrogerBases()
+activate B
+
+B -> B: rechercherMatches()
+B -> P: retournerCandidats()
+deactivate B
+
+P -> P: calculerScores()
+note over P: Scores:\n100% = exact\n80-99% = probable\n<80% = non PPE
+
+alt Score >= 80%
+    P -> K: alertePPE()
+    
+    K -> C: escaladerPPE()
+    activate C
+    
+    C -> C: analyserMatch()
+    
+    alt PPE confirmée
+        C -> K: confirmerPPE()
+        K -> K: appliquerRestrictions()
+        K -> G: alerteRestrictions()
+        
+    else Faux positif
+        C -> K: infirmerPPE()
+        K -> K: processusNormal()
+    end
+    
+    deactivate C
+    
+else Score < 80%
+    P -> K: aucunePPE()
+    K -> K: validerControle()
+end
+
+deactivate P
+K -> G: retournerStatut()
+deactivate K
+
+note over B
+**Sources:** Bases officielles,\nONU, UE, commerciales
+end note
+
+@enduml

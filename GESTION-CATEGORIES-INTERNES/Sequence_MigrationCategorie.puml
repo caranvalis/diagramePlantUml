@@ -1,0 +1,117 @@
+@startuml Sequence_MigrationCategorie
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Migration Massive de Catégories (Changement Réglementaire)
+
+participant "Admin\nSystème" as admin
+participant "Moteur\nMigration" as migration
+participant "Règles\nMétier" as regles
+participant "Base\nDonnées" as bdd
+participant "Moteur\nPolitiques" as politiques
+participant "Gestionnaire\nCommercial" as commercial
+participant "Client" as client
+
+== Préparation Migration ==
+admin -> migration : Lancer migration\nmassive
+activate migration
+
+migration -> regles : Charger nouvelles\nrègles catégories
+activate regles
+regles -> regles : Valider cohérence\nrègles business
+regles -> migration : Règles validées
+deactivate regles
+
+migration -> bdd : Analyser population\nconcernée
+activate bdd
+bdd -> bdd : Identifier clients\nà migrer
+bdd -> migration : Liste clients (estimation)
+deactivate bdd
+
+note over migration : Exemple: 15 000 clients\nParticuliers Aisés -> VIP
+
+== Simulation ==
+migration -> migration : Mode simulation
+loop Pour chaque client concerné
+    migration -> regles : Calculer nouvelle\ncatégorie
+    migration -> politiques : Simuler impact\npolitiques
+    activate politiques
+    politiques -> politiques : Évaluer changements\ntarifs/services
+    politiques -> migration : Impact estimé
+    deactivate politiques
+end
+
+migration -> admin : Rapport simulation
+note right : 12 000 VIP\n2 500 PREMIUM\n500 maintien statut
+
+== Validation Migration ==
+admin -> admin : Valider rapport
+admin -> migration : Autoriser migration\nréelle
+
+== Exécution par Lots ==
+migration -> migration : Diviser en lots\n(500 clients/lot)
+
+loop Traitement par lot
+    migration -> bdd : Sélectionner lot\nsuivant
+    activate bdd
+    
+    loop Pour chaque client du lot
+        migration -> regles : Recalculer catégorie
+        regles -> migration : Nouvelle catégorie
+        
+        alt Changement effectif
+            migration -> bdd : Sauvegarder\nhistorique
+            migration -> bdd : Mettre à jour\ncatégorie
+            
+            migration -> politiques : Appliquer\nnouvelles politiques
+            activate politiques
+            politiques -> politiques : Recalculer tarifs\net limites
+            politiques -> bdd : Sauvegarder\nchangements
+            deactivate politiques
+            
+            migration -> commercial : Créer tâche\nsuivi client
+            activate commercial
+            commercial -> commercial : Planifier contact\nclient
+            deactivate commercial
+            
+        else Pas de changement
+            migration -> bdd : Tracer vérification\n(pas de changement)
+        end
+    end
+    
+    migration -> admin : Rapport lot\nterminé
+    deactivate bdd
+    
+    migration -> migration : Pause inter-lots\n(30 secondes)
+end
+
+== Post-Migration ==
+migration -> bdd : Vérifier cohérence\nglobale
+activate bdd
+bdd -> bdd : Contrôles intégrité
+bdd -> migration : Rapport qualité
+deactivate bdd
+
+migration -> commercial : Déclencher campagne\ninformation
+activate commercial
+commercial -> client : Communication\nchangements
+note right : Email personnalisé\navec nouveaux avantages
+deactivate commercial
+
+migration -> admin : Migration terminée\n(rapport final)
+deactivate migration
+
+== Surveillance Post-Migration ==
+admin -> admin : Programmer surveillance\n30 jours
+
+note over admin : Monitoring:\n- Réclamations clients\n- Impacts revenus\n- Retours commerciaux
+
+@enduml

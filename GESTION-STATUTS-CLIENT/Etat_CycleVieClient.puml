@@ -1,0 +1,111 @@
+@startuml Etat_CycleVieClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam state {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Cycle de Vie Client - Diagramme d'États
+
+[*] --> PROSPECT : Création lead
+
+state PROSPECT {
+    PROSPECT : Prospection active
+    PROSPECT : Documents partiels
+    PROSPECT : Évaluation en cours
+}
+
+PROSPECT --> ACTIF : Ouverture compte\n+ KYC complet
+PROSPECT --> REJETE : Non conforme\nou refus
+
+state ACTIF {
+    ACTIF : Compte opérationnel
+    ACTIF : Services accessibles
+    ACTIF : Mouvements réguliers
+    
+    state "Sous-États Conformité" as CONF {
+        CONFORME --> NON_CONFORME : Expiration documents
+        NON_CONFORME --> CONFORME : Régularisation
+        CONFORME --> PPE : Détection PPE
+        PPE --> CONFORME : Déclassement
+    }
+    
+    state "Sous-États Risque" as RISQ {
+        FAIBLE --> MOYEN : Évolution profil
+        MOYEN --> ELEVE : Alertes fréquentes
+        ELEVE --> CRITIQUE : Sanctions/Fraude
+        CRITIQUE --> ELEVE : Amélioration
+        ELEVE --> MOYEN : Stabilisation
+        MOYEN --> FAIBLE : Bon comportement
+    }
+}
+
+ACTIF --> INACTIF : Inactivité > 12 mois
+INACTIF --> ACTIF : Reprise activité
+INACTIF --> DORMANT : Inactivité > 24 mois
+
+state INACTIF {
+    INACTIF : Services limités
+    INACTIF : Surveillance réduite
+    INACTIF : Relance périodique
+}
+
+state DORMANT {
+    DORMANT : Compte gelé
+    DORMANT : Consultation seule
+    DORMANT : Procédure réveil
+}
+
+ACTIF --> SUSPENDU : Décision\nDA/Conformité
+INACTIF --> SUSPENDU : Problème détecté
+SUSPENDU --> ACTIF : Levée suspension
+SUSPENDU --> CLOTURE : Suspension définitive
+
+state SUSPENDU {
+    SUSPENDU : Blocage temporaire
+    SUSPENDU : Investigation en cours
+    SUSPENDU : Services bloqués
+}
+
+DORMANT --> CLOTURE : Clôture administrative
+ACTIF --> CLOTURE : Demande client\nou décision banque
+INACTIF --> CLOTURE : Procédure légale
+
+state CLOTURE {
+    CLOTURE : Comptes fermés
+    CLOTURE : Archive légale
+    CLOTURE : Historique conservé
+}
+
+CLOTURE --> [*] : Purge\n(après délai légal)
+
+state REJETE {
+    REJETE : Dossier refusé
+    REJETE : Non-conformité
+    REJETE : Liste noire
+}
+
+REJETE --> [*] : Archive
+
+note right of CONF
+**Conformité KYC**
+Gestion documentaire
+et réglementaire
+end note
+
+note bottom of RISQ
+**Profil de Risque**
+Évaluation continue
+du comportement
+end note
+
+note left of SUSPENDU
+**Suspension**
+Mesure conservatoire
+ou disciplinaire
+end note
+
+@enduml

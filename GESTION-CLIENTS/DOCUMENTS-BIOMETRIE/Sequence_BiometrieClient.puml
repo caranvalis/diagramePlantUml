@@ -1,0 +1,163 @@
+@startuml Sequence_BiometrieClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Prise de Données Biométriques Client
+
+participant "Agent" as agent
+participant "Station\nBiométrie" as station
+participant "Capteur\nPhoto" as photo
+participant "Scanner\nEmpreinte" as empreinte
+participant "Tablette\nSignature" as signature
+participant "Moteur\nQualité" as qualite
+participant "Service\nChiffrement" as crypto
+participant "Base\nBiométrie" as bio_db
+participant "Système\nAudit" as audit
+
+== Capture Photo ==
+agent -> station : Initialiser session biométrie
+activate station
+station -> photo : Activer caméra
+activate photo
+
+photo -> agent : Positionner client
+agent -> photo : Capturer photo
+photo -> photo : Ajuster éclairage/cadrage
+photo -> qualite : Analyser qualité image
+activate qualite
+
+qualite -> qualite : Vérifier résolution
+qualite -> qualite : Contrôler netteté
+qualite -> qualite : Détecter visage unique
+qualite -> qualite : Valider conformité
+
+alt Qualité insuffisante
+    qualite -> photo : Reprendre capture
+    photo -> agent : Repositionner client
+else Qualité acceptable
+    qualite -> photo : Photo validée
+    photo -> station : Image stockée
+end
+
+deactivate qualite
+deactivate photo
+
+== Capture Empreinte Digitale ==
+station -> empreinte : Activer scanner
+activate empreinte
+
+empreinte -> agent : Positionner doigt client
+agent -> empreinte : Scanner empreinte
+empreinte -> empreinte : Capturer minuties
+empreinte -> qualite : Analyser qualité
+activate qualite
+
+qualite -> qualite : Vérifier netteté ridges
+qualite -> qualite : Contrôler surface couverte
+qualite -> qualite : Détecter doigt vivant
+
+alt Empreinte floue/partielle
+    qualite -> empreinte : Reprendre capture
+    empreinte -> agent : Nettoyer doigt/repositionner
+else Empreinte exploitable
+    qualite -> empreinte : Empreinte validée
+    empreinte -> station : Template généré
+end
+
+deactivate qualite
+deactivate empreinte
+
+== Signature Biométrique ==
+station -> signature : Activer tablette
+activate signature
+
+signature -> agent : Client signe sur tablette
+agent -> signature : Capturer signature dynamique
+signature -> signature : Enregistrer pression/vitesse
+signature -> signature : Analyser caractéristiques
+
+signature -> qualite : Valider signature
+activate qualite
+qualite -> qualite : Contrôler fluidité
+qualite -> qualite : Vérifier caractéristiques uniques
+
+alt Signature inadéquate
+    qualite -> signature : Recommencer signature
+else Signature satisfaisante
+    qualite -> signature : Signature acceptée
+    signature -> station : Modèle biométrique créé
+end
+
+deactivate qualite
+deactivate signature
+
+== Chiffrement et Stockage ==
+station -> crypto : Chiffrer données biométriques
+activate crypto
+crypto -> crypto : Générer clés session
+crypto -> crypto : Chiffrer templates
+crypto -> crypto : Hacher données sensibles
+crypto -> station : Données sécurisées
+deactivate crypto
+
+station -> bio_db : Stocker profil biométrique
+activate bio_db
+bio_db -> bio_db : Indexer par ID client
+bio_db -> bio_db : Sauvegarder templates chiffrés
+bio_db -> bio_db : Tracer opération
+bio_db -> station : Stockage confirmé
+deactivate bio_db
+
+== Traçabilité ==
+station -> audit : Enregistrer session
+activate audit
+audit -> audit : Logger captures effectuées
+audit -> audit : Tracer agent/client/heure
+audit -> audit : Archiver métadonnées
+audit -> station : Audit enregistré
+deactivate audit
+
+station -> agent : Session biométrie terminée
+deactivate station
+
+== Vérification Ultérieure ==
+note over station : **Utilisation pour Authentification**
+
+agent -> station : Authentifier client
+activate station
+station -> bio_db : Récupérer profil biométrique
+activate bio_db
+bio_db -> station : Templates de référence
+deactivate bio_db
+
+station -> photo : Capturer photo vérification
+activate photo
+photo -> station : Image client
+deactivate photo
+
+station -> qualite : Comparer avec référence
+activate qualite
+qualite -> qualite : Algorithme reconnaissance faciale
+qualite -> qualite : Calculer score similarité
+
+alt Score < Seuil confiance
+    qualite -> station : Identification refusée
+    station -> agent : Authentification échouée
+else Score > Seuil confiance
+    qualite -> station : Client authentifié
+    station -> audit : Tracer authentification
+    station -> agent : Accès autorisé
+end
+
+deactivate qualite
+deactivate station
+
+@enduml

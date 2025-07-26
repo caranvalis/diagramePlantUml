@@ -1,0 +1,154 @@
+@startuml Sequence_GestionDossierClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion du Dossier Client
+
+participant "Agent" as agent
+participant "Interface\nDossier" as ui
+participant "Contrôleur\nDossier" as ctrl
+participant "Service\nClient" as client
+participant "Gestionnaire\nDocuments" as docs
+participant "Service\nAttributions" as attrib
+participant "Base\nDonnées" as bdd
+participant "GED" as ged
+
+== Créer Dossier Client ==
+agent -> ui : Créer nouveau dossier
+activate ui
+ui -> agent : Sélectionner client
+agent -> ui : Client sélectionné
+ui -> ctrl : Initialiser dossier
+activate ctrl
+ctrl -> client : Vérifier client existant
+activate client
+client -> ctrl : Client validé
+deactivate client
+
+ctrl -> bdd : Créer dossier client
+activate bdd
+bdd -> bdd : Générer ID dossier
+bdd -> bdd : Lier au client
+bdd -> bdd : Définir statut "EN_COURS"
+bdd -> ctrl : Dossier créé
+deactivate bdd
+
+== Attribution Responsable ==
+ctrl -> attrib : Attribuer dossier
+activate attrib
+attrib -> ui : Sélectionner agent responsable
+ui -> agent : Choisir gestionnaire
+agent -> ui : Agent sélectionné
+ui -> attrib : Attribution confirmée
+attrib -> bdd : Enregistrer attribution
+activate bdd
+bdd -> attrib : Attribution sauvegardée
+deactivate bdd
+deactivate attrib
+
+== Modifier Dossier Client ==
+agent -> ui : Modifier dossier existant
+ui -> ctrl : Charger dossier
+ctrl -> bdd : Récupérer informations dossier
+activate bdd
+bdd -> ctrl : Données dossier
+deactivate bdd
+
+ctrl -> ui : Afficher dossier
+ui -> agent : Formulaire modification
+agent -> ui : Modifier informations
+note right : Statut, priorité, notes,\ndate échéance, catégorie
+
+ui -> ctrl : Valider modifications
+ctrl -> bdd : Sauvegarder changements
+activate bdd
+bdd -> bdd : Mettre à jour dossier
+bdd -> bdd : Historiser modifications
+bdd -> bdd : Tracer agent/date
+bdd -> ctrl : Dossier mis à jour
+deactivate bdd
+
+== Gestion Documents ==
+ctrl -> docs : Gérer documents dossier
+activate docs
+docs -> ui : Interface documents
+ui -> agent : Actions sur documents
+note right : Ajouter, modifier,\nsupprimer, classer
+
+agent -> ui : Ajouter document
+ui -> ged : Télécharger fichier
+activate ged
+ged -> ged : Valider format/taille
+ged -> ged : Indexer document
+ged -> docs : Document ajouté
+deactivate ged
+
+docs -> bdd : Lier document au dossier
+activate bdd
+bdd -> docs : Liaison enregistrée
+deactivate bdd
+deactivate docs
+
+== Supprimer Dossier ==
+agent -> ui : Supprimer dossier
+ui -> ctrl : Vérifier contraintes suppression
+ctrl -> bdd : Contrôler dépendances
+activate bdd
+bdd -> ctrl : Documents/comptes liés
+deactivate bdd
+
+alt Dossier avec dépendances
+    ctrl -> ui : Suppression impossible
+    ui -> agent : Archiver plutôt que supprimer
+else Dossier vide
+    ctrl -> bdd : Supprimer dossier
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> ged : Archiver documents
+    bdd -> ctrl : Dossier supprimé
+    deactivate bdd
+end
+
+== Rechercher Dossier ==
+agent -> ui : Rechercher dossiers
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Filtrer par critères
+note right : Client, agent, statut,\ndate création, priorité
+bdd -> ui : Résultats recherche
+deactivate bdd
+
+== Filtrer Dossiers ==
+agent -> ui : Appliquer filtres
+ui -> bdd : Requête avec filtres
+activate bdd
+bdd -> bdd : Filtrer par statut
+bdd -> bdd : Filtrer par agent
+bdd -> bdd : Filtrer par période
+bdd -> ui : Dossiers filtrés
+deactivate bdd
+
+ui -> agent : Liste dossiers
+agent -> ui : Sélectionner dossier
+ui -> ctrl : Ouvrir dossier sélectionné
+ctrl -> bdd : Charger détails complets
+activate bdd
+bdd -> ctrl : Dossier complet
+deactivate bdd
+ctrl -> ui : Afficher dossier
+ui -> agent : Vue détaillée dossier
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Dossier client géré\navec documents organisés\net traçabilité complète
+
+@enduml

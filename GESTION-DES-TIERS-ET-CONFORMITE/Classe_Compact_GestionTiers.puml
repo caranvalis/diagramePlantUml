@@ -1,0 +1,82 @@
+@startuml Classe_Compact_GestionTiers
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam note FontSize 7
+
+title Modèle Classes - Tiers et Conformité (Format A4)
+
+class Tiers {
+    - id: String
+    - ibu: String
+    - type: TypeTiers
+    - statut: StatutConformite
+    + creer()
+    + modifier()
+    + rechercher()
+}
+
+class PersonnePhysique {
+    - nom: String
+    - prenom: String
+    - dateNaissance: Date
+    - nationalite: String
+    + validerIdentite()
+}
+
+class PersonneMorale {
+    - raisonSociale: String
+    - numeroRCCM: String
+    + validerExistence()
+}
+
+class ControlePPE {
+    - datControle: Date
+    - resultat: Boolean
+    - score: Integer
+    + verifierPPE()
+    + genererAlerte()
+}
+
+class ControleOFAC {
+    - listes: List<String>
+    - match: Boolean
+    + verifierSanctions()
+}
+
+class StatutConformite {
+    - code: String
+    - libelle: String
+    - actif: Boolean
+    + evaluerStatut()
+}
+
+class BlocageCompte {
+    - motif: String
+    - dateBlocage: Date
+    - typeBloc: TypeBlocage
+    + bloquer()
+    + debloquer()
+}
+
+' Relations principales
+Tiers ||--|| PersonnePhysique
+Tiers ||--|| PersonneMorale
+Tiers ||--o{ ControlePPE
+Tiers ||--o{ ControleOFAC
+Tiers ||--|| StatutConformite
+StatutConformite ||--o{ BlocageCompte
+
+note top of Tiers
+Entité centrale pour\ngestion des tiers
+end note
+
+note bottom of BlocageCompte
+Gestion blocages\nautomatiques/manuels
+end note
+
+@enduml

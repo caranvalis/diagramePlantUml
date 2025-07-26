@@ -1,0 +1,123 @@
+@startuml Sequence_AnalyseRisqueClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Analyse de Données pour Scoring de Risque Client
+
+participant "Système\nSurveillance" as sys
+participant "Collecteur\nDonnées" as collect
+participant "Moteur\nAnalyse" as analyse
+participant "Algorithme\nScoring" as algo
+participant "Évaluateur\nRisque" as eval
+participant "Gestionnaire\nSeuils" as seuil
+participant "Moteur\nAlerte" as alerte
+participant "Base\nDonnées" as bdd
+
+== Collecte Données ==
+sys -> collect : Déclencher analyse
+activate collect
+collect -> bdd : Récupérer données client
+activate bdd
+bdd -> collect : Profil complet client
+deactivate bdd
+
+collect -> collect : Agréger données transactionnelles
+collect -> collect : Récupérer données externes
+collect -> analyse : Dataset complet
+deactivate collect
+
+== Analyse Comportementale ==
+activate analyse
+analyse -> analyse : Analyser patterns transactionnels
+note right : Fréquence, montants,\ncanaux, géographie
+
+analyse -> analyse : Détecter anomalies
+analyse -> analyse : Calculer volatilité revenus
+analyse -> analyse : Évaluer stabilité relation
+
+analyse -> algo : Données préparées
+deactivate analyse
+
+== Calcul Score Composite ==
+activate algo
+algo -> algo : Score démographique (25%)
+note right : Âge, profession,\nrésidence, situation
+
+algo -> algo : Score financier (35%)
+note right : Revenus, patrimoine,\nendettement, épargne
+
+algo -> algo : Score comportemental (25%)
+note right : Ancienneté, régularité,\ncanaux utilisés
+
+algo -> algo : Score géographique (15%)
+note right : Pays résidence/activité,\nexposition zones risque
+
+algo -> algo : Calcul score global pondéré
+algo -> eval : Score calculé + détails
+deactivate algo
+
+== Évaluation Risque ==
+activate eval
+eval -> seuil : Récupérer seuils réglementaires
+activate seuil
+seuil -> eval : Grilles de seuils
+deactivate seuil
+
+eval -> eval : Classer niveau risque
+note right : FAIBLE < 30\nMODERE 30-60\nELEVE 60-85\nCRITIQUE > 85
+
+eval -> eval : Identifier facteurs aggravants
+eval -> eval : Calculer probabilité défaut
+
+alt Score critique (>85)
+    eval -> alerte : Déclencher alerte immédiate
+    activate alerte
+    alerte -> alerte : Notifier conformité
+    alerte -> alerte : Escalader superviseur
+    deactivate alerte
+    
+else Score élevé (60-85)
+    eval -> alerte : Alerte surveillance renforcée
+    activate alerte
+    alerte -> alerte : Programmer contrôles
+    deactivate alerte
+    
+else Score modéré (30-60)
+    eval -> eval : Surveillance standard
+    
+else Score faible (<30)
+    eval -> eval : Surveillance allégée
+end
+
+== Recommandations ==
+eval -> eval : Générer recommandations
+note right : Restrictions produits,\nlimites opérationnelles,\nfréquence révision
+
+eval -> bdd : Sauvegarder scoring
+activate bdd
+bdd -> bdd : Historiser évolution score
+bdd -> bdd : Appliquer recommandations
+bdd -> eval : Enregistrement confirmé
+deactivate bdd
+
+== Planification Réévaluation ==
+eval -> sys : Programmer prochaine analyse
+note right : Fréquence selon niveau risque:\nCritique: mensuel\nÉlevé: trimestriel\nModéré: semestriel\nFaible: annuel
+
+eval -> sys : Rapport scoring terminé
+deactivate eval
+
+== Surveillance Continue ==
+sys -> sys : Monitorer changements significatifs
+sys -> sys : Détecter triggers réévaluation
+note right : Changement situation,\nnouvelles transactions,\névénements externes
+
+@enduml

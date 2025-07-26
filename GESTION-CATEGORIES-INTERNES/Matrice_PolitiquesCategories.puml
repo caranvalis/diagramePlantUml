@@ -1,0 +1,35 @@
+@startuml Matrice_PolitiquesCategories
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam table {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+
+title Matrice des Politiques par Catégorie Interne
+
+|= **CATÉGORIE** |= **GRILLE TARIFAIRE** |= **SERVICES INCLUS** |= **LIMITES & PLAFONDS** |= **NIVEAU SERVICE** |
+| **VIP**\n(CA >2M€) | • Tarifs préférentiels -40%\n• Frais négociés individuellement\n• Conditions exceptionnelles | • Gestionnaire dédié 24/7\n• Salle de marché privée\n• Conseil en gestion patrimoine\n• Produits structurés exclusifs | • Découvert: 500K€\n• Virement: illimité\n• Change: conditions préférentielles\n• Crédit: conditions négociées | **PLATINUM**\n• Contact direct gestionnaire\n• Réponse <1h\n• Rendez-vous à domicile |
+| **PREMIUM**\n(CA 500K-2M€) | • Tarifs préférentiels -25%\n• Commissions réduites\n• Package services inclus | • Gestionnaire attitré\n• Conseil financier dédié\n• Accès produits premium\n• Reporting personnalisé | • Découvert: 200K€\n• Virement: 100K€/jour\n• Change: tarifs négociés\n• Crédit: étude privilégiée | **GOLD**\n• Gestionnaire assigné\n• Réponse <4h\n• Accès agence prioritaire |
+| **ENTREPRISE**\n(CA 100-500K€) | • Tarifs business standard\n• Packages professionnels\n• Remises selon volumes | • Gestionnaire PME\n• Solutions cash management\n• Financement entreprise\n• Outils de gestion | • Découvert: 100K€\n• Virement: 50K€/jour\n• Crédit: procédure standard\n• Garanties: selon activité | **SILVER**\n• Gestionnaire partagé\n• Réponse <8h\n• Rendez-vous planifiés |
+| **MICRO_ENTREPRISE**\n(CA 30-100K€) | • Tarifs micro-entreprise\n• Packages simplifiés\n• Facturation mensuelle | • Conseiller business\n• Solutions digitales\n• Accompagnement création\n• Formation gestion | • Découvert: 25K€\n• Virement: 10K€/jour\n• Crédit: microcrédit\n• Garanties simplifiées | **BRONZE**\n• Conseiller téléphonique\n• Réponse <24h\n• Canaux digitaux privilégiés |
+| **PARTICULIER**\n(Revenus >5K€/mois) | • Tarifs particuliers\n• Packages familiaux\n• Avantages fidélité | • Conseiller personnel\n• Crédit immobilier\n• Épargne/placement\n• Assurances incluses | • Découvert: 5K€\n• Virement: 3K€/jour\n• Crédit: selon revenus\n• Découvert autorisé | **STANDARD**\n• Conseiller agence\n• Réponse <48h\n• Accès tous canaux |
+| **STANDARD**\n(Revenus 2-5K€/mois) | • Tarifs standard\n• Package de base\n• Gratuités conditionnelles | • Conseiller agence\n• Produits essentiels\n• Services bancaires de base\n• Support téléphonique | • Découvert: 1K€\n• Virement: 1K€/jour\n• Crédit: étude standard\n• Plafonds réglementaires | **BASIC**\n• Accueil agence\n• Réponse selon disponibilité\n• Orientation canaux digitaux |
+| **ÉCONOMIQUE**\n(Revenus <2K€/mois) | • Tarifs sociaux\n• Packages essentiels\n• Services de base gratuits | • Services bancaires essentiels\n• Accès digital prioritaire\n• Accompagnement social\n• Prévention surendettement | • Découvert: 200€\n• Virement: 300€/jour\n• Accès crédit limité\n• Protection consommateur | **ESSENTIAL**\n• Services automatisés\n• Support digital\n• Accueil social spécialisé |
+
+|= **TRANSITIONS AUTORISÉES** |= **CONDITIONS** |= **VALIDATION REQUISE** |= **DÉLAI APPLICATION** |
+| ÉCONOMIQUE → STANDARD | Revenus stables >2K€ pendant 6 mois | Automatique | Immédiat |
+| STANDARD → PARTICULIER | Revenus >5K€ + ancienneté 12 mois | Validation commerciale | 1 semaine |
+| PARTICULIER → PREMIUM | CA >500K€ ou patrimoine >1M€ | Validation risques | 2 semaines |
+| PREMIUM → VIP | CA >2M€ + ancienneté PREMIUM 24 mois | Comité clientèle | 1 mois |
+| Micro → ENTREPRISE | CA >100K€ + développement confirmé | Validation commerciale | 2 semaines |
+| ENTREPRISE → PREMIUM | Critères mixtes (CA + patrimoine dirigeants) | Validation risques + commercial | 3 semaines |
+
+|= **CONTRÔLES ET ALERTES** |= **INDICATEURS** |= **SEUILS D'ALERTE** |= **ACTIONS CORRECTIVES** |
+| Dérive tarifaire | Marge vs catégorie | <80% marge théorique | Révision catégorie |
+| Sur-classification | Score vs catégorie | Score <70% du minimum | Audit classification |
+| Sous-classification | Potentiel vs actuel | Potentiel >150% actuel | Proposition upgrade |
+| Incohérence risques | Risque vs catégorie | Inadéquation niveau | Reclassification forcée |
+
+@enduml

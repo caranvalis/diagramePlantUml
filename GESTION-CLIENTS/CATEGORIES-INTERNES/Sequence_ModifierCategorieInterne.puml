@@ -1,0 +1,127 @@
+@startuml Sequence_ModifierCategorieInterne
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier une Catégorie Interne
+
+participant "Admin\nSystème" as admin
+participant "Interface\nCatégories" as ui
+participant "Contrôleur\nCatégorie" as ctrl
+participant "Analyseur\nImpact" as impact
+participant "Service\nMigration" as migration
+participant "Validateur\nChangement" as valid
+participant "Base\nDonnées" as bdd
+participant "Cache\nSystème" as cache
+
+== Sélection Catégorie ==
+admin -> ui : Modifier catégorie existante
+activate ui
+ui -> admin : Liste catégories actives
+admin -> ui : Sélectionner catégorie
+ui -> ctrl : Charger catégorie
+activate ctrl
+ctrl -> bdd : Récupérer paramètres actuels
+activate bdd
+bdd -> ctrl : Données catégorie
+deactivate bdd
+ctrl -> ui : Formulaire pré-rempli
+ui -> admin : Afficher paramètres actuels
+
+== Modification Paramètres ==
+admin -> ui : Modifier paramètres
+note right : Seuils, tarifs, politiques,\nniveau service, restrictions
+
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler changements
+activate valid
+valid -> valid : Vérifier cohérence nouvelles valeurs
+valid -> valid : Contrôler impacts métier
+valid -> ctrl : Validation OK
+deactivate valid
+
+== Analyse d'Impact ==
+ctrl -> impact : Analyser impact changements
+activate impact
+impact -> bdd : Compter clients affectés
+activate bdd
+bdd -> impact : Nombre clients par changement
+deactivate bdd
+
+impact -> impact : Calculer impact financier
+impact -> impact : Évaluer risques opérationnels
+impact -> impact : Estimer effort migration
+
+alt Impact majeur (>1000 clients)
+    impact -> ctrl : Validation N+2 requise
+    ctrl -> ui : Escalader validation
+    ui -> admin : Attendre approbation hiérarchique
+else Impact modéré (100-1000 clients)
+    impact -> ctrl : Validation N+1 requise
+    ctrl -> ui : Demander validation superviseur
+else Impact mineur (<100 clients)
+    impact -> ctrl : Autorisation accordée
+    deactivate impact
+    
+    == Plan de Migration ==
+    ctrl -> migration : Préparer migration clients
+    activate migration
+    migration -> bdd : Identifier clients concernés
+    activate bdd
+    bdd -> migration : Liste clients à migrer
+    deactivate bdd
+    
+    migration -> migration : Définir ordre migration
+    migration -> migration : Planifier communications
+    migration -> ctrl : Plan migration validé
+    deactivate migration
+    
+    == Application Changements ==
+    ctrl -> bdd : Mettre à jour catégorie
+    activate bdd
+    bdd -> bdd : Sauvegarder nouveaux paramètres
+    bdd -> bdd : Historiser modifications
+    bdd -> bdd : Tracer changements
+    bdd -> ctrl : Modifications enregistrées
+    deactivate bdd
+    
+    == Migration Clients ==
+    ctrl -> migration : Exécuter migration
+    activate migration
+    
+    loop Pour chaque client affecté
+        migration -> bdd : Recalculer catégorie client
+        migration -> bdd : Appliquer nouvelles politiques
+        migration -> bdd : Notifier changements
+    end
+    
+    migration -> ctrl : Migration terminée
+    deactivate migration
+    
+    == Actualisation Système ==
+    ctrl -> cache : Invalider cache catégories
+    activate cache
+    cache -> cache : Recharger catégories modifiées
+    cache -> cache : Actualiser règles classification
+    cache -> ctrl : Cache actualisé
+    deactivate cache
+    
+    == Notification ==
+    ctrl -> ui : Modification appliquée
+    ui -> admin : Confirmation modification
+    note right : Catégorie mise à jour\nClients migrés\nSystème actualisé
+end
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Catégorie modifiée avec\nmigration automatique des\nclients concernés
+
+@enduml

@@ -1,0 +1,94 @@
+@startuml UC_Detail_StatutsClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 7
+
+title Statuts Client - Cas d'Usage Détaillés
+
+left to right direction
+
+actor "GFC" as G
+actor "Conformité" as C
+actor "DA" as D
+actor "Système" as S
+
+rectangle "Gestion Statuts Client" {
+  
+  usecase "Créer\nStatut" as UC1
+  usecase "Définir\nParamètres" as UC1_1
+  usecase "Configurer\nRègles" as UC1_2
+  usecase "Valider\nCréation" as UC1_3
+  
+  usecase "Attribuer\nStatut" as UC2
+  usecase "Évaluer\nProfil" as UC2_1
+  usecase "Appliquer\nRègles" as UC2_2
+  usecase "Confirmer\nAttribution" as UC2_3
+  
+  usecase "Changer\nStatut" as UC3
+  usecase "Vérifier\nTransition" as UC3_1
+  usecase "Valider\nChangement" as UC3_2
+  usecase "Propager\nMise à jour" as UC3_3
+  
+  usecase "Surveiller\nConformité" as UC4
+  usecase "Contrôler\nExpiration" as UC4_1
+  usecase "Détecter\nAnomalies" as UC4_2
+  usecase "Générer\nAlertes" as UC4_3
+}
+
+' Relations
+G --> UC2
+G --> UC3
+
+C --> UC1
+C --> UC3_2
+C --> UC4
+
+D --> UC3
+D --> UC3_2
+
+S --> UC4_1
+S --> UC4_2
+S --> UC4_3
+
+' Inclusions
+UC1 .> UC1_1 : <<include>>
+UC1 .> UC1_2 : <<include>>
+UC1 .> UC1_3 : <<include>>
+
+UC2 .> UC2_1 : <<include>>
+UC2 .> UC2_2 : <<include>>
+UC2 .> UC2_3 : <<include>>
+
+UC3 .> UC3_1 : <<include>>
+UC3 .> UC3_2 : <<include>>
+UC3 .> UC3_3 : <<include>>
+
+UC4 .> UC4_1 : <<include>>
+UC4 .> UC4_2 : <<include>>
+UC4 .> UC4_3 : <<include>>
+
+note right of UC1
+**Types de Statuts:**
+- Base: ACTIF, INACTIF
+- Conformité: CONFORME, PPE
+- Risque: FAIBLE, ÉLEVÉ
+end note
+
+note bottom of UC3
+**Transitions Contrôlées:**
+Matrice d'autorisation,
+validation hiérarchique,
+traçabilité complète
+end note
+
+@enduml

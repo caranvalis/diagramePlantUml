@@ -1,0 +1,88 @@
+@startuml Activite_ChangerStatut
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Changer Statut Client
+
+|GFC/DA|
+start
+:Sélectionner client;
+:Demander changement statut;
+
+|Système|
+:Récupérer statut actuel;
+:Afficher transitions possibles;
+
+|GFC/DA|
+:Choisir nouveau statut;
+:Saisir motif changement;
+
+|Système|
+:Vérifier transition autorisée;
+
+if (Transition OK?) then (oui)
+    :Évaluer niveau validation;
+    
+    if (Validation hiérarchique?) then (oui)
+        |Conformité/DG|
+        :Analyser demande;
+        :Valider justification;
+        
+        if (Validé?) then (oui)
+            :Approuver changement;
+        else (non)
+            :Rejeter avec motif;
+            stop
+        endif
+    endif
+    
+    |Système|
+    :Calculer impacts;
+    note right: Services affectés,\nrestrictions nouvelles,\nnotifications requises
+    
+    :Appliquer nouveau statut;
+    :Mettre à jour profil client;
+    
+    |Restrictions|
+    :Appliquer nouvelles règles;
+    
+    if (Restrictions?) then (oui)
+        :Bloquer services concernés;
+        :Configurer limites;
+    endif
+    
+    |Notifications|
+    :Notifier client;
+    :Alerter gestionnaire;
+    :Informer équipes;
+    
+    |Audit|
+    :Tracer changement;
+    :Enregistrer valideur;
+    :Documenter motif;
+    
+    |GFC/DA|
+    :Recevoir confirmation;
+    
+else (non)
+    |Système|
+    :Afficher erreur transition;
+    :Proposer alternatives;
+    
+    |GFC/DA|
+    :Choisir action alternative;
+endif
+
+stop
+
+@enduml

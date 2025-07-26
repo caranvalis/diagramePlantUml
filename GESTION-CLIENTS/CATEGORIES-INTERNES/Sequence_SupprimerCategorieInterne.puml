@@ -1,0 +1,125 @@
+@startuml Sequence_SupprimerCategorieInterne
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer une Catégorie Interne
+
+participant "Admin\nSystème" as admin
+participant "Interface\nCatégories" as ui
+participant "Contrôleur\nCatégorie" as ctrl
+participant "Analyseur\nDépendances" as dep
+participant "Service\nMigration" as migration
+participant "Validateur\nSuppression" as valid
+participant "Base\nDonnées" as bdd
+participant "Archive" as archive
+
+== Sélection pour Suppression ==
+admin -> ui : Supprimer catégorie
+activate ui
+ui -> admin : Liste catégories existantes
+admin -> ui : Sélectionner catégorie à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse des Dépendances ==
+ctrl -> dep : Analyser dépendances
+activate dep
+dep -> bdd : Compter clients utilisant catégorie
+activate bdd
+bdd -> dep : Nombre clients affectés
+deactivate bdd
+
+dep -> dep : Vérifier règles de classification
+dep -> dep : Contrôler politiques liées
+dep -> dep : Identifier impacts système
+
+alt Clients actifs présents
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - clients actifs
+    ui -> admin : Migration requise avant suppression
+    note right : Proposer catégorie\nde remplacement
+    
+else Aucun client actif
+    dep -> ctrl : Suppression autorisée
+    deactivate dep
+    
+    == Validation Suppression ==
+    ctrl -> valid : Valider suppression
+    activate valid
+    valid -> valid : Contrôler cohérence système
+    valid -> valid : Vérifier autorisations admin
+    
+    alt Validation échouée
+        valid -> ctrl : Suppression refusée
+        ctrl -> ui : Erreur validation
+        ui -> admin : Motifs refus
+    else Validation réussie
+        valid -> ctrl : Suppression validée
+        deactivate valid
+        
+        == Confirmation Administrateur ==
+        ctrl -> ui : Demander confirmation finale
+        ui -> admin : Confirmer suppression définitive
+        note right : "Êtes-vous sûr ?\nAction irréversible"
+        
+        admin -> ui : Confirmer suppression
+        ui -> ctrl : Suppression confirmée
+        
+        == Archivage ==
+        ctrl -> archive : Archiver catégorie
+        activate archive
+        archive -> bdd : Récupérer données complètes
+        activate bdd
+        bdd -> archive : Configuration complète
+        deactivate bdd
+        
+        archive -> archive : Créer archive avec métadonnées
+        archive -> archive : Horodater suppression
+        archive -> ctrl : Archivage terminé
+        deactivate archive
+        
+        == Suppression Logique ==
+        ctrl -> bdd : Marquer catégorie supprimée
+        activate bdd
+        bdd -> bdd : Statut = SUPPRIME
+        bdd -> bdd : Date suppression
+        bdd -> bdd : Désactiver dans référentiels
+        bdd -> bdd : Tracer opération
+        bdd -> ctrl : Suppression enregistrée
+        deactivate bdd
+        
+        == Nettoyage Système ==
+        ctrl -> migration : Nettoyer références
+        activate migration
+        migration -> bdd : Purger règles de classification
+        migration -> bdd : Supprimer politiques liées
+        migration -> bdd : Invalider cache
+        migration -> ctrl : Nettoyage terminé
+        deactivate migration
+        
+        == Notification ==
+        ctrl -> ui : Suppression réussie
+        ui -> admin : Catégorie supprimée
+        note right : Suppression définitive\nArchivage effectué\nSystème nettoyé
+    end
+end
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec détails
+note right : Heure suppression\nDonnées archivées\nImpacts système
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Catégorie supprimée\nde manière sécurisée avec\narchivage et traçabilité
+
+@enduml

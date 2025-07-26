@@ -1,0 +1,68 @@
+@startuml Sequence_NotificationStatut
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Notifications Changement Statut
+
+participant "Système" as S
+participant "Moteur Notification" as M
+participant "Client" as CL
+participant "Gestionnaire" as G
+participant "Conformité" as C
+participant "Email/SMS" as E
+
+S -> M: declencherNotifications()
+activate M
+
+M -> M: determinerDestinataires()
+M -> M: personnaliserMessages()
+
+M -> CL: notifierClient()
+activate CL
+note over CL: Notification via canal préféré:\nEmail, SMS, courrier
+CL -> M: accuserReception()
+deactivate CL
+
+M -> G: alerterGestionnaire()
+activate G
+note over G: Tableau de bord mis à jour,\ntâches de suivi créées
+G -> M: confirmerPriseEnCompte()
+deactivate G
+
+alt Statut critique (PPE, Sanctions)
+    M -> C: alerterConformite()
+    activate C
+    C -> C: declencherSurveillance()
+    C -> M: confirmerSurveillance()
+    deactivate C
+endif
+
+M -> E: envoyerNotificationsCanaux()
+activate E
+E -> E: formaterMessages()
+E -> M: confirmerEnvoi()
+deactivate E
+
+M -> S: confirmerNotifications()
+deactivate M
+
+note over M
+**Types Notifications:**
+- Immédiate: Statuts critiques
+- Différée: Statuts standard
+- Périodique: Rappels
+end note
+
+note over E
+**Canaux Multiples:**
+Email, SMS, Push,
+courrier postal
+end note
+
+@enduml

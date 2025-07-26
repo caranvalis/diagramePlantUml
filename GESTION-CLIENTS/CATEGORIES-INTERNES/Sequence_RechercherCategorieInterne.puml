@@ -1,0 +1,132 @@
+@startuml Sequence_RechercherCategorieInterne
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Rechercher une Catégorie Interne
+
+participant "Utilisateur" as user
+participant "Interface\nRecherche" as ui
+participant "Moteur\nRecherche" as search
+participant "Service\nFiltrage" as filter
+participant "Cache\nRapide" as cache
+participant "Base\nDonnées" as bdd
+participant "Analyseur\nPerformance" as perf
+
+== Saisie Critères ==
+user -> ui : Accéder recherche catégories
+activate ui
+ui -> user : Interface recherche avancée
+user -> ui : Saisir critères recherche
+note right : Code, libellé, niveau risque,\nstatut, date création
+
+== Optimisation Requête ==
+ui -> search : Lancer recherche
+activate search
+search -> cache : Vérifier cache résultats
+activate cache
+cache -> cache : Contrôler fraîcheur cache
+
+alt Résultats en cache
+    cache -> search : Résultats cachés
+    search -> ui : Résultats immédiats
+else Cache expiré/absent
+    cache -> search : Cache vide
+    deactivate cache
+    
+    == Construction Requête ==
+    search -> filter : Construire filtres
+    activate filter
+    filter -> filter : Valider critères saisis
+    filter -> filter : Optimiser conditions SQL
+    filter -> filter : Appliquer sécurité accès
+    filter -> search : Requête optimisée
+    deactivate filter
+    
+    == Exécution Recherche ==
+    search -> bdd : Exécuter requête
+    activate bdd
+    bdd -> bdd : Recherche fulltext libellé
+    bdd -> bdd : Filtrer par statut actif
+    bdd -> bdd : Ordonner par pertinence
+    bdd -> search : Résultats bruts
+    deactivate bdd
+    
+    == Enrichissement Résultats ==
+    search -> search : Calculer statistiques
+    search -> search : Ajouter métadonnées
+    search -> search : Formater affichage
+    
+    search -> cache : Mettre en cache
+    activate cache
+    cache -> cache : Stocker résultats + TTL
+    deactivate cache
+    
+    search -> ui : Résultats enrichis
+end
+
+== Affichage Résultats ==
+ui -> user : Liste catégories trouvées
+note right : Code, libellé, niveau risque,\nnombre clients, statut
+
+== Actions sur Résultats ==
+alt Aucun résultat
+    ui -> user : Suggestions recherche
+    note right : Élargir critères\nVérifier orthographe\nUtiliser filtres
+else Trop de résultats
+    ui -> user : Affiner recherche
+    note right : Ajouter filtres\nPréciser critères
+else Résultats pertinents
+    user -> ui : Sélectionner catégorie
+    ui -> search : Récupérer détails complets
+    activate search
+    search -> bdd : Charger configuration complète
+    activate bdd
+    bdd -> search : Paramètres détaillés
+    deactivate bdd
+    search -> ui : Fiche catégorie complète
+    deactivate search
+    ui -> user : Afficher détails
+end
+
+== Recherche Suggérée ==
+note over search : **Fonctionnalités Avancées**
+
+ui -> search : Recherche par mots-clés
+activate search
+search -> bdd : Recherche dans descriptions
+activate bdd
+bdd -> search : Catégories similaires
+deactivate bdd
+search -> ui : Suggestions intelligentes
+deactivate search
+
+== Statistiques Usage ==
+search -> perf : Tracer recherche
+activate perf
+perf -> perf : Comptabiliser requêtes
+perf -> perf : Analyser patterns
+perf -> perf : Optimiser index
+perf -> search : Stats enregistrées
+deactivate perf
+
+== Sauvegarde Recherche ==
+user -> ui : Sauvegarder critères recherche
+ui -> bdd : Créer recherche favorite
+activate bdd
+bdd -> ui : Recherche sauvegardée
+deactivate bdd
+
+deactivate search
+deactivate ui
+
+note over user : Catégorie trouvée avec\ndétails complets et\nhistorique d'utilisation
+
+@enduml

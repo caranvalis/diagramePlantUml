@@ -1,0 +1,126 @@
+@startuml Sequence_CreerProcuration
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Créer une Procuration
+
+participant "Agent" as agent
+participant "Interface\nProcuration" as ui
+participant "Contrôleur\nProcuration" as ctrl
+participant "Service\nClient" as client
+participant "Validateur\nPouvoir" as valid
+participant "Service\nJuridique" as juridique
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Initiation Procuration ==
+agent -> ui : Créer nouvelle procuration
+activate ui
+ui -> agent : Sélectionner mandant (titulaire)
+agent -> ui : Rechercher client mandant
+ui -> client : Vérifier éligibilité mandant
+activate client
+client -> client : Contrôler statut client
+client -> client : Vérifier capacité juridique
+client -> ui : Mandant éligible
+deactivate client
+
+== Définition Mandataire ==
+ui -> agent : Saisir mandataire
+agent -> ui : Données mandataire
+note right : Nom, prénom, adresse,\nCNI, relation avec mandant
+
+ui -> ctrl : Valider mandataire
+activate ctrl
+ctrl -> ctrl : Contrôler identité mandataire
+ctrl -> ctrl : Vérifier absence d'incompatibilités
+
+== Configuration Pouvoirs ==
+ctrl -> ui : Définir étendue pouvoirs
+ui -> agent : Sélectionner opérations autorisées
+note right : Retraits, virements, consultations,\nouverture comptes, crédits
+
+agent -> ui : Définir limitations
+note right : Montants maximum,\ndurée validité, comptes concernés
+
+ui -> ctrl : Valider configuration pouvoirs
+ctrl -> valid : Contrôler cohérence pouvoirs
+activate valid
+valid -> valid : Vérifier limites légales
+valid -> valid : Contrôler cohérence montants
+valid -> valid : Valider durée procuration
+
+alt Pouvoirs excessifs
+    valid -> ctrl : Pouvoirs non conformes
+    ctrl -> ui : Réduire étendue pouvoirs
+    ui -> agent : Ajuster limitations
+else Pouvoirs conformes
+    valid -> ctrl : Pouvoirs validés
+    deactivate valid
+    
+    == Validation Juridique ==
+    ctrl -> juridique : Valider procuration
+    activate juridique
+    juridique -> juridique : Contrôler forme légale
+    juridique -> juridique : Vérifier mentions obligatoires
+    juridique -> juridique : Valider clauses spéciales
+    juridique -> ctrl : Procuration conforme
+    deactivate juridique
+    
+    == Génération Document ==
+    ctrl -> ged : Générer document procuration
+    activate ged
+    ged -> ged : Utiliser modèle standard
+    ged -> ged : Personnaliser avec données
+    ged -> ged : Ajouter clauses spécifiques
+    ged -> ui : Document procuration
+    deactivate ged
+    
+    == Signature et Validation ==
+    ui -> agent : Document à faire signer
+    agent -> ui : Signatures apposées
+    note right : Mandant + Mandataire\n+ témoins si requis
+    
+    ui -> ctrl : Documents signés
+    ctrl -> ged : Numériser procuration signée
+    activate ged
+    ged -> ged : Scanner document
+    ged -> ged : Contrôler qualité scan
+    ged -> ged : Extraire métadonnées
+    ged -> ctrl : Document numérisé
+    deactivate ged
+    
+    == Enregistrement Procuration ==
+    ctrl -> bdd : Créer procuration
+    activate bdd
+    bdd -> bdd : Générer ID procuration
+    bdd -> bdd : Enregistrer mandant/mandataire
+    bdd -> bdd : Sauvegarder pouvoirs définis
+    bdd -> bdd : Définir dates validité
+    bdd -> bdd : Lier document numérisé
+    bdd -> bdd : Tracer création
+    bdd -> ctrl : Procuration enregistrée
+    deactivate bdd
+    
+    == Activation ==
+    ctrl -> ctrl : Activer procuration
+    ctrl -> ctrl : Notifier activation
+    ctrl -> ui : Procuration opérationnelle
+    ui -> agent : Confirmation création
+    note right : ID procuration généré\nMandataire autorisé\nDocument archivé
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Procuration créée et\nopérationnelle avec\ncontrôles juridiques complets
+
+@enduml

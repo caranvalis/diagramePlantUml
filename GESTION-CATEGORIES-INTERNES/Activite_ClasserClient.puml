@@ -1,0 +1,87 @@
+@startuml Activite_ClasserClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Classification Client par Catégorie Interne
+
+|GFC/Commercial|
+start
+:Analyser profil client;
+note right: CA, secteur, structure,\nhistorique, potentiel
+
+|Système|
+:Récupérer données client;
+:Consulter grille de classification;
+
+|Moteur Classification|
+:Appliquer algorithme de scoring;
+note right: Pondération critères:\nCA (40%), Secteur (20%),\nAncienneté (15%), Comportement (25%)
+
+:Calculer score global;
+
+if (Score automatique?) then (oui)
+    if (Score > 80?) then (oui)
+        :Classification automatique;
+        :Proposer catégorie;
+    else (non)
+        |GFC/Commercial|
+        :Analyser propositions système;
+        :Ajuster selon connaissance client;
+    endif
+else (non)
+    |GFC/Commercial|
+    :Classification manuelle;
+    :Justifier choix;
+endif
+
+|Validation|
+:Vérifier cohérence classification;
+
+if (Catégorie sensible?) then (oui)
+    |Conformité/Direction|
+    :Valider classification;
+    :Analyser justifications;
+    
+    if (Validation OK?) then (oui)
+        :Approuver catégorie;
+    else (non)
+        |GFC/Commercial|
+        :Revoir classification;
+        :Proposer alternative;
+    endif
+else (non)
+    :Validation automatique;
+endif
+
+|Système|
+:Enregistrer catégorie;
+:Calculer politiques applicables;
+
+|Application Politiques|
+:Configurer tarification;
+:Définir services autorisés;
+:Paramétrer limites;
+:Attribuer niveau service;
+
+|Notifications|
+:Notifier gestionnaire;
+:Informer équipes commerciales;
+:Créer tâches de suivi;
+
+|GFC/Commercial|
+:Recevoir confirmation;
+:Adapter approche commerciale;
+
+stop
+
+@enduml

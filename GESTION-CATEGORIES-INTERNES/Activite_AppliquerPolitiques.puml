@@ -1,0 +1,106 @@
+@startuml Activite_AppliquerPolitiques
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Application des Politiques par Catégorie
+
+|Système|
+start
+:Changement catégorie détecté;
+:Récupérer nouvelle catégorie;
+
+|Moteur Politiques|
+:Consulter matrice politiques;
+:Identifier changements requis;
+
+|Tarification|
+:Calculer nouvelle grille tarifaire;
+
+if (Tarifs plus avantageux?) then (oui)
+    :Appliquer immédiatement;
+    :Notifier amélioration;
+else if (Tarifs moins avantageux?) then (oui)
+    |Commercial|
+    :Négocier transition;
+    :Proposer accompagnement;
+    
+    if (Accord client?) then (oui)
+        :Appliquer nouveaux tarifs;
+    else (non)
+        :Maintenir tarifs actuels;
+        :Programmer révision;
+    endif
+else (identiques)
+    :Conserver tarification;
+endif
+
+|Services|
+:Évaluer services autorisés;
+
+if (Nouveaux services?) then (oui)
+    :Activer automatiquement;
+    :Proposer au client;
+else if (Services restreints?) then (oui)
+    |Commercial|
+    :Informer client;
+    :Proposer alternatives;
+    :Désactiver avec préavis;
+else (identiques)
+    :Maintenir configuration;
+endif
+
+|Limites et Plafonds|
+:Recalculer limites applicables;
+
+if (Limites augmentées?) then (oui)
+    :Appliquer immédiatement;
+    :Notifier gestionnaire;
+else if (Limites réduites?) then (oui)
+    |Risques|
+    :Analyser exposition actuelle;
+    
+    if (Dépassement?) then (oui)
+        |Commercial|
+        :Négocier régularisation;
+        :Proposer plan ajustement;
+    else (non)
+        :Appliquer nouvelles limites;
+    endif
+else (identiques)
+    :Conserver limites;
+endif
+
+|Niveau Service|
+:Configurer nouveau niveau;
+
+if (Service amélioré?) then (oui)
+    :Attribuer gestionnaire dédié;
+    :Activer services premium;
+else if (Service standard?) then (oui)
+    :Configurer service normal;
+else (service réduit)
+    :Orienter vers canaux digitaux;
+endif
+
+|Système|
+:Enregistrer changements;
+:Tracer historique;
+:Programmer contrôles;
+
+|Notifications|
+:Notifier toutes parties;
+:Créer plan communication;
+
+stop
+
+@enduml

@@ -1,0 +1,175 @@
+@startuml Sequence_LierCompteClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Lier un Compte à un Client
+
+participant "Gestionnaire\nComptes" as admin
+participant "Interface\nLiaison" as ui
+participant "Contrôleur\nLiaison" as ctrl
+participant "Validateur\nKYC" as kyc
+participant "Contrôleur\nAutorisations" as auth
+participant "Service\nNotification" as notif
+participant "Base\nDonnées" as bdd
+
+== Sélection Éléments ==
+admin -> ui : Lier compte à client
+activate ui
+ui -> admin : Interface sélection
+admin -> ui : Sélectionner client et compte
+ui -> ctrl : Demander liaison
+activate ctrl
+
+== Validation Éligibilité ==
+ctrl -> kyc : Valider éligibilité liaison
+activate kyc
+kyc -> bdd : Vérifier statut client
+activate bdd
+bdd -> kyc : Statut KYC + restrictions
+deactivate bdd
+
+kyc -> kyc : Contrôler validité KYC
+kyc -> kyc : Vérifier absence d'alertes
+kyc -> kyc : Analyser profil de risque
+
+alt Client inéligible
+    kyc -> ctrl : Liaison impossible
+    ctrl -> ui : Client non éligible
+    ui -> admin : KYC invalide ou alertes actives
+    note right : "Client non conforme\nKYC expiré ou alertes"
+    deactivate kyc
+    deactivate ctrl
+    deactivate ui
+else Client éligible
+    kyc -> ctrl : Liaison autorisée
+    deactivate kyc
+end
+
+== Contrôle Compte ==
+ctrl -> ctrl : Vérifier statut compte
+alt Compte déjà lié
+    ctrl -> ui : Compte déjà associé
+    ui -> admin : Compte lié à autre client
+    note right : "Compte déjà lié\nau client X"
+    
+    admin -> ui : Forcer déliaison ou annuler
+    ui -> admin : Options disponibles
+    
+    alt Forcer déliaison
+        admin -> ui : Confirmer déliaison forcée
+        ui -> ctrl : Délier compte existant
+        ctrl -> bdd : Supprimer liaison existante
+        activate bdd
+        bdd -> ctrl : Liaison supprimée
+        deactivate bdd
+    else Annuler liaison
+        admin -> ui : Annuler opération
+        ui -> admin : Liaison annulée
+        deactivate ctrl
+        deactivate ui
+    end
+end
+
+== Validation Autorisations ==
+ctrl -> auth : Valider autorisations liaison
+activate auth
+auth -> auth : Contrôler droits gestionnaire
+auth -> auth : Vérifier délégations
+auth -> auth : Analyser restrictions compte
+
+alt Autorisations insuffisantes
+    auth -> ctrl : Liaison non autorisée
+    ctrl -> ui : Droits insuffisants
+    ui -> admin : Autorisation supérieure requise
+    note right : "Validation hiérarchique\nnécessaire"
+    
+    admin -> ui : Demander validation supérieure
+    ui -> auth : Escalader validation
+    auth -> auth : Notifier responsable
+    auth -> ctrl : Validation en attente
+    deactivate auth
+    
+    note over admin : Attente validation\nhiérarchique
+    
+else Autorisations validées
+    auth -> ctrl : Liaison autorisée
+    deactivate auth
+end
+
+== Vérification Cohérence ==
+ctrl -> ctrl : Contrôler cohérence métier
+alt Incompatibilité détectée
+    ctrl -> ui : Incompatibilité métier
+    ui -> admin : Liaison incohérente
+    note right : "Type compte incompatible\navec profil client"
+    
+    admin -> ui : Confirmer malgré incompatibilité
+    ui -> ctrl : Forcer liaison
+end
+
+== Création Liaison ==
+ctrl -> bdd : Créer liaison compte-client
+activate bdd
+bdd -> bdd : Enregistrer association
+bdd -> bdd : Mettre à jour statuts
+bdd -> bdd : Configurer autorisations
+bdd -> bdd : Tracer création liaison
+bdd -> ctrl : Liaison créée
+deactivate bdd
+
+== Configuration Accès ==
+ctrl -> auth : Configurer accès compte
+activate auth
+auth -> auth : Définir droits d'accès
+auth -> auth : Paramétrer limitations
+auth -> auth : Activer autorisations
+auth -> ctrl : Accès configuré
+deactivate auth
+
+== Notification Client ==
+ctrl -> notif : Notifier client liaison
+activate notif
+notif -> notif : Préparer notification
+notif -> notif : Informer nouveaux accès
+notif -> notif : Envoyer confirmation
+notif -> ctrl : Client notifié
+deactivate notif
+
+== Mise à Jour Profil ==
+ctrl -> bdd : Mettre à jour profil client
+activate bdd
+bdd -> bdd : Ajouter compte au profil
+bdd -> bdd : Recalculer scoring si nécessaire
+bdd -> bdd : Actualiser limites globales
+bdd -> ctrl : Profil mis à jour
+deactivate bdd
+
+== Activation Services ==
+ctrl -> ctrl : Activer services liés
+ctrl -> ctrl : Configurer produits associés
+ctrl -> ctrl : Initialiser historique
+
+== Finalisation ==
+ctrl -> ui : Liaison réussie
+ui -> admin : Compte lié avec succès
+note right : "Liaison créée\nClient notifié\nAccès configuré"
+
+== Rapport Liaison ==
+ctrl -> ui : Générer rapport liaison
+ui -> admin : Rapport avec détails
+note right : "Liaison effectuée\nAutorisations configurées\nNotifications envoyées"
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Compte lié au client\navec configuration complète\net notifications effectuées
+
+@enduml

@@ -1,0 +1,198 @@
+@startuml Activite_ControlesConformite
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Contrôles de Conformité
+
+|Système|
+start
+:Déclencher contrôles;
+
+|PPE|
+:Vérifier PPE;
+
+if (PPE?) then (oui)
+    |Conformité|
+    :Analyser match;
+    if (Confirmé?) then (oui)
+        :Vigilance renforcée;
+    endif
+endif
+
+|FATCA|
+:Vérifier US Person;
+if (US Person?) then (oui)
+    :Configurer FATCA;
+endif
+
+|OFAC|
+:Contrôle sanctions;
+if (Sanctions?) then (oui)
+    if (Match fort?) then (oui)
+        :BLOCAGE IMMÉDIAT;
+        stop
+    else (possible)
+        :Investiguer;
+        if (Confirmé?) then (oui)
+            :BLOCAGE;
+            stop
+        endif
+    endif
+endif
+
+|Centrale Risques|
+:Interroger COBAC;
+if (Interdiction?) then (oui)
+    :REFUSER;
+    stop
+endif
+
+|Doublons|
+:Rechercher similaires;
+if (Doublon?) then (oui)
+    |GFC|
+    if (Même personne?) then (oui)
+        :Lier existant;
+        stop
+    endif
+endif
+
+|Évaluation|
+:Consolider résultats;
+if (Conforme?) then (oui)
+    :Statut CONFORME;
+else (non)
+    :Statut NON CONFORME;
+    :Appliquer restrictions;
+endif
+
+:Tracer contrôles;
+stop
+
+@enduml
+        :Activer obligations reporting FATCA;
+        :Configurer seuils déclaration;
+        :Programmer reportings périodiques;
+    else (non)
+        :Documenter exemption FATCA;
+        :Programmer contrôles périodiques;
+    endif
+endif
+
+|Système de Contrôle OFAC|
+:Interroger listes sanctions;
+:Appliquer matching multicritères;
+
+if (Match sanctions?) then (oui)
+    :Calculer score correspondance;
+    
+    if (Match certain/fort?) then (oui)
+        |Conformité|
+        :BLOCAGE IMMÉDIAT relation;
+        :Escalader vers direction;
+        :Générer alerte critique;
+        :Déclarer aux autorités;
+        stop
+    else (possible)
+        |Conformité|
+        :Investiguer manuellement;
+        :Demander clarifications;
+        
+        if (Sanctions confirmées?) then (oui)
+            :BLOCAGE DÉFINITIF;
+            stop
+        else (non)
+            :Marquer faux positif;
+            :Continuer processus;
+        endif
+    endif
+endif
+
+|Système Centrale des Risques|
+:Interroger centrale COBAC;
+:Analyser historique incidents;
+
+if (Incidents détectés?) then (oui)
+    :Évaluer gravité incidents;
+    
+    if (Interdiction bancaire?) then (oui)
+        |Conformité|
+        :REFUSER relation bancaire;
+        stop
+    else (incidents mineurs)
+        :Appliquer surveillance renforcée;
+        :Définir restrictions appropriées;
+    endif
+endif
+
+|Système de Détection Doublons|
+:Rechercher clients similaires;
+:Calculer scores correspondance;
+
+if (Doublon détecté?) then (oui)
+    |GFC|
+    :Analyser clients similaires;
+    
+    if (Même personne?) then (oui)
+        :Bloquer création doublon;
+        :Lier au client existant;
+        stop
+    else (non)
+        :Annoter et continuer;
+    endif
+endif
+
+|Système de Contrôle Contagion|
+:Analyser liens entités;
+:Vérifier contagion depuis entités liées;
+
+if (Contagion détectée?) then (oui)
+    :Appliquer restrictions par contagion;
+    :Étendre surveillance au réseau;
+    :Documenter liens problématiques;
+endif
+
+|Système d'Évaluation Globale|
+:Consolider tous les résultats;
+:Calculer score de conformité global;
+:Déterminer statut final;
+
+if (Conforme?) then (oui)
+    :Attribuer statut CONFORME;
+    :Activer services normaux;
+    
+    |Système de Notification|
+    :Notifier validation positive;
+    :Informer gestionnaires;
+    
+else (non)
+    :Attribuer statut NON CONFORME;
+    :Appliquer restrictions automatiques;
+    
+    |Système de Blocage|
+    :Propager blocages tous systèmes;
+    :Activer plan régularisation;
+    
+    |Système de Notification|
+    :Alerter équipes concernées;
+    :Informer client restrictions;
+endif
+
+|Système de Traçabilité|
+:Enregistrer tous contrôles effectués;
+:Documenter décisions prises;
+:Programmer prochains contrôles;
+
+stop
+
+@enduml

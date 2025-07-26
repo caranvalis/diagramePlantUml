@@ -1,0 +1,171 @@
+@startuml Sequence_VerifierConformiteClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Vérifier la Conformité Client
+
+participant "Analyste\nConformité" as analyst
+participant "Interface\nConformité" as ui
+participant "Contrôleur\nConformité" as ctrl
+participant "Moteur\nKYC" as kyc
+parameter "Validateur\nLAB-FT" as labft
+participant "Service\nScoring" as scoring
+participant "Analyseur\nRisques" as risk
+participant "Base\nDonnées" as bdd
+
+== Lancement Vérification ==
+analyst -> ui : Vérifier conformité client
+activate ui
+ui -> analyst : Sélectionner client à vérifier
+analyst -> ui : Choisir client et niveau vérification
+ui -> ctrl : Lancer vérification conformité
+activate ctrl
+
+== Collecte Données ==
+ctrl -> bdd : Récupérer profil client complet
+activate bdd
+bdd -> ctrl : Données client + historique + documents
+deactivate bdd
+
+== Vérification KYC ==
+ctrl -> kyc : Contrôler statut KYC
+activate kyc
+kyc -> kyc : Vérifier validité documents
+kyc -> kyc : Contrôler dates d'expiration
+kyc -> kyc : Analyser complétude dossier
+
+alt KYC expiré ou incomplet
+    kyc -> ctrl : KYC non conforme
+    ctrl -> ui : Non-conformité KYC détectée
+    ui -> analyst : Mise à jour KYC requise
+    note right : "KYC expiré depuis X jours\nDocuments manquants"
+    
+    analyst -> ui : Programmer mise à jour KYC
+    ui -> kyc : Planifier renouvellement
+    kyc -> ctrl : Renouvellement planifié
+else KYC conforme
+    kyc -> ctrl : KYC validé
+end
+
+deactivate kyc
+
+== Contrôle LAB-FT ==
+ctrl -> labft : Vérifier conformité LAB-FT
+activate labft
+labft -> labft : Contrôler listes sanctions
+labft -> labft : Vérifier personnes politiquement exposées
+labft -> labft : Analyser transactions suspectes
+labft -> labft : Contrôler seuils réglementaires
+
+alt Alerte LAB-FT détectée
+    labft -> ctrl : Non-conformité LAB-FT
+    ctrl -> ui : Alerte LAB-FT active
+    ui -> analyst : Investigation LAB-FT requise
+    note right : "Client sur liste sanctions\nou transactions suspectes"
+    
+    analyst -> ui : Lancer investigation
+    ui -> labft : Démarrer procédure investigation
+    labft -> ctrl : Investigation en cours
+else Conformité LAB-FT validée
+    labft -> ctrl : LAB-FT conforme
+end
+
+deactivate labft
+
+== Analyse Scoring ==
+ctrl -> scoring : Vérifier scoring conformité
+activate scoring
+scoring -> scoring : Calculer score de conformité
+scoring -> scoring : Analyser évolution scoring
+scoring -> scoring : Contrôler seuils d'alerte
+
+alt Scoring dégradé
+    scoring -> ctrl : Dégradation scoring détectée
+    ctrl -> ui : Score conformité en baisse
+    ui -> analyst : Analyse approfondie recommandée
+    note right : "Score passé de A à C\nAnalyse nécessaire"
+else Scoring satisfaisant
+    scoring -> ctrl : Scoring conforme
+end
+
+deactivate scoring
+
+== Évaluation Risques ==
+ctrl -> risk : Évaluer niveau de risque
+activate risk
+risk -> risk : Analyser profil de risque actuel
+risk -> risk : Contrôler cohérence avec activité
+risk -> risk : Vérifier limites opérationnelles
+
+alt Risque inadéquat
+    risk -> ctrl : Profil risque incohérent
+    ctrl -> ui : Réévaluation risque nécessaire
+    ui -> analyst : Ajustement profil requis
+    note right : "Profil risque inadéquat\navec activité réelle"
+    
+    analyst -> ui : Programmer réévaluation
+    ui -> risk : Planifier nouveau profilage
+    risk -> ctrl : Réévaluation planifiée
+else Profil risque cohérent
+    risk -> ctrl : Risque validé
+end
+
+deactivate risk
+
+== Synthèse Conformité ==
+ctrl -> ctrl : Synthétiser résultats vérification
+ctrl -> ctrl : Calculer score global conformité
+ctrl -> ctrl : Identifier actions correctives
+
+== Génération Rapport ==
+ctrl -> ctrl : Générer rapport conformité
+ctrl -> ctrl : Lister non-conformités détectées
+ctrl -> ctrl : Proposer plan d'action
+
+== Affichage Résultats ==
+ctrl -> ui : Rapport conformité complet
+ui -> analyst : Résultats vérification
+note right : "Score conformité : X/100\nNon-conformités : Y\nActions requises : Z"
+
+== Actions Correctives ==
+alt Non-conformités détectées
+    analyst -> ui : Programmer actions correctives
+    ui -> ctrl : Planifier corrections
+    ctrl -> bdd : Enregistrer plan d'action
+    activate bdd
+    bdd -> ctrl : Plan enregistré
+    deactivate bdd
+    
+    ctrl -> ui : Actions programmées
+    ui -> analyst : Plan d'action créé
+    note right : "Plan d'action créé\nÉchéances définies"
+end
+
+== Traçabilité ==
+ctrl -> bdd : Tracer vérification conformité
+activate bdd
+bdd -> bdd : Enregistrer résultats
+bdd -> bdd : Horodater vérification
+bdd -> bdd : Associer analyste
+bdd -> ctrl : Vérification tracée
+deactivate bdd
+
+== Notification ==
+ctrl -> ui : Vérification terminée
+ui -> analyst : Conformité vérifiée
+note right : "Vérification complète\nRapport généré\nActions planifiées"
+
+deactivate ctrl
+deactivate ui
+
+note over analyst : Conformité client vérifiée\navec plan d'action\net traçabilité complète
+
+@enduml

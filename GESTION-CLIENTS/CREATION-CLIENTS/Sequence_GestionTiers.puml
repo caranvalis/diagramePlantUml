@@ -1,0 +1,171 @@
+@startuml Sequence_GestionTiers
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Tiers
+
+participant "Agent" as agent
+participant "Interface\nTiers" as ui
+participant "Contrôleur\nTiers" as ctrl
+participant "Service\nValidation" as valid
+participant "Moteur\nKYC" as kyc
+participant "Service\nRelation" as relation
+participant "Base\nDonnées" as bdd
+
+== Ajouter Tiers ==
+agent -> ui : Ajouter nouveau tiers
+activate ui
+ui -> agent : Formulaire tiers
+agent -> ui : Saisir informations tiers
+note right : Nom, adresse, téléphone,\nemail, type relation,\nqualité juridique
+
+== Validation Données ==
+ui -> ctrl : Valider saisie
+activate ctrl
+ctrl -> valid : Contrôler format données
+activate valid
+valid -> valid : Vérifier cohérence informations
+valid -> valid : Contrôler doublons potentiels
+valid -> valid : Valider format contacts
+valid -> ctrl : Données validées
+deactivate valid
+
+== Contrôles KYC Tiers ==
+ctrl -> kyc : Lancer contrôles KYC
+activate kyc
+kyc -> kyc : Vérifier listes sanctions
+kyc -> kyc : Contrôler PEP
+kyc -> kyc : Analyser pays résidence
+kyc -> kyc : Évaluer niveau risque
+
+alt Tiers à risque
+    kyc -> ctrl : Alerte risque détectée
+    ctrl -> ui : Escalader validation
+    ui -> agent : Validation hiérarchique requise
+else Tiers acceptable
+    kyc -> ctrl : Contrôles favorables
+    deactivate kyc
+    
+    == Enregistrement Tiers ==
+    ctrl -> bdd : Créer tiers
+    activate bdd
+    bdd -> bdd : Générer ID tiers
+    bdd -> bdd : Sauvegarder informations
+    bdd -> bdd : Enregistrer évaluation risque
+    bdd -> bdd : Tracer création
+    bdd -> ctrl : Tiers créé
+    deactivate bdd
+end
+
+== Modifier Tiers ==
+agent -> ui : Modifier tiers existant
+ui -> ctrl : Charger tiers sélectionné
+ctrl -> bdd : Récupérer données actuelles
+activate bdd
+bdd -> ctrl : Informations tiers
+deactivate bdd
+
+agent -> ui : Modifier informations
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler changements
+activate valid
+valid -> valid : Analyser impact modifications
+valid -> valid : Vérifier cohérence
+
+alt Changement d'adresse/pays
+    valid -> kyc : Réévaluer risque pays
+    activate kyc
+    kyc -> valid : Nouveau niveau risque
+    deactivate kyc
+    
+    alt Risque dégradé
+        valid -> ctrl : Validation requise
+        ctrl -> ui : Escalader modification
+    else Risque acceptable
+        valid -> ctrl : Modification autorisée
+    end
+else Modification mineure
+    valid -> ctrl : Modification directe
+end
+
+ctrl -> bdd : Mettre à jour tiers
+activate bdd
+bdd -> bdd : Historiser changement
+bdd -> bdd : Sauvegarder modifications
+bdd -> ctrl : Tiers mis à jour
+deactivate bdd
+deactivate valid
+
+== Supprimer Tiers ==
+agent -> ui : Supprimer tiers
+ui -> ctrl : Vérifier utilisation
+ctrl -> relation : Contrôler liaisons existantes
+activate relation
+relation -> bdd : Rechercher relations actives
+activate bdd
+bdd -> relation : Relations trouvées
+deactivate bdd
+
+alt Tiers lié à clients/comptes
+    relation -> ctrl : Suppression impossible
+    ctrl -> ui : Délier avant suppression
+    ui -> agent : Relations à supprimer d'abord
+else Tiers non lié
+    relation -> ctrl : Suppression autorisée
+    ctrl -> bdd : Supprimer tiers
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> ctrl : Tiers supprimé
+    deactivate bdd
+end
+deactivate relation
+
+== Rechercher Tiers ==
+agent -> ui : Rechercher tiers
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Recherche par nom/critères
+bdd -> ui : Résultats trouvés
+deactivate bdd
+ui -> agent : Liste tiers
+
+== Lier Tiers à Client/Compte ==
+agent -> ui : Associer tiers
+ui -> ctrl : Sélectionner entité cible
+ctrl -> relation : Créer liaison
+activate relation
+relation -> relation : Définir type relation
+note right : Bénéficiaire, Garant,\nReprésentant, Ayant-droit
+
+relation -> valid : Valider cohérence liaison
+activate valid
+valid -> valid : Contrôler compatibilité
+valid -> valid : Vérifier autorisations
+valid -> relation : Liaison validée
+deactivate valid
+
+relation -> bdd : Enregistrer relation
+activate bdd
+bdd -> bdd : Créer lien tiers-entité
+bdd -> bdd : Définir droits/restrictions
+bdd -> relation : Relation créée
+deactivate bdd
+deactivate relation
+
+ctrl -> ui : Liaison confirmée
+ui -> agent : Tiers associé avec succès
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Tiers géré avec\ncontrôles KYC complets\net relations traçables
+
+@enduml

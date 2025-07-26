@@ -1,0 +1,98 @@
+@startuml Sequence_CreerClientParticulier
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Création d'un Client Particulier
+
+participant "Agent" as agent
+participant "Interface\nSaisie" as ui
+participant "Contrôleur\nClient" as ctrl
+participant "Validateur\nDonnées" as valid
+participant "Service\nBiométrie" as bio
+participant "Moteur\nKYC" as kyc
+participant "Base\nDonnées" as bdd
+participant "GED" as ged
+
+== Saisie Informations ==
+agent -> ui : Nouveau client particulier
+activate ui
+ui -> agent : Formulaire saisie
+agent -> ui : Saisir données personnelles
+note right : Nom, prénom, adresse,\ntéléphone, email, CNI
+
+ui -> ctrl : Valider saisie
+activate ctrl
+ctrl -> valid : Contrôler format données
+activate valid
+valid -> valid : Vérifier intégrité
+valid -> ctrl : Validation OK
+deactivate valid
+
+== Vérifications Réglementaires ==
+ctrl -> kyc : Lancer contrôles KYC
+activate kyc
+kyc -> kyc : Vérifier listes sanctions
+kyc -> kyc : Contrôler PEP
+kyc -> kyc : Évaluer risque pays
+kyc -> ctrl : Résultat contrôles
+deactivate kyc
+
+alt Contrôles défavorables
+    ctrl -> ui : Bloquer création
+    ui -> agent : Motifs refus
+else Contrôles favorables
+    == Données Biométriques ==
+    ctrl -> bio : Demander capture
+    activate bio
+    bio -> agent : Capturer photo
+    bio -> agent : Empreinte digitale
+    bio -> agent : Signature biométrique
+    bio -> ctrl : Données biométriques
+    deactivate bio
+    
+    == Régime Matrimonial ==
+    ctrl -> ui : Demander régime
+    ui -> agent : Saisir régime matrimonial
+    agent -> ui : Type régime + documents
+    
+    == Documents Justificatifs ==
+    ui -> ged : Télécharger pièces
+    activate ged
+    ged -> ged : Vérifier validité
+    ged -> ged : Extraire métadonnées
+    ged -> ui : Documents validés
+    deactivate ged
+    
+    == Enregistrement ==
+    ctrl -> bdd : Créer client
+    activate bdd
+    bdd -> bdd : Générer ID client
+    bdd -> bdd : Sauvegarder données
+    bdd -> bdd : Créer dossier client
+    bdd -> ctrl : Client créé (ID)
+    deactivate bdd
+    
+    == Attribution et Statut ==
+    ctrl -> bdd : Attribuer agent responsable
+    ctrl -> bdd : Définir statut "ACTIF"
+    ctrl -> bdd : Associer documents
+    
+    == Notification ==
+    ctrl -> ui : Création confirmée
+    ui -> agent : ID client + récapitulatif
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Client particulier créé\navec ID unique et\ndossier complet
+
+@enduml

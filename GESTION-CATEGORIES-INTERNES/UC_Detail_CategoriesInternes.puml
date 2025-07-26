@@ -1,0 +1,103 @@
+@startuml UC_Detail_CategoriesInternes
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 7
+
+title Catégories Internes - Cas d'Usage Détaillés
+
+left to right direction
+
+actor "GFC" as G
+actor "Commercial" as CO
+actor "Conformité" as C
+actor "Direction" as D
+
+rectangle "Gestion Catégories Internes" {
+  
+  usecase "Créer\nCatégorie" as UC1
+  usecase "Définir\nCritères" as UC1_1
+  usecase "Configurer\nPolitiques" as UC1_2
+  usecase "Tester\nRègles" as UC1_3
+  
+  usecase "Classer\nClient" as UC2
+  usecase "Évaluer\nCritères" as UC2_1
+  usecase "Appliquer\nAlgorithme" as UC2_2
+  usecase "Valider\nClassement" as UC2_3
+  
+  usecase "Migrer\nCatégorie" as UC3
+  usecase "Analyser\nÉvolution" as UC3_1
+  usecase "Proposer\nMigration" as UC3_2
+  usecase "Approuver\nChangement" as UC3_3
+  
+  usecase "Appliquer\nPolitiques" as UC4
+  usecase "Calculer\nTarifs" as UC4_1
+  usecase "Contrôler\nAccès" as UC4_2
+  usecase "Configurer\nLimites" as UC4_3
+}
+
+' Relations
+G --> UC2
+G --> UC2_3
+
+CO --> UC3
+CO --> UC3_2
+CO --> UC4
+
+C --> UC1
+C --> UC2_3
+C --> UC3_3
+
+D --> UC1_2
+D --> UC3_3
+D --> UC4
+
+' Inclusions
+UC1 .> UC1_1 : <<include>>
+UC1 .> UC1_2 : <<include>>
+UC1 .> UC1_3 : <<include>>
+
+UC2 .> UC2_1 : <<include>>
+UC2 .> UC2_2 : <<include>>
+UC2 .> UC2_3 : <<include>>
+
+UC3 .> UC3_1 : <<include>>
+UC3 .> UC3_2 : <<include>>
+UC3 .> UC3_3 : <<include>>
+
+UC4 .> UC4_1 : <<include>>
+UC4 .> UC4_2 : <<include>>
+UC4 .> UC4_3 : <<include>>
+
+note right of UC1
+**Types Catégories:**
+- Taille: MICRO, PME, GE
+- Segment: RETAIL, CORPORATE
+- Risque: STANDARD, VIP
+- Canal: AGENCE, DIGITAL
+end note
+
+note bottom of UC2
+**Critères Classification:**
+CA, secteur, ancienneté,
+comportement, potentiel
+commercial, relation
+end note
+
+note left of UC4
+**Politiques Applicables:**
+Tarification, services,
+limites, niveau service,
+processus spécialisés
+end note
+
+@enduml

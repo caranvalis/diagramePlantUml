@@ -1,0 +1,83 @@
+@startuml Sequence_ValidationStatut
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Validation Changement Statut
+
+participant "GFC" as G
+participant "Système" as S
+participant "Moteur Règles" as M
+participant "Conformité" as C
+participant "Notification" as N
+
+G -> S: demanderChangementStatut()
+activate S
+
+S -> S: recupererStatutActuel()
+S -> M: verifierTransitionAutorisee()
+activate M
+
+M -> M: consulterMatriceTransitions()
+
+alt Transition autorisée
+    M -> S: transitionValide(conditions)
+    deactivate M
+    
+    S -> S: evaluerNiveauValidation()
+    
+    alt Validation hiérarchique requise
+        S -> C: demanderValidation()
+        activate C
+        
+        C -> C: analyserJustification()
+        C -> C: evaluerImpact()
+        
+        if (Validation accordée?) then (oui)
+            C -> S: approuverChangement()
+        else (non)
+            C -> S: rejeterChangement(motif)
+            S -> G: notifierRejet()
+            deactivate C
+            deactivate S
+        endif
+        deactivate C
+    endif
+    
+    S -> S: appliquerNouveauStatut()
+    S -> S: calculerRestrictions()
+    S -> S: mettreAJourProfil()
+    
+    S -> N: notifierChangement()
+    activate N
+    N -> G: confirmerChangement()
+    N -> C: informerEquipes()
+    deactivate N
+    
+    S -> G: retournerConfirmation()
+    
+else Transition interdite
+    M -> S: transitionInterdite(raison)
+    deactivate M
+    
+    S -> G: retournerErreur()
+endif
+
+deactivate S
+
+note over M
+**Matrice Transitions**
+Règles métier configurables
+end note
+
+note over C
+**Validations Requises**
+DA→DG pour statuts critiques
+end note
+
+@enduml

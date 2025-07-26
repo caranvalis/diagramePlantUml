@@ -1,0 +1,116 @@
+@startuml EFC03_GestionDoublons
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC03 - Gestion Avancée des Doublons
+
+package "Détection Doublons" {
+  component [Calculateur Empreinte] as Empreinte
+  component [Comparateur Documents] as Comparateur
+  component [Analyseur Similarité] as Similarite
+}
+
+package "Gestion Intelligente" {
+  component [Moteur Décision] as Decision
+  component [Consolidateur] as Consolid
+  component [Gestionnaire Versions] as Versions
+}
+
+package "Stockage Doublons" {
+  database [Index Empreintes] as IndexEmpr
+  database [Liens Documents] as Liens
+  database [Historique Doublons] as Historique
+}
+
+' Flux de traitement
+Empreinte --> IndexEmpr : recherche
+IndexEmpr --> Comparateur : candidats trouvés
+Comparateur --> Similarite : analyse fine
+Similarite --> Decision : score similarité
+Decision --> Consolid : consolidation
+Decision --> Versions : gestion versions
+Consolid --> Liens : création liens
+Versions --> Historique : traçabilité
+
+note right of Empreinte
+**Calcul Empreinte:**
+- Hash MD5 contenu
+- Hash SHA-256 sécurisé
+- Empreinte visuelle
+- Signature métadonnées
+
+**Détection:**
+- Duplication exacte
+- Similarité structurelle
+- Versions modifiées
+- Fragments partiels
+end note
+
+note right of Similarite
+**Analyse Similarité:**
+- Algorithme Levenshtein
+- Comparaison sémantique
+- Analyse mise en page
+- Score composite pondéré
+
+**Seuils:**
+- Identique: 100%
+- Très similaire: >95%
+- Similaire: 80-95%
+- Différent: <80%
+end note
+
+@enduml
+skinparam actorStyle awesome
+skinparam usecase {
+  ArrowColor #1976D2
+  BorderColor #1976D2
+}
+left to right direction
+
+title EFC03 - Archivage et gestion du cycle de vie des courriers
+
+actor "Utilisateur" as U
+actor "Administrateur" as ADM
+
+rectangle "Archivage" {
+  usecase "Archivage structuré\n(client, date, type...)" as UC10
+  usecase "Recherche multicritères\n(métadonnées, mots-clés)" as UC11
+  usecase "Journalisation des actions\n(tracabilité complète)" as UC12
+  usecase "Durée de conservation\nselon type de document" as UC13
+  usecase "Purge automatique\nou archivage long terme" as UC14
+  usecase "Notification d’expiration" as UC15
+}
+
+U --> UC10
+U --> UC11
+
+ADM --> UC12
+ADM --> UC13
+ADM --> UC14
+ADM --> UC15
+
+' ========================================
+' NOTES EXPLICATIVES
+' ========================================
+note top of UC10 : Archivage organisé par client, date, type de document
+note right of UC11 : Recherche avancée sur toutes les métadonnées
+note left of UC12 : Traçabilité complète des opérations d’archivage
+note bottom of UC13 : Conservation conforme à la réglementation
+note top of UC14 : Purge automatique ou archivage longue durée
+note right of UC15 : Notification avant expiration des documents
+
+@enduml

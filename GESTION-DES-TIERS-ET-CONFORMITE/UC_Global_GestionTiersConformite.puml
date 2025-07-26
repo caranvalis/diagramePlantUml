@@ -1,0 +1,70 @@
+@startuml UC_Global_GestionTiersConformite
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontSize 8
+}
+
+title Gestion Tiers et Conformité
+
+left to right direction
+
+actor "GFC" as G
+actor "Conformité" as C
+actor "DA" as D
+
+rectangle "Système KYC" {
+  
+  package "Gestion Tiers" {
+    usecase "Ajouter\nTiers" as UC1
+    usecase "Modifier\nTiers" as UC2
+    usecase "Rechercher\nTiers" as UC3
+    usecase "Lier au\nClient" as UC4
+  }
+  
+  package "Contrôles" {
+    usecase "Contrôle\nPPE" as UC5
+    usecase "Contrôle\nFATCA" as UC6
+    usecase "Contrôle\nOFAC" as UC7
+  }
+  
+  package "Blocages" {
+    usecase "Gérer\nStatuts" as UC8
+    usecase "Bloquer\nComptes" as UC9
+  }
+}
+
+' Relations
+G --> UC1
+G --> UC2
+G --> UC3
+G --> UC4
+
+C --> UC5
+C --> UC6
+C --> UC7
+C --> UC8
+
+D --> UC9
+
+' Inclusions
+UC1 .> UC5 : <<include>>
+UC8 .> UC9 : <<include>>
+
+note right of UC5
+Contrôles automatiques
+end note
+
+@enduml

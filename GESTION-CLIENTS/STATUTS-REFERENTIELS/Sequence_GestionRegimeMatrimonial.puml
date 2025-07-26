@@ -1,0 +1,138 @@
+@startuml Sequence_GestionRegimeMatrimonial
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion du Régime Matrimonial
+
+participant "Agent" as agent
+participant "Interface\nRégime" as ui
+participant "Contrôleur\nRégime" as ctrl
+participant "Service\nJuridique" as juridique
+participant "Validateur\nDocuments" as valid_doc
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Saisir Régime Matrimonial ==
+agent -> ui : Enregistrer régime matrimonial
+activate ui
+ui -> agent : Formulaire régime
+agent -> ui : Sélectionner type régime
+note right : Communauté réduite aux acquêts\nCommunauté universelle\nSéparation de biens\nParticipation aux acquêts
+
+agent -> ui : Saisir détails
+note right : Date mariage, lieu,\nnotaire, contrat spécial
+
+== Validation Juridique ==
+ui -> ctrl : Valider saisie
+activate ctrl
+ctrl -> juridique : Contrôler cohérence juridique
+activate juridique
+juridique -> juridique : Vérifier compatibilité régime
+juridique -> juridique : Contrôler dates cohérentes
+juridique -> juridique : Valider mentions obligatoires
+juridique -> ctrl : Régime juridiquement valide
+deactivate juridique
+
+== Documents Justificatifs ==
+ctrl -> ui : Demander pièces justificatives
+ui -> agent : Télécharger documents
+note right : Acte de mariage\nContrat de mariage\nActes modificatifs
+
+agent -> ui : Documents fournis
+ui -> ged : Numériser documents
+activate ged
+ged -> ged : Scanner/indexer documents
+ged -> valid_doc : Valider authenticité
+activate valid_doc
+valid_doc -> valid_doc : Contrôler cohérence dates
+valid_doc -> valid_doc : Vérifier signatures
+valid_doc -> valid_doc : Valider timbres/cachets
+valid_doc -> ged : Documents authentifiés
+deactivate valid_doc
+ged -> ctrl : Documents validés
+deactivate ged
+
+== Enregistrement Régime ==
+ctrl -> bdd : Créer régime matrimonial
+activate bdd
+bdd -> bdd : Générer ID régime
+bdd -> bdd : Sauvegarder type régime
+bdd -> bdd : Enregistrer détails juridiques
+bdd -> bdd : Lier documents justificatifs
+bdd -> bdd : Tracer création
+bdd -> ctrl : Régime enregistré
+deactivate bdd
+
+== Modification Régime ==
+agent -> ui : Modifier régime existant
+ui -> ctrl : Charger régime
+ctrl -> bdd : Récupérer données actuelles
+activate bdd
+bdd -> ctrl : Régime actuel
+deactivate bdd
+
+agent -> ui : Modifier informations
+ui -> ctrl : Valider modifications
+ctrl -> juridique : Contrôler changements
+activate juridique
+juridique -> juridique : Vérifier impacts juridiques
+juridique -> juridique : Valider cohérence temporelle
+
+alt Changement majeur de régime
+    juridique -> ctrl : Documents additionnels requis
+    ctrl -> ui : Demander acte modificatif
+    ui -> agent : Fournir acte notarié
+else Modification mineure
+    juridique -> ctrl : Modification autorisée
+    ctrl -> bdd : Mettre à jour régime
+    activate bdd
+    bdd -> bdd : Historiser changement
+    bdd -> bdd : Sauvegarder modifications
+    bdd -> ctrl : Régime mis à jour
+    deactivate bdd
+end
+deactivate juridique
+
+== Suppression Régime ==
+agent -> ui : Supprimer régime
+ui -> ctrl : Vérifier contraintes
+ctrl -> bdd : Contrôler utilisation
+activate bdd
+bdd -> ctrl : Régime utilisé par clients
+deactivate bdd
+
+alt Régime utilisé
+    ctrl -> ui : Suppression impossible
+    ui -> agent : Migration clients requise
+else Régime non utilisé
+    ctrl -> bdd : Supprimer régime
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> ged : Archiver documents
+    bdd -> ctrl : Régime supprimé
+    deactivate bdd
+end
+
+== Recherche Régime ==
+agent -> ui : Rechercher régimes
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Filtrer par type/date
+bdd -> ui : Résultats trouvés
+deactivate bdd
+ui -> agent : Liste régimes
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Régime matrimonial\nenregistré avec validations\njuridiques et documents
+
+@enduml

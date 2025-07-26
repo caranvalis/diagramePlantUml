@@ -1,0 +1,85 @@
+@startuml Sequence_BlocageComptes
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontSize 9
+}
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 80
+
+title Blocage/Déblocage Comptes
+
+participant "Conformité" as C
+participant "KYC" as K
+participant "Core Banking" as A
+participant "Cartes" as CR
+participant "E-Banking" as E
+
+== Détection et Blocage ==
+
+C -> K: detecterNonConformite()
+activate K
+
+K -> K: evaluerGravite()
+
+alt Critique
+    K -> A: blocageImmediat()
+    activate A
+    A -> K: confirmer()
+    deactivate A
+else Mineure
+    K -> A: blocagePartiel()
+    activate A
+    A -> K: confirmer()
+    deactivate A
+end
+
+K -> CR: suspendreCartes()
+activate CR
+CR -> K: confirmer()
+deactivate CR
+
+K -> E: bloquerServices()
+activate E
+E -> K: confirmer()
+deactivate E
+
+== Déblocage ==
+
+C -> K: demanderDeblocage()
+
+K -> K: verifierConditions()
+
+alt Conditions OK
+    K -> A: debloquerComptes()
+    activate A
+    A -> K: confirmer()
+    deactivate A
+    
+    K -> CR: reactiverCartes()
+    activate CR
+    CR -> K: confirmer()
+    deactivate CR
+    
+    K -> E: reactiverServices()
+    activate E
+    E -> K: confirmer()
+    deactivate E
+else Refus
+    K -> C: refuser()
+end
+
+deactivate K
+
+note over A
+**SLA:** Blocage <30s, Déblocage <5min
+end note
+
+@enduml

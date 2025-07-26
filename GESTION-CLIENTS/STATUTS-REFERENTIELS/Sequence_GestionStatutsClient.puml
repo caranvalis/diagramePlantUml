@@ -1,0 +1,157 @@
+@startuml Sequence_GestionStatutsClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Statuts Client et Compte
+
+participant "Agent" as agent
+participant "Interface\nStatuts" as ui
+participant "Contrôleur\nStatut" as ctrl
+participant "Moteur\nRègles" as regles
+participant "Service\nNotification" as notif
+participant "Gestionnaire\nComptes" as compte
+participant "Service\nBlocage" as blocage
+participant "Base\nDonnées" as bdd
+participant "Système\nAudit" as audit
+
+== Changement Statut Client ==
+agent -> ui : Modifier statut client
+activate ui
+ui -> agent : Sélectionner nouveau statut
+note right : ACTIF, SUSPENDU, DÉCÉDÉ,\nINACTIF, RÉSILIE
+
+agent -> ui : Motif changement + justification
+ui -> ctrl : Valider changement statut
+activate ctrl
+
+ctrl -> regles : Vérifier transition autorisée
+activate regles
+regles -> regles : Contrôler matrice transitions
+regles -> regles : Valider conditions préalables
+
+alt Transition interdite
+    regles -> ctrl : Changement refusé
+    ctrl -> ui : Erreur transition
+    ui -> agent : Motifs refus
+else Transition autorisée
+    regles -> ctrl : Changement validé
+    deactivate regles
+    
+    == Impact sur les Comptes ==
+    ctrl -> compte : Récupérer comptes liés
+    activate compte
+    compte -> compte : Lister comptes actifs
+    compte -> ctrl : Comptes impactés
+    deactivate compte
+    
+    alt Statut DÉCÉDÉ
+        ctrl -> blocage : Bloquer tous les comptes
+        activate blocage
+        blocage -> blocage : Suspendre cartes
+        blocage -> blocage : Bloquer virements
+        blocage -> blocage : Geler découverts
+        blocage -> ctrl : Comptes bloqués
+        deactivate blocage
+        
+        ctrl -> notif : Notifier succession
+        activate notif
+        notif -> notif : Préparer procédure légale
+        deactivate notif
+        
+    else Statut SUSPENDU
+        ctrl -> blocage : Restrictions partielles
+        activate blocage
+        blocage -> blocage : Limiter opérations
+        blocage -> blocage : Suspendre crédit
+        blocage -> ctrl : Restrictions appliquées
+        deactivate blocage
+        
+    else Statut INACTIF
+        ctrl -> compte : Marquer comptes dormants
+        activate compte
+        compte -> compte : Changer statut comptes
+        compte -> ctrl : Comptes inactifs
+        deactivate compte
+        
+    else Statut RÉSILIÉ
+        ctrl -> compte : Programmer clôture comptes
+        activate compte
+        compte -> compte : Vérifier soldes
+        compte -> compte : Planifier fermeture
+        compte -> ctrl : Clôture programmée
+        deactivate compte
+    end
+    
+    == Enregistrement Changement ==
+    ctrl -> bdd : Sauvegarder nouveau statut
+    activate bdd
+    bdd -> bdd : Historiser changement
+    bdd -> bdd : Dater transition
+    bdd -> bdd : Tracer motifs
+    bdd -> ctrl : Statut mis à jour
+    deactivate bdd
+    
+    == Notifications ==
+    ctrl -> notif : Déclencher notifications
+    activate notif
+    notif -> notif : Notifier client (si possible)
+    notif -> notif : Alerter gestionnaire
+    notif -> notif : Informer conformité
+    notif -> ctrl : Notifications envoyées
+    deactivate notif
+    
+    == Audit et Traçabilité ==
+    ctrl -> audit : Tracer changement statut
+    activate audit
+    audit -> audit : Enregistrer agent/date/motif
+    audit -> audit : Logger impacts comptes
+    audit -> audit : Archiver justifications
+    audit -> ctrl : Audit complet
+    deactivate audit
+    
+    ctrl -> ui : Changement statut confirmé
+    ui -> agent : Nouveau statut appliqué
+end
+
+== Recherche par Statut ==
+note over ui : **Recherche et Filtrage**
+
+agent -> ui : Rechercher clients par statut
+ui -> bdd : Requête filtrage statut
+activate bdd
+bdd -> bdd : Filtrer par statut + critères
+bdd -> ui : Liste clients filtrés
+deactivate bdd
+
+ui -> agent : Résultats recherche
+
+== Contrôles Automatiques ==
+note over regles : **Surveillance Automatique**
+
+regles -> bdd : Détecter clients à risque
+activate regles
+activate bdd
+bdd -> regles : Clients critères changement
+deactivate bdd
+
+regles -> regles : Appliquer règles métier
+regles -> regles : Proposer changements statut
+
+loop Pour chaque client identifié
+    regles -> ctrl : Suggestion changement
+    ctrl -> notif : Alerter gestionnaire
+end
+
+deactivate regles
+deactivate ctrl
+deactivate ui
+
+@enduml

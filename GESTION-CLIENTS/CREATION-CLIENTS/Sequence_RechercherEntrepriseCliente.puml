@@ -1,0 +1,153 @@
+@startuml Sequence_RechercherEntrepriseCliente
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Rechercher une Entreprise Cliente
+
+participant "Utilisateur" as user
+participant "Interface\nRecherche" as ui
+participant "Contrôleur\nRecherche" as ctrl
+participant "Moteur\nRecherche" as search
+participant "Service\nRCS" as rcs
+participant "Analyseur\nDroits" as rights
+participant "Base\nDonnées" as bdd
+
+== Saisie Critères ==
+user -> ui : Rechercher entreprise cliente
+activate ui
+ui -> user : Interface critères entreprise
+user -> ui : Saisir critères (SIREN, raison sociale, etc.)
+ui -> ctrl : Lancer recherche entreprise
+activate ctrl
+
+== Validation Droits ==
+ctrl -> rights : Vérifier droits consultation entreprises
+activate rights
+rights -> rights : Contrôler autorisations utilisateur
+rights -> rights : Analyser niveau accès données entreprises
+
+alt Droits insuffisants
+    rights -> ctrl : Accès refusé
+    ctrl -> ui : Droits insuffisants
+    ui -> user : Recherche non autorisée
+    note right : "Vous n'avez pas les droits\npour consulter les entreprises"
+    deactivate rights
+    deactivate ctrl
+    deactivate ui
+else Droits validés
+    rights -> ctrl : Recherche autorisée
+    deactivate rights
+end
+
+== Recherche Multicritères ==
+ctrl -> search : Rechercher entreprise avec critères
+activate search
+search -> bdd : Requête multicritères entreprise
+activate bdd
+bdd -> bdd : Recherche par SIREN/SIRET
+bdd -> bdd : Filtrer par raison sociale
+bdd -> bdd : Contrôler secteur activité
+bdd -> bdd : Analyser adresse siège
+bdd -> search : Résultats entreprises
+deactivate bdd
+
+search -> search : Scorer pertinence résultats
+search -> search : Éliminer doublons société
+search -> search : Appliquer filtres conformité
+
+== Validation RCS ==
+search -> rcs : Valider avec RCS
+activate rcs
+rcs -> rcs : Vérifier existence au RCS
+rcs -> rcs : Contrôler statut juridique
+rcs -> rcs : Analyser radiations éventuelles
+
+rcs -> search : Validation RCS effectuée
+deactivate rcs
+
+alt Aucun résultat
+    search -> ctrl : Aucune entreprise trouvée
+    ctrl -> ui : Recherche infructueuse
+    ui -> user : Aucune entreprise correspondante
+    note right : "Aucune entreprise trouvée\navec ces critères"
+    deactivate search
+else Résultats trouvés
+    search -> ctrl : X entreprises trouvées
+    deactivate search
+end
+
+== Enrichissement Données ==
+ctrl -> ctrl : Enrichir avec données publiques
+ctrl -> ctrl : Ajouter informations secteur
+ctrl -> ctrl : Compléter structure actionnariat
+
+== Formatage Résultats ==
+ctrl -> ctrl : Anonymiser données sensibles
+ctrl -> ctrl : Appliquer masquage selon droits
+ctrl -> ctrl : Formater pour affichage entreprise
+
+== Affichage Résultats ==
+ctrl -> ui : Résultats entreprises formatés
+ui -> user : Liste entreprises trouvées
+note right : "X entreprises trouvées\nInformations selon vos droits"
+
+== Actions Disponibles ==
+user -> ui : Sélectionner entreprise
+ui -> ctrl : Demander détails entreprise
+ctrl -> rights : Vérifier droits détail entreprise
+activate rights
+rights -> ctrl : Niveau accès autorisé
+deactivate rights
+
+alt Accès détail autorisé
+    ctrl -> bdd : Récupérer détails complets entreprise
+    activate bdd
+    bdd -> ctrl : Informations détaillées entreprise
+    deactivate bdd
+    
+    ctrl -> ui : Détails entreprise
+    ui -> user : Fiche entreprise complète
+    note right : "Détails selon vos\nautorisations"
+    
+    == Consultation Actionnariat ==
+    user -> ui : Consulter actionnariat
+    ui -> ctrl : Demander structure actionnariat
+    ctrl -> bdd : Récupérer actionnaires
+    activate bdd
+    bdd -> ctrl : Structure actionnariat
+    deactivate bdd
+    
+    ctrl -> ui : Actionnariat
+    ui -> user : Structure actionnaires
+    
+else Accès détail refusé
+    ctrl -> ui : Accès limité
+    ui -> user : Informations restreintes
+    note right : "Accès limité aux\ninformations de base"
+end
+
+== Historique Recherche ==
+ctrl -> ctrl : Tracer recherche entreprise
+ctrl -> bdd : Enregistrer log recherche
+activate bdd
+bdd -> ctrl : Recherche tracée
+deactivate bdd
+
+ctrl -> ui : Recherche terminée
+ui -> user : Résultats affichés
+note right : "Recherche tracée\npour audit"
+
+deactivate ctrl
+deactivate ui
+
+note over user : Entreprise cliente recherchée\navec validation RCS\net traçabilité complète
+
+@enduml

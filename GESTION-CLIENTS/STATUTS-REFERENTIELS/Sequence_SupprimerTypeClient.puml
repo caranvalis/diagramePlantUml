@@ -1,0 +1,140 @@
+@startuml Sequence_SupprimerTypeClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Type de Client
+
+participant "Admin\nSystème" as admin
+participant "Interface\nTypes" as ui
+participant "Contrôleur\nType" as ctrl
+participant "Analyseur\nDépendances" as dep
+participant "Service\nMigration" as migration
+participant "Validateur\nSuppression" as valid
+participant "Base\nDonnées" as bdd
+parameter "Archive" as archive
+
+== Sélection Type ==
+admin -> ui : Supprimer type client
+activate ui
+ui -> admin : Liste types existants
+admin -> ui : Sélectionner type à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse Utilisation ==
+ctrl -> dep : Analyser utilisation type
+activate dep
+dep -> bdd : Compter clients utilisant type
+activate bdd
+bdd -> dep : Nombre clients affectés
+deactivate bdd
+
+dep -> dep : Analyser impact suppression
+dep -> dep : Vérifier règles métier dépendantes
+dep -> dep : Contrôler produits liés
+
+alt Type utilisé par clients
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - clients utilisent ce type
+    ui -> admin : Migration clients requise
+    note right : Proposer type de remplacement\nou migration massive
+    
+    == Proposition Migration ==
+    ctrl -> migration : Proposer migration
+    activate migration
+    migration -> ui : Interface migration
+    ui -> admin : Sélectionner type de destination
+    admin -> ui : Confirmer type de remplacement
+    ui -> migration : Type destination validé
+    
+    migration -> bdd : Migrer clients vers nouveau type
+    activate bdd
+    bdd -> bdd : Mettre à jour type clients
+    bdd -> bdd : Appliquer nouvelles règles
+    bdd -> migration : Migration terminée
+    deactivate bdd
+    migration -> ctrl : Clients migrés
+    deactivate migration
+    
+else Type non utilisé
+    dep -> ctrl : Suppression autorisée
+    deactivate dep
+end
+
+== Validation Suppression ==
+ctrl -> valid : Valider suppression type
+activate valid
+valid -> valid : Contrôler cohérence système
+valid -> valid : Vérifier autorisations admin
+valid -> valid : Analyser impact règles métier
+
+alt Validation échouée
+    valid -> ctrl : Suppression refusée
+    ctrl -> ui : Motifs refus
+    ui -> admin : Erreurs validation
+else Validation réussie
+    valid -> ctrl : Suppression validée
+    deactivate valid
+    
+    == Confirmation Admin ==
+    ctrl -> ui : Demander confirmation finale
+    ui -> admin : Confirmer suppression définitive
+    note right : "Supprimer type définitivement ?\nAction irréversible"
+    
+    admin -> ui : Confirmer suppression
+    ui -> ctrl : Suppression confirmée
+    
+    == Archivage Type ==
+    ctrl -> archive : Archiver configuration type
+    activate archive
+    archive -> bdd : Récupérer configuration complète
+    activate bdd
+    bdd -> archive : Paramètres + règles + historique
+    deactivate bdd
+    
+    archive -> archive : Créer archive avec métadonnées
+    archive -> archive : Horodater suppression
+    archive -> ctrl : Type archivé
+    deactivate archive
+    
+    == Suppression Logique ==
+    ctrl -> bdd : Marquer type supprimé
+    activate bdd
+    bdd -> bdd : Statut = SUPPRIME
+    bdd -> bdd : Date suppression
+    bdd -> bdd : Désactiver dans référentiels
+    bdd -> bdd : Purger règles liées
+    bdd -> bdd : Tracer opération
+    bdd -> ctrl : Type supprimé
+    deactivate bdd
+    
+    == Nettoyage Système ==
+    ctrl -> ctrl : Invalider cache types
+    ctrl -> ctrl : Nettoyer règles validation
+    ctrl -> ctrl : Purger références
+    
+    == Notification ==
+    ctrl -> ui : Suppression réussie
+    ui -> admin : Type client supprimé
+    note right : Type supprimé définitivement\nArchivage effectué\nSystème nettoyé
+end
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec détails
+note right : Type supprimé\nClients migrés si nécessaire\nArchive créée
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Type client supprimé\navec migration automatique\net archivage sécurisé
+
+@enduml

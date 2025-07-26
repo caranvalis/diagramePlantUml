@@ -1,0 +1,119 @@
+@startuml Sequence_ModifierCompte
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier les Informations d'un Compte
+
+participant "Agent" as agent
+participant "Interface\nCompte" as ui
+participant "Contrôleur\nModification" as ctrl
+participant "Validateur\nChangement" as valid
+participant "Service\nRisque" as risque
+participant "Core\nBanking" as core
+participant "Service\nNotification" as notif
+participant "Base\nDonnées" as bdd
+
+== Sélection Compte ==
+agent -> ui : Modifier compte existant
+activate ui
+ui -> agent : Rechercher compte
+agent -> ui : Saisir numéro/critères
+ui -> bdd : Rechercher compte
+activate bdd
+bdd -> ui : Compte trouvé + paramètres actuels
+deactivate bdd
+ui -> agent : Afficher configuration actuelle
+
+== Modification Paramètres ==
+agent -> ui : Modifier paramètres
+note right : Plafonds, découvert autorisé,\nrestrictions, tarification
+ui -> ctrl : Valider modifications
+activate ctrl
+
+== Validation Changements ==
+ctrl -> valid : Contrôler modifications
+activate valid
+valid -> valid : Vérifier cohérence nouvelles valeurs
+valid -> valid : Contrôler limites réglementaires
+valid -> valid : Valider autorisations agent
+
+alt Changements majeurs (plafonds +50%)
+    valid -> ctrl : Validation hiérarchique requise
+    ctrl -> ui : Escalader vers superviseur
+    ui -> agent : Attendre approbation N+1
+else Changements standards
+    valid -> ctrl : Modifications validées
+    deactivate valid
+    
+    == Réévaluation Risque ==
+    ctrl -> risque : Réévaluer profil risque
+    activate risque
+    risque -> risque : Calculer nouveau score
+    risque -> risque : Analyser impact changements
+    
+    alt Score risque dégradé
+        risque -> ctrl : Restrictions supplémentaires
+        ctrl -> ui : Proposer restrictions compensatoires
+        ui -> agent : Accepter restrictions ou annuler
+        
+        alt Agent accepte restrictions
+            agent -> ui : Valider avec restrictions
+            ui -> ctrl : Confirmer avec compensations
+        else Agent refuse
+            agent -> ui : Annuler modifications
+            ui -> ctrl : Abandon modification
+            ctrl -> ui : Modification annulée
+        end
+        
+    else Score risque acceptable
+        risque -> ctrl : Modifications autorisées
+    end
+    deactivate risque
+    
+    == Application Core Banking ==
+    ctrl -> core : Mettre à jour paramètres
+    activate core
+    core -> core : Modifier configuration compte
+    core -> core : Appliquer nouveaux plafonds
+    core -> core : Activer restrictions
+    core -> ctrl : Paramètres mis à jour
+    deactivate core
+    
+    == Enregistrement Modifications ==
+    ctrl -> bdd : Sauvegarder changements
+    activate bdd
+    bdd -> bdd : Historiser modifications
+    bdd -> bdd : Tracer agent/date/motifs
+    bdd -> bdd : Mettre à jour paramètres
+    bdd -> ctrl : Enregistrement confirmé
+    deactivate bdd
+    
+    == Notifications ==
+    ctrl -> notif : Notifier changements
+    activate notif
+    notif -> notif : Préparer communication client
+    notif -> notif : Alerter gestionnaire compte
+    notif -> notif : Informer conformité si requis
+    notif -> ctrl : Notifications envoyées
+    deactivate notif
+    
+    == Confirmation ==
+    ctrl -> ui : Modification réussie
+    ui -> agent : Paramètres mis à jour
+    note right : Nouveaux paramètres actifs\nNotifications envoyées\nHistorique tracé
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Compte modifié avec\ncontrôles de cohérence et\ntraçabilité complète
+
+@enduml

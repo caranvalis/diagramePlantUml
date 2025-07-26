@@ -1,0 +1,107 @@
+@startuml Activite_ReceptionCourrierPhysique
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+title Diagramme d'Activité - Réception Courrier Physique
+
+|Agent Accueil|
+start
+:Recevoir courrier physique;
+note right: Point d'entrée du processus
+:Ouvrir enveloppe/colis;
+
+if (Contient documents KYC?) then (oui)
+    |Agent Accueil|
+    :Scanner documents;
+    
+    |Système OCR|
+    :Extraire données OCR;
+    :Analyser qualité extraction;
+    
+    if (Données lisibles?) then (oui)
+        |Système de Routage|
+        :Identifier client par numéro compte;
+        :Rechercher dans base clients;
+        
+        if (Client trouvé?) then (oui)
+            |Gestionnaire KYC|
+            :Associer documents au dossier client;
+            :Mettre à jour statut KYC;
+            :Évaluer complétude dossier;
+            
+            if (Documents complets?) then (oui)
+                :Marquer dossier comme "Complet";
+                :Programmer validation finale;
+                
+                |Système de Notification|
+                :Notifier gestionnaire responsable;
+                :Envoyer confirmation client;
+                
+            else (non)
+                |Gestionnaire KYC|
+                :Marquer comme "En attente documents";
+                :Identifier documents manquants;
+                
+                |Système de Notification|
+                :Générer demande compléments;
+                :Envoyer demande au client;
+            endif
+            
+        else (non)
+            |Gestionnaire KYC|
+            :Créer nouveau dossier client;
+            :Attribuer gestionnaire selon charge;
+            :Initialiser processus KYC;
+            
+            |Système de Workflow|
+            :Déclencher workflow standard;
+            :Planifier étapes de validation;
+        endif
+        
+    else (non)
+        |Expert OCR|
+        :Signaler pour traitement manuel;
+        :Analyser erreurs OCR;
+        :Corriger données si possible;
+        :Affecter à expert spécialisé;
+    endif
+    
+else (non)
+    |Système de Routage|
+    :Analyser type de courrier;
+    
+    if (Courrier urgent?) then (oui)
+        |Service Urgence|
+        :Router vers traitement urgent;
+        :Appliquer SLA prioritaire;
+        stop
+        
+    else (non)
+        |Agent Accueil|
+        :Classer selon type;
+        
+        |Système de Routage|
+        :Router vers service approprié;
+        :Appliquer règles de distribution;
+    endif
+endif
+
+|Agent Accueil|
+:Archiver courrier original;
+:Mettre étiquette de traitement;
+
+|Système de Traçabilité|
+:Mettre à jour journal des traitements;
+:Enregistrer métriques de performance;
+:Archiver logs de traitement;
+
+stop
+
+@enduml

@@ -1,0 +1,131 @@
+@startuml Sequence_GestionDocuments
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion Électronique des Documents (GED)
+
+participant "Agent" as agent
+participant "Interface\nGED" as ui
+participant "Contrôleur\nDoc" as ctrl
+participant "Service\nValidation" as valid
+participant "Moteur\nOCR" as ocr
+participant "Service\nArchivage" as arch
+participant "Base\nIndex" as index
+participant "Stockage\nSécurisé" as stock
+
+== Téléchargement Document ==
+agent -> ui : Ajouter document
+activate ui
+ui -> agent : Sélectionner fichier + métadonnées
+note right : Type document, entité liée,\ncatégorie, confidentialité
+
+agent -> ui : Upload fichier
+ui -> ctrl : Traiter document
+activate ctrl
+
+== Validation et Contrôles ==
+ctrl -> valid : Valider format/taille
+activate valid
+valid -> valid : Contrôler type MIME
+valid -> valid : Scanner virus
+valid -> valid : Vérifier intégrité
+valid -> ctrl : Document sain
+deactivate valid
+
+== Extraction Métadonnées ==
+ctrl -> ocr : Analyser contenu
+activate ocr
+ocr -> ocr : Reconnaissance texte
+ocr -> ocr : Extraire données clés
+ocr -> ocr : Détecter type document
+ocr -> ctrl : Métadonnées extraites
+deactivate ocr
+
+== Vérification Cohérence ==
+ctrl -> ctrl : Vérifier cohérence métadonnées
+ctrl -> ctrl : Contrôler dates validité
+ctrl -> ctrl : Détecter doublons
+
+alt Document déjà existant
+    ctrl -> ui : Proposer versioning
+    alt Nouvelle version
+        ctrl -> arch : Archiver version précédente
+        activate arch
+        arch -> stock : Déplacer vers historique
+        deactivate arch
+    else Doublon détecté
+        ctrl -> ui : Document rejeté
+        ui -> agent : Fichier déjà présent
+    end
+else Nouveau document
+    == Stockage Sécurisé ==
+    ctrl -> stock : Stocker document
+    activate stock
+    stock -> stock : Chiffrer contenu
+    stock -> stock : Générer empreinte
+    stock -> stock : Répartir stockage
+    stock -> ctrl : Document stocké (ID)
+    deactivate stock
+    
+    == Indexation ==
+    ctrl -> index : Indexer métadonnées
+    activate index
+    index -> index : Créer index fulltext
+    index -> index : Cataloguer mots-clés
+    index -> index : Lier aux entités
+    index -> ctrl : Document indexé
+    deactivate index
+    
+    == Finalisation ==
+    ctrl -> ui : Document enregistré
+    ui -> agent : Confirmation + ID document
+end
+
+== Recherche Document ==
+note over ui : **Recherche et Consultation**
+
+agent -> ui : Rechercher documents
+ui -> index : Requête recherche
+activate index
+index -> index : Recherche fulltext
+index -> index : Filtrer par critères
+index -> ui : Résultats trouvés
+deactivate index
+
+agent -> ui : Sélectionner document
+ui -> ctrl : Demander consultation
+ctrl -> stock : Récupérer document
+activate stock
+stock -> stock : Déchiffrer contenu
+stock -> ctrl : Document déchiffré
+deactivate stock
+
+ctrl -> ui : Prévisualisation document
+ui -> agent : Affichage sécurisé
+
+== Archivage Automatique ==
+note over arch : **Cycle de Vie**
+
+arch -> index : Documents à archiver
+activate arch
+activate index
+index -> arch : Liste documents anciens
+deactivate index
+
+arch -> stock : Archiver documents
+arch -> arch : Appliquer politique rétention
+arch -> arch : Migrer vers stockage froid
+deactivate arch
+
+deactivate ctrl
+deactivate ui
+
+@enduml

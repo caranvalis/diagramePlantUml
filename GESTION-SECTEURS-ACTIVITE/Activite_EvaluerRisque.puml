@@ -1,0 +1,92 @@
+@startuml Activite_EvaluerRisque
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Évaluation Risque Sectoriel
+
+|Système|
+start
+:Réception demande évaluation;
+note right: Nouveau client,\nreclassement,\ncontrôle périodique
+
+|Moteur Risque|
+:Récupérer paramètres secteur;
+:Consulter matrice risques;
+
+|Analyse|
+:Évaluer facteurs aggravants;
+note right: Géographie, taille,\ncomplexité, historique
+
+:Calculer score de base;
+
+if (Facteurs géographiques?) then (oui)
+    :Appliquer coefficient pays;
+    note right: Pays à risque,\nsanctions, paradis fiscaux
+endif
+
+if (Taille significative?) then (oui)
+    :Appliquer coefficient taille;
+    note right: CA > seuils,\neffectifs, complexité
+endif
+
+if (Activité complexe?) then (oui)
+    :Majoration complexité;
+    note right: Multi-secteurs,\ninternational, structures
+endif
+
+|Contrôles Réglementaires|
+:Vérifier listes restrictives;
+
+if (Secteur interdit?) then (oui)
+    :Score risque maximal;
+    |Conformité|
+    :Escalader vers DG;
+    stop
+    
+else if (Secteur sensible?) then (oui)
+    :Score risque élevé;
+    :Activer surveillance renforcée;
+    
+else (standard)
+    :Score risque standard;
+endif
+
+|Système|
+:Calculer score final;
+:Déterminer restrictions applicables;
+
+if (Score > Seuil Critique?) then (oui)
+    :Restrictions maximales;
+    :Validation DG obligatoire;
+    
+else if (Score > Seuil Élevé?) then (oui)
+    :Restrictions renforcées;
+    :Validation DA;
+    
+else if (Score > Seuil Modéré?) then (oui)
+    :Restrictions standards;
+    :Validation Conformité;
+    
+else (faible)
+    :Aucune restriction;
+    :Traitement normal;
+endif
+
+|Enregistrement|
+:Sauvegarder évaluation;
+:Tracer décision;
+:Programmer réévaluation;
+
+stop
+
+@enduml

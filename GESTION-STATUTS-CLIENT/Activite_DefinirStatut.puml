@@ -1,0 +1,74 @@
+@startuml Activite_DefinirStatut
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Définir Nouveau Statut Client
+
+|Conformité|
+start
+:Analyser besoin métier;
+:Définir nouveau statut;
+
+|Système|
+:Vérifier unicité nom;
+
+if (Nom existe?) then (oui)
+    |Conformité|
+    :Modifier nom statut;
+else (non)
+    |Conformité|
+    :Configurer paramètres;
+    note right: Code, libellé, description,\ncouleur, icône
+    
+    :Définir restrictions;
+    note right: Services autorisés,\nmontants limites,\nfréquence opérations
+    
+    :Configurer règles transition;
+    note right: Statuts source/cible,\nconditions, validations
+    
+    :Paramétrer surveillance;
+    note right: Seuils d'alerte,\nfréquence contrôles,\nactions automatiques
+    
+    |Système|
+    :Valider cohérence règles;
+    
+    if (Règles cohérentes?) then (oui)
+        :Enregistrer statut;
+        :Générer documentation;
+        
+        |Conformité|
+        :Tester statut;
+        note right: Tests unitaires,\nscénarios de transition,\nvalidation métier
+        
+        if (Tests OK?) then (oui)
+            |Système|
+            :Activer statut;
+            :Notifier équipes;
+            
+            |Conformité|
+            :Former utilisateurs;
+            :Documenter procédures;
+            
+        else (non)
+            :Corriger paramètres;
+        endif
+        
+    else (non)
+        |Conformité|
+        :Revoir règles métier;
+    endif
+endif
+
+stop
+
+@enduml

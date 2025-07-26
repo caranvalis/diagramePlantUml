@@ -1,0 +1,110 @@
+@startuml Sequence_OuvrirCompte
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Ouverture d'un Compte Client
+
+participant "Agent" as agent
+participant "Interface\nCompte" as ui
+participant "Contrôleur\nCompte" as ctrl
+participant "Service\nClient" as client
+participant "Moteur\nRisque" as risque
+participant "Gestionnaire\nProduits" as produit
+participant "Service\nSignature" as sign
+participant "Base\nDonnées" as bdd
+participant "Core\nBanking" as core
+
+== Sélection Client ==
+agent -> ui : Ouvrir nouveau compte
+activate ui
+ui -> agent : Rechercher client existant
+agent -> ui : Sélectionner client
+ui -> client : Récupérer profil client
+activate client
+client -> client : Vérifier éligibilité
+client -> ui : Données client + restrictions
+deactivate client
+
+== Choix du Produit ==
+ui -> produit : Lister produits autorisés
+activate produit
+produit -> produit : Filtrer selon profil client
+produit -> ui : Produits disponibles
+deactivate produit
+
+agent -> ui : Sélectionner type compte
+ui -> ctrl : Valider sélection
+activate ctrl
+
+== Évaluation Risques ==
+ctrl -> risque : Évaluer ouverture compte
+activate risque
+risque -> risque : Analyser profil client
+risque -> risque : Calculer score risque
+risque -> risque : Déterminer restrictions
+
+alt Risque élevé
+    risque -> ctrl : Validation hiérarchique requise
+    ctrl -> ui : Escalader vers N+1
+    ui -> agent : Attendre validation superviseur
+else Risque acceptable
+    risque -> ctrl : Autorisation accordée
+    deactivate risque
+    
+    == Configuration Compte ==
+    ctrl -> bdd : Générer numéro compte
+    activate bdd
+    bdd -> bdd : Réserver numéro unique
+    bdd -> ctrl : Numéro attribué
+    deactivate bdd
+    
+    ctrl -> ui : Configurer paramètres
+    ui -> agent : Définir plafonds/limites
+    agent -> ui : Confirmer configuration
+    
+    == Spécimens de Signature ==
+    ctrl -> sign : Enregistrer signatures
+    activate sign
+    sign -> agent : Capturer spécimens
+    sign -> sign : Valider qualité signatures
+    sign -> ctrl : Signatures enregistrées
+    deactivate sign
+    
+    == Création dans Core Banking ==
+    ctrl -> core : Créer compte
+    activate core
+    core -> core : Initialiser compte
+    core -> core : Appliquer paramètres
+    core -> core : Activer compte
+    core -> ctrl : Compte opérationnel
+    deactivate core
+    
+    == Enregistrement Final ==
+    ctrl -> bdd : Sauvegarder compte
+    activate bdd
+    bdd -> bdd : Lier au client
+    bdd -> bdd : Enregistrer restrictions
+    bdd -> bdd : Tracer ouverture
+    bdd -> ctrl : Enregistrement terminé
+    deactivate bdd
+    
+    == Documents et Notification ==
+    ctrl -> ui : Générer convention compte
+    ctrl -> ui : Préparer kit d'accueil
+    ui -> agent : Compte ouvert - Documentation
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Compte opérationnel\navec tous les paramètres\net restrictions appliqués
+
+@enduml

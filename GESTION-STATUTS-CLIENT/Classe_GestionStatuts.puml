@@ -1,0 +1,128 @@
+@startuml Classe_GestionStatuts
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam note FontSize 7
+
+title Classes - Gestion Statuts Client
+
+class StatutClient {
+    - id: String
+    - code: String
+    - libelle: String
+    - description: String
+    - couleur: String
+    - actif: Boolean
+    + creer()
+    + modifier()
+    + desactiver()
+}
+
+class TypeStatut {
+    - BASE: "ACTIF,INACTIF,PROSPECT"
+    - CONFORMITE: "CONFORME,PPE"
+    - RISQUE: "FAIBLE,ELEVE"
+    + validerType()
+}
+
+class RegleTransition {
+    - statutSource: StatutClient
+    - statutCible: StatutClient
+    - conditionsRequises: List<String>
+    - validationHierarchique: Boolean
+    + verifierTransition()
+    + evaluerConditions()
+}
+
+class RestrictionStatut {
+    - statut: StatutClient
+    - servicesInterdits: List<String>
+    - montantMax: Montant
+    - frequenceMax: Integer
+    + appliquerRestrictions()
+    + verifierAutorisation()
+}
+
+class HistoriqueStatut {
+    - client: Client
+    - statutPrecedent: StatutClient
+    - statutNouveau: StatutClient
+    - dateChangement: Date
+    - motif: String
+    - valideur: Agent
+    + tracer()
+    + consulter()
+}
+
+class Client {
+    - id: String
+    - nom: String
+    - statutActuel: StatutClient
+    - dateAttribution: Date
+    + changerStatut()
+    + obtenirHistorique()
+}
+
+class ValidationStatut {
+    - demande: DemandeChangement
+    - valideur: Agent
+    - decision: Boolean
+    - motifDecision: String
+    + valider()
+    + rejeter()
+}
+
+class NotificationStatut {
+    - client: Client
+    - changement: HistoriqueStatut
+    - canal: String
+    - message: String
+    + envoyer()
+    + confirmer()
+}
+
+class MoteurRestrictions {
+    - regles: List<RegleTransition>
+    + evaluerRestrictions()
+    + appliquerLimites()
+    + verifierAcces()
+}
+
+' Relations
+StatutClient ||--|| TypeStatut
+StatutClient ||--o{ RegleTransition : source
+StatutClient ||--o{ RegleTransition : cible
+StatutClient ||--o{ RestrictionStatut
+StatutClient ||--o{ HistoriqueStatut : ancien
+StatutClient ||--o{ HistoriqueStatut : nouveau
+
+Client ||--|| StatutClient : actuel
+Client ||--o{ HistoriqueStatut
+Client ||--o{ NotificationStatut
+
+RegleTransition ||--o{ ValidationStatut
+HistoriqueStatut ||--|| ValidationStatut
+HistoriqueStatut ||--o{ NotificationStatut
+
+MoteurRestrictions ||--o{ RestrictionStatut
+
+note top of StatutClient
+Entité centrale définissant
+les différents états du client
+end note
+
+note right of RegleTransition
+Matrice des transitions
+autorisées entre statuts
+end note
+
+note bottom of MoteurRestrictions
+Applique automatiquement
+les restrictions par statut
+end note
+
+@enduml

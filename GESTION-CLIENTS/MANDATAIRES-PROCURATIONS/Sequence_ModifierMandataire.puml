@@ -1,0 +1,132 @@
+@startuml Sequence_ModifierMandataire
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier les Droits d'un Mandataire
+
+participant "Agent" as agent
+participant "Interface\nMandats" as ui
+participant "Contrôleur\nMandats" as ctrl
+participant "Validateur\nPouvoir" as valid
+participant "Service\nSignature" as sign
+participant "Analyseur\nUtilisation" as usage
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Sélection Mandataire ==
+agent -> ui : Modifier droits mandataire
+activate ui
+ui -> agent : Rechercher mandataire
+agent -> ui : Sélectionner mandataire
+ui -> ctrl : Charger mandataire sélectionné
+activate ctrl
+ctrl -> bdd : Récupérer pouvoirs actuels
+activate bdd
+bdd -> ctrl : Configuration mandataire
+deactivate bdd
+ctrl -> ui : Afficher pouvoirs actuels
+ui -> agent : Formulaire droits existants
+
+== Analyse Utilisation ==
+ctrl -> usage : Analyser historique utilisation
+activate usage
+usage -> bdd : Récupérer historique opérations
+activate bdd
+bdd -> usage : Statistiques utilisation
+deactivate bdd
+usage -> usage : Analyser patterns utilisation
+usage -> usage : Identifier pouvoirs inutilisés
+usage -> ctrl : Rapport utilisation
+deactivate usage
+ctrl -> ui : Afficher statistiques
+ui -> agent : Pouvoirs utilisés/non utilisés
+
+== Modification Pouvoirs ==
+agent -> ui : Modifier droits
+note right : Types opérations,\nmontants maximum,\ndurée validité, comptes
+
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler nouveaux pouvoirs
+activate valid
+valid -> valid : Vérifier cohérence modifications
+valid -> valid : Contrôler limites légales
+valid -> valid : Valider montants/durées
+
+alt Extension pouvoirs significative
+    valid -> ctrl : Validation hiérarchique requise
+    ctrl -> ui : Escalader validation
+    ui -> agent : Attendre approbation superviseur
+else Modification standard/restriction
+    valid -> ctrl : Pouvoirs validés
+    deactivate valid
+    
+    == Mise à Jour Documents ==
+    alt Modification majeure
+        ctrl -> ged : Générer avenant procuration
+        activate ged
+        ged -> ged : Utiliser modèle avenant
+        ged -> ged : Personnaliser avec modifications
+        ged -> ui : Document avenant
+        deactivate ged
+        
+        ui -> agent : Faire signer avenant
+        agent -> ui : Signatures apposées
+        ui -> ctrl : Avenant signé
+        
+        ctrl -> ged : Numériser avenant signé
+        activate ged
+        ged -> ged : Archiver document
+        ged -> ged : Lier à procuration originale
+        ged -> ctrl : Avenant archivé
+        deactivate ged
+    else Modification administrative
+        ctrl -> ctrl : Mise à jour directe
+    end
+    
+    == Enregistrement Modifications ==
+    ctrl -> bdd : Mettre à jour pouvoirs
+    activate bdd
+    bdd -> bdd : Historiser anciens pouvoirs
+    bdd -> bdd : Sauvegarder nouveaux droits
+    bdd -> bdd : Dater modification
+    bdd -> bdd : Lier documents modifiés
+    bdd -> bdd : Tracer modification
+    bdd -> ctrl : Mandataire mis à jour
+    deactivate bdd
+    
+    == Actualisation Signatures ==
+    alt Nouveaux pouvoirs de signature
+        ctrl -> sign : Mettre à jour spécimens
+        activate sign
+        sign -> agent : Capturer nouvelles signatures
+        sign -> sign : Associer aux nouveaux pouvoirs
+        sign -> ctrl : Signatures mises à jour
+        deactivate sign
+    end
+    
+    == Test Pouvoirs ==
+    ctrl -> ctrl : Tester nouveaux pouvoirs
+    ctrl -> ctrl : Valider restrictions appliquées
+    
+    == Notification ==
+    ctrl -> ctrl : Notifier mandant des changements
+    ctrl -> ctrl : Alerter services opérationnels
+    ctrl -> ui : Modification confirmée
+    ui -> agent : Droits mandataire mis à jour
+    note right : Nouveaux pouvoirs actifs\nDocuments à jour\nNotifications envoyées
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Droits mandataire modifiés\navec validation et\ntraçabilité complète
+
+@enduml

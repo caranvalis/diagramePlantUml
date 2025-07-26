@@ -1,0 +1,99 @@
+@startuml Sequence_ValidationCategorie
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Validation et Approbation des Changements de Catégorie
+
+participant "SGT" as sys
+participant "Moteur\nClassif" as moteur
+participant "Contrôle\nRisques" as risques  
+participant "Gestionnaire\nRisques" as gest_risk
+participant "Gestionnaire\nCommercial" as gest_com
+participant "Validation\nN+1" as n1
+participant "Comité\nRisques" as comite
+
+== Proposition de Changement ==
+sys -> moteur : Déclencher réévaluation
+activate moteur
+moteur -> moteur : Calculer nouveau score
+moteur -> moteur : Déterminer nouvelle catégorie
+
+alt Changement mineur (même niveau risque)
+    moteur -> sys : Auto-validation
+    note right : VIP -> PREMIUM\nParticulier -> Micro-entreprise
+else Changement significatif
+    moteur -> risques : Valider changement
+    activate risques
+    
+    == Analyse des Risques ==
+    risques -> risques : Analyser impact\nfinancier
+    risques -> risques : Évaluer exposition\nréglementaire
+    
+    alt Impact faible (<50K€)
+        risques -> gest_risk : Demander validation
+        activate gest_risk
+        gest_risk -> gest_risk : Évaluer dossier
+        gest_risk -> risques : Décision
+        deactivate gest_risk
+        
+    else Impact moyen (50K-500K€)
+        risques -> gest_com : Avis commercial
+        activate gest_com
+        gest_com -> gest_com : Évaluer relation\nclient
+        gest_com -> risques : Avis favorable/défavorable
+        deactivate gest_com
+        
+        risques -> n1 : Demander validation N+1
+        activate n1
+        n1 -> n1 : Évaluer impacts\nglobaux
+        n1 -> risques : Décision finale
+        deactivate n1
+        
+    else Impact élevé (>500K€)
+        risques -> comite : Présenter au comité
+        activate comite
+        
+        note over comite : Réunion hebdomadaire\nAnalyse collégiale
+        
+        comite -> comite : Étudier dossier\ncomplet
+        comite -> comite : Voter décision
+        comite -> risques : Décision comité
+        deactivate comite
+    end
+    
+    == Finalisation ==
+    alt Validation accordée
+        risques -> moteur : Approuver changement
+        moteur -> sys : Appliquer nouvelle catégorie
+        sys -> sys : Tracer historique\nvalidation
+        
+    else Validation refusée
+        risques -> moteur : Refuser changement
+        moteur -> sys : Maintenir catégorie\nactuelle
+        sys -> sys : Tracer refus\net motifs
+        
+    else Validation conditionnelle
+        risques -> moteur : Conditions à remplir
+        moteur -> sys : Créer plan\nd'action
+        sys -> sys : Programmer\nnouvelle évaluation
+    end
+    
+    deactivate risques
+end
+
+deactivate moteur
+
+== Notifications ==
+sys -> gest_com : Notifier décision
+sys -> gest_risk : Notifier changement
+sys -> sys : Mettre à jour\ntableau de bord
+
+@enduml

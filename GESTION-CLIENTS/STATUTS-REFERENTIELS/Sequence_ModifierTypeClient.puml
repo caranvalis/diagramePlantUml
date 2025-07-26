@@ -1,0 +1,128 @@
+@startuml Sequence_ModifierTypeClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Modifier un Type de Client
+
+participant "Admin\nSystème" as admin
+participant "Interface\nTypes" as ui
+participant "Contrôleur\nType" as ctrl
+participant "Analyseur\nImpact" as impact
+participant "Service\nMigration" as migration
+participant "Validateur\nRègles" as valid
+participant "Base\nDonnées" as bdd
+participant "Cache\nRéférentiel" as cache
+
+== Sélection Type ==
+admin -> ui : Modifier type client
+activate ui
+ui -> admin : Liste types existants
+admin -> ui : Sélectionner type à modifier
+ui -> ctrl : Charger type sélectionné
+activate ctrl
+ctrl -> bdd : Récupérer configuration actuelle
+activate bdd
+bdd -> ctrl : Paramètres type client
+deactivate bdd
+ctrl -> ui : Formulaire pré-rempli
+ui -> admin : Afficher configuration actuelle
+
+== Modification Paramètres ==
+admin -> ui : Modifier caractéristiques
+note right : Libellé, description,\nrègles métier, produits\nautorisés, validations
+
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler cohérence
+activate valid
+valid -> valid : Vérifier impact hiérarchie types
+valid -> valid : Contrôler règles métier
+valid -> valid : Valider compatibilités produits
+valid -> ctrl : Modifications cohérentes
+deactivate valid
+
+== Analyse d'Impact ==
+ctrl -> impact : Analyser impact changements
+activate impact
+impact -> bdd : Compter clients utilisant ce type
+activate bdd
+bdd -> impact : Nombre clients affectés
+deactivate bdd
+
+impact -> impact : Évaluer impact fonctionnel
+impact -> impact : Calculer effort migration
+impact -> impact : Identifier risques
+
+alt Impact majeur (>500 clients)
+    impact -> ctrl : Validation N+2 requise
+    ctrl -> ui : Escalader validation
+    ui -> admin : Attendre approbation hiérarchique
+else Impact modéré (100-500 clients)
+    impact -> ctrl : Validation N+1 requise
+    ctrl -> ui : Demander validation superviseur
+else Impact mineur (<100 clients)
+    impact -> ctrl : Modification autorisée
+    deactivate impact
+    
+    == Plan de Migration ==
+    ctrl -> migration : Préparer migration clients
+    activate migration
+    migration -> bdd : Identifier clients concernés
+    activate bdd
+    bdd -> migration : Liste clients à migrer
+    deactivate bdd
+    
+    migration -> migration : Définir plan migration
+    migration -> migration : Préparer communications
+    migration -> ctrl : Plan migration validé
+    deactivate migration
+    
+    == Application Modifications ==
+    ctrl -> bdd : Mettre à jour type client
+    activate bdd
+    bdd -> bdd : Sauvegarder nouveaux paramètres
+    bdd -> bdd : Historiser modifications
+    bdd -> bdd : Tracer changements
+    bdd -> ctrl : Type mis à jour
+    deactivate bdd
+    
+    == Migration Clients ==
+    ctrl -> migration : Exécuter migration
+    activate migration
+    
+    loop Pour chaque client affecté
+        migration -> bdd : Appliquer nouvelles règles
+        migration -> bdd : Recalculer éligibilités produits
+        migration -> bdd : Notifier changements
+    end
+    
+    migration -> ctrl : Migration terminée
+    deactivate migration
+    
+    == Actualisation Système ==
+    ctrl -> cache : Invalider cache types
+    activate cache
+    cache -> cache : Recharger types modifiés
+    cache -> cache : Actualiser règles validation
+    cache -> ctrl : Cache actualisé
+    deactivate cache
+    
+    == Notification ==
+    ctrl -> ui : Modification appliquée
+    ui -> admin : Confirmation modification
+    note right : Type client mis à jour\nClients migrés\nSystème actualisé
+end
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Type client modifié avec\nmigration automatique et\nvalidation des impacts
+
+@enduml

@@ -1,0 +1,112 @@
+@startuml EFC04_TraitementUrgent
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC04 - Traitement Prioritaire et Urgent
+
+package "Détection Urgence" {
+  component [Analyseur Urgence] as AnalyseurUrg
+  component [Classificateur Priorité] as ClassifPrio
+  component [Détecteur Mots-Clés] as MotsCles
+}
+
+package "Traitement Express" {
+  component [File Prioritaire] as FilePrio
+  component [Affectation Urgente] as AffectUrg
+  component [Escalade Automatique] as Escalade
+}
+
+package "Monitoring Temps Réel" {
+  component [Chronomètre SLA] as Chrono
+  component [Alertes Automatiques] as Alertes
+  component [Dashboard Urgences] as Dashboard
+}
+
+' Flux urgence
+AnalyseurUrg --> ClassifPrio : évaluation
+ClassifPrio --> MotsCles : analyse contenu
+MotsCles --> FilePrio : priorisation
+FilePrio --> AffectUrg : assignment
+AffectUrg --> Escalade : [délais dépassés]
+Chrono --> Alertes : surveillance SLA
+Alertes --> Dashboard : visualisation
+
+note right of AnalyseurUrg
+**Détection Automatique:**
+- Mots-clés d'urgence
+- Expéditeurs prioritaires
+- Mentions légales
+- Échéances critiques
+
+**Critères Urgence:**
+- Opposition/Fraude
+- Mise en demeure
+- Autorités de contrôle
+- Réclamations graves
+end note
+
+note right of FilePrio
+**Gestion Priorités:**
+- File CRITIQUE (0-2h)
+- File URGENT (2-4h)
+- File IMPORTANT (4-24h)
+- File NORMAL (24-72h)
+
+**SLA par Priorité:**
+- Critique: 30 min
+- Urgent: 2 heures
+- Important: 1 jour
+- Normal: 3 jours
+end note
+
+@enduml
+skinparam actorStyle awesome
+skinparam usecase {
+  ArrowColor #1976D2
+  BorderColor #1976D2
+}
+left to right direction
+
+title EFC04 - Supervision & Reporting des courriers
+
+actor "Manager" as MGR
+actor "Utilisateur" as U
+actor "Administrateur" as ADM
+
+rectangle "Supervision & Reporting" {
+  usecase "Dashboard en temps réel\n(indicateurs clés)" as UC20
+  usecase "Fiches de suivi par courrier" as UC21
+  usecase "Statistiques détaillées" as UC22
+  usecase "Alertes sur retards/anomalies" as UC23
+  usecase "Rapports personnalisés\n(PDF, Excel, CSV)" as UC24
+}
+
+MGR --> UC20
+MGR --> UC22
+MGR --> UC24
+U --> UC21
+ADM --> UC23
+
+' ========================================
+' NOTES EXPLICATIVES
+' ========================================
+note top of UC20 : Tableau de bord avec indicateurs clés en temps réel
+note right of UC21 : Suivi détaillé de chaque courrier traité
+note left of UC22 : Statistiques avancées sur les flux de courriers
+note bottom of UC23 : Alertes automatiques sur retards ou anomalies
+note right of UC24 : Génération de rapports personnalisés (PDF, Excel, CSV)
+
+@enduml

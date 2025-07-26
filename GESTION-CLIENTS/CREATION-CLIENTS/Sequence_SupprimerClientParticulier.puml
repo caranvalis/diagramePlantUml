@@ -1,0 +1,127 @@
+@startuml Sequence_SupprimerClientParticulier
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Client Particulier
+
+participant "Agent" as agent
+participant "Interface\nClient" as ui
+participant "Contrôleur\nSuppression" as ctrl
+participant "Analyseur\nDépendances" as dep
+participant "Service\nComptes" as comptes
+participant "Service\nArchivage" as arch
+participant "GED" as ged
+participant "Base\nDonnées" as bdd
+
+== Sélection Client ==
+agent -> ui : Supprimer client particulier
+activate ui
+ui -> agent : Rechercher client
+agent -> ui : Sélectionner client
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse des Dépendances ==
+ctrl -> dep : Analyser dépendances client
+activate dep
+dep -> comptes : Vérifier comptes actifs
+activate comptes
+comptes -> comptes : Lister comptes ouverts
+comptes -> comptes : Contrôler soldes
+comptes -> dep : Comptes trouvés
+deactivate comptes
+
+dep -> bdd : Vérifier autres liaisons
+activate bdd
+bdd -> dep : Mandats, procurations, tiers
+deactivate bdd
+
+dep -> dep : Analyser impact suppression
+
+alt Comptes actifs ou soldes non nuls
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - comptes actifs
+    ui -> agent : Clôturer comptes d'abord
+    note right : Lister comptes à clôturer\navec soldes
+    
+else Mandats/procurations actifs
+    dep -> ctrl : Suppression bloquée
+    ctrl -> ui : Impossible - mandats actifs
+    ui -> agent : Révoquer mandats d'abord
+    
+else Aucune dépendance bloquante
+    dep -> ctrl : Suppression autorisée
+    deactivate dep
+    
+    == Validation Suppression ==
+    ctrl -> ctrl : Contrôler autorisations agent
+    ctrl -> ctrl : Vérifier période rétention légale
+    
+    alt Période rétention non écoulée
+        ctrl -> ui : Archivage seulement
+        ui -> agent : Client archivé (non supprimé)
+    else Suppression autorisée
+        == Confirmation Agent ==
+        ctrl -> ui : Demander confirmation
+        ui -> agent : Confirmer suppression définitive
+        note right : "Action irréversible\nDonnées seront archivées"
+        
+        agent -> ui : Confirmer suppression
+        ui -> ctrl : Suppression confirmée
+        
+        == Archivage Documents ==
+        ctrl -> ged : Archiver documents client
+        activate ged
+        ged -> ged : Récupérer tous documents
+        ged -> arch : Créer archive client
+        activate arch
+        arch -> arch : Compresser documents
+        arch -> arch : Chiffrer archive
+        arch -> arch : Horodater archivage
+        arch -> ged : Archive créée
+        deactivate arch
+        ged -> ctrl : Documents archivés
+        deactivate ged
+        
+        == Anonymisation Données ==
+        ctrl -> bdd : Anonymiser données personnelles
+        activate bdd
+        bdd -> bdd : Remplacer données sensibles
+        bdd -> bdd : Conserver ID pour traçabilité
+        bdd -> bdd : Marquer statut SUPPRIME
+        bdd -> bdd : Dater suppression
+        bdd -> bdd : Tracer agent suppresseur
+        bdd -> ctrl : Client anonymisé
+        deactivate bdd
+        
+        == Nettoyage Système ==
+        ctrl -> ctrl : Supprimer données biométriques
+        ctrl -> ctrl : Invalider sessions actives
+        ctrl -> ctrl : Nettoyer caches
+        
+        == Notification ==
+        ctrl -> ui : Suppression réussie
+        ui -> agent : Client supprimé
+        note right : Données anonymisées\nDocuments archivés\nTraçabilité conservée
+    end
+end
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> agent : Rapport avec détails
+note right : Date suppression\nArchives créées\nDonnées anonymisées
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Client particulier supprimé\nde manière sécurisée avec\narchivage et anonymisation
+
+@enduml

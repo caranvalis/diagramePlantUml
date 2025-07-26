@@ -1,0 +1,99 @@
+@startuml UC_Global_GestionSecteurs
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Gestion Secteurs d'Activité - Vue Globale
+
+left to right direction
+
+actor "GFC" as G
+actor "Conformité" as C
+actor "Risques" as R
+actor "DA" as D
+
+rectangle "Système Gestion Secteurs" {
+  
+  package "Référentiel Secteurs" {
+    usecase "Créer\nSecteur" as UC1
+    usecase "Modifier\nSecteur" as UC2
+    usecase "Hiérarchiser\nSecteurs" as UC3
+    usecase "Définir\nRisques" as UC4
+  }
+  
+  package "Classification Client" {
+    usecase "Attribuer\nSecteur" as UC5
+    usecase "Reclasser\nClient" as UC6
+    usecase "Valider\nCohérence" as UC7
+    usecase "Détecter\nIncohérences" as UC8
+  }
+  
+  package "Contrôles Sectoriels" {
+    usecase "Évaluer\nRisque" as UC9
+    usecase "Appliquer\nRestrictions" as UC10
+    usecase "Surveiller\nSecteurs" as UC11
+    usecase "Générer\nAlertes" as UC12
+  }
+  
+  package "Reporting" {
+    usecase "Analyser\nRépartition" as UC13
+    usecase "Suivre\nÉvolution" as UC14
+    usecase "Audit\nSectoriel" as UC15
+  }
+}
+
+' Relations
+G --> UC5
+G --> UC6
+G --> UC7
+
+C --> UC1
+C --> UC2
+C --> UC4
+C --> UC9
+C --> UC11
+
+R --> UC4
+R --> UC9
+R --> UC10
+R --> UC12
+
+D --> UC8
+D --> UC10
+D --> UC15
+
+' Inclusions
+UC5 .> UC9 : <<include>>
+UC6 .> UC7 : <<include>>
+UC9 .> UC10 : <<include>>
+UC11 .> UC12 : <<include>>
+
+note right of UC4
+**Niveaux Risque:**
+Minimal, Modéré,
+Élevé, Critique
+end note
+
+note bottom of UC10
+**Types Restrictions:**
+Montants, services,
+géographie, fréquence
+end note
+
+note left of UC11
+**Surveillance:**
+Temps réel,
+seuils configurables
+end note
+
+@enduml

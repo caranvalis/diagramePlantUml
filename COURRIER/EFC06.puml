@@ -1,0 +1,133 @@
+@startuml EFC06_MonitoringReporting
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC06 - Monitoring et Reporting
+
+package "Collecte Métriques" {
+  component [Collecteur Performances] as Collecteur
+  component [Analyseur SLA] as AnalyseurSLA
+  component [Traçabilité Actions] as Trace
+}
+
+package "Tableaux de Bord" {
+  component [Dashboard Opérationnel] as DashOps
+  component [Dashboard Managérial] as DashMgmt
+  component [Alertes Temps Réel] as AlertesTR
+}
+
+package "Reporting Automatisé" {
+  component [Générateur Rapports] as GenRapport
+  component [Planificateur] as Planif
+  component [Exportateur] as Export
+}
+
+package "Stockage Analytics" {
+  database [Métriques Historiques] as DBMetriques
+  database [Logs Système] as DBLogs
+  database [KPIs Métier] as DBKPI
+}
+
+' Flux de données
+Collecteur --> DBMetriques : stockage
+AnalyseurSLA --> DBKPI : calculs
+Trace --> DBLogs : événements
+DashOps --> DBMetriques : visualisation
+DashMgmt --> DBKPI : indicateurs
+AlertesTR --> DBLogs : surveillance
+GenRapport --> DBKPI : données
+Planif --> GenRapport : automatisation
+Export --> GenRapport : diffusion
+
+note right of Collecteur
+**Métriques Collectées:**
+- Volume courrier traité
+- Temps de traitement moyen
+- Taux d'erreur OCR
+- Performance agents
+- Charge système
+
+**Fréquence:**
+- Temps réel (1 seconde)
+- Agrégation (1 minute)
+- Consolidation (1 heure)
+- Archivage (1 jour)
+end note
+
+note right of DashOps
+**Dashboard Opérationnel:**
+- Files d'attente en temps réel
+- Alertes et incidents
+- Performance OCR
+- Statut des intégrations
+
+**Utilisateurs:**
+- Superviseurs
+- Agents de traitement
+- Support technique
+- Administrateurs système
+end note
+
+note right of GenRapport
+**Rapports Automatiques:**
+- Quotidien: Activité jour
+- Hebdomadaire: Tendances
+- Mensuel: Bilan complet
+- Trimestriel: Analyse performance
+
+**Formats de sortie:**
+- PDF exécutif
+- Excel détaillé
+- Dashboard web
+- API JSON
+end note
+
+@enduml
+skinparam actorStyle awesome
+skinparam usecase {
+  ArrowColor #1976D2
+  BorderColor #1976D2
+}
+left to right direction
+
+title EFC06 - Intégration SI & BI des courriers
+
+actor "SI Bancaire" as SI
+actor "Utilisateur" as U
+actor "Administrateur" as ADM
+actor "Outil BI" as BI
+
+rectangle "Intégration SI & BI" {
+  usecase "Rattachement courrier\nà client/compte bancaire" as UC30
+  usecase "Envoi de notifications\net alertes automatiques" as UC31
+  usecase "Accès aux données\npour analyses BI" as UC32
+  usecase "Partage sécurisé\nvia liens temporaires" as UC33
+}
+
+SI --> UC30
+U --> UC31
+BI --> UC32
+ADM --> UC33
+
+' ========================================
+' NOTES EXPLICATIVES
+' ========================================
+note top of UC30 : Association automatique des courriers aux clients ou comptes bancaires
+note right of UC31 : Notifications et alertes envoyées aux utilisateurs concernés
+note left of UC32 : Accès sécurisé aux données pour analyses décisionnelles
+note bottom of UC33 : Partage sécurisé via liens temporaires pour consultation externe
+
+@enduml

@@ -1,0 +1,184 @@
+@startuml Sequence_SupprimerCompte
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Compte
+
+participant "Gestionnaire\nComptes" as admin
+participant "Interface\nComptes" as ui
+participant "Contrôleur\nCompte" as ctrl
+participant "Validateur\nMétier" as valid
+participant "Moteur\nSoldes" as solde
+participant "Service\nClôture" as closure
+participant "Gestionnaire\nArchives" as archive
+participant "Base\nDonnées" as bdd
+
+== Sélection Compte ==
+admin -> ui : Supprimer compte
+activate ui
+ui -> admin : Liste comptes clients
+admin -> ui : Sélectionner compte à supprimer
+ui -> ctrl : Demander suppression compte
+activate ctrl
+
+== Contrôle Statut Compte ==
+ctrl -> valid : Valider éligibilité suppression
+activate valid
+valid -> bdd : Récupérer statut compte
+activate bdd
+bdd -> valid : Statut + type + restrictions
+deactivate bdd
+
+valid -> valid : Contrôler statut actuel
+valid -> valid : Vérifier restrictions légales
+valid -> valid : Analyser obligations réglementaires
+
+alt Compte non éligible suppression
+    valid -> ctrl : Suppression impossible
+    ctrl -> ui : Compte non supprimable
+    ui -> admin : Statut compte incompatible
+    note right : "Compte sous séquestre,\nsaisi ou avec restrictions"
+    deactivate valid
+    deactivate ctrl
+    deactivate ui
+else Compte éligible
+    valid -> ctrl : Suppression autorisée
+    deactivate valid
+end
+
+== Vérification Soldes ==
+ctrl -> solde : Analyser soldes compte
+activate solde
+solde -> bdd : Récupérer soldes toutes devises
+activate bdd
+bdd -> solde : Soldes comptables + disponibles
+deactivate bdd
+
+solde -> solde : Calculer solde global
+solde -> solde : Contrôler mouvements en cours
+solde -> solde : Vérifier opérations pendantes
+
+alt Solde non nul
+    solde -> ctrl : Compte a un solde
+    ctrl -> ui : Solde compte non nul
+    ui -> admin : Virement ou clôture requis
+    note right : "Solde : X EUR\nVirement nécessaire"
+    
+    admin -> ui : Choisir action solde
+    ui -> admin : Options : Virer / Clôturer
+    
+    alt Virer solde
+        admin -> ui : Effectuer virement solde
+        ui -> solde : Interface virement
+        solde -> solde : Préparer virement clôture
+        solde -> bdd : Exécuter virement
+        activate bdd
+        bdd -> solde : Virement effectué
+        deactivate bdd
+        solde -> ctrl : Solde viré
+    else Clôture avec solde
+        admin -> ui : Clôturer avec solde restant
+        ui -> closure : Procédure clôture
+        activate closure
+        closure -> closure : Traiter solde résiduel
+        closure -> ctrl : Clôture préparée
+        deactivate closure
+    end
+    
+else Solde nul
+    solde -> ctrl : Compte soldé
+    deactivate solde
+end
+
+== Contrôle Opérations ==
+ctrl -> ctrl : Vérifier opérations en cours
+alt Opérations pendantes
+    ctrl -> ui : Opérations en cours détectées
+    ui -> admin : Finaliser opérations avant suppression
+    note right : "X opérations en cours\nsur ce compte"
+    
+    admin -> ui : Attendre fin opérations
+    ui -> ctrl : Surveiller finalisation
+    ctrl -> ctrl : Attendre fin opérations
+end
+
+== Validation Réglementaire ==
+ctrl -> ctrl : Contrôler obligations conservation
+alt Délai conservation non respecté
+    ctrl -> ui : Délai conservation obligatoire
+    ui -> admin : Compte non supprimable avant délai
+    note right : "Conservation obligatoire\njusqu'au JJ/MM/AAAA"
+    deactivate ctrl
+    deactivate ui
+end
+
+== Confirmation Admin ==
+ctrl -> ui : Demander confirmation finale
+ui -> admin : Confirmer suppression définitive
+note right : "Supprimer compte définitivement ?\nToutes données seront archivées"
+
+admin -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Archivage Complet ==
+ctrl -> archive : Archiver compte complet
+activate archive
+archive -> bdd : Récupérer historique complet
+activate bdd
+bdd -> archive : Mouvements + opérations + documents
+deactivate bdd
+
+archive -> archive : Créer archive réglementaire
+archive -> archive : Compresser historique
+archive -> archive : Chiffrer données sensibles
+archive -> archive : Horodater suppression
+archive -> archive : Générer empreinte archive
+archive -> ctrl : Compte archivé
+deactivate archive
+
+== Suppression Cascade ==
+ctrl -> bdd : Supprimer compte et dépendances
+activate bdd
+bdd -> bdd : Marquer compte supprimé
+bdd -> bdd : Date suppression
+bdd -> bdd : Supprimer RIB associés
+bdd -> bdd : Purger autorisations
+bdd -> bdd : Désactiver cartes liées
+bdd -> bdd : Clôturer services associés
+bdd -> bdd : Tracer suppression audit
+bdd -> ctrl : Compte supprimé
+deactivate bdd
+
+== Notification Services ==
+ctrl -> ctrl : Notifier services impactés
+ctrl -> ctrl : Désactiver alertes compte
+ctrl -> ctrl : Purger cache compte
+
+== Notification Client ==
+ctrl -> ctrl : Préparer notification client
+ctrl -> ctrl : Générer attestation suppression
+
+== Finalisation ==
+ctrl -> ui : Suppression réussie
+ui -> admin : Compte supprimé avec succès
+note right : Compte supprimé\nArchive créée\nServices notifiés
+
+== Rapport Suppression ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec détails archivage
+note right : Compte supprimé\nArchivage réglementaire\nNotifications effectuées
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Compte supprimé\navec archivage complet\net conformité réglementaire
+
+@enduml

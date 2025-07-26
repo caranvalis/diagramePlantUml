@@ -1,0 +1,102 @@
+@startuml UC_Global_GestionCategories
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam usecase {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Gestion Catégories Internes - Vue Globale
+
+left to right direction
+
+actor "GFC" as G
+actor "Commercial" as CO
+actor "Conformité" as C
+actor "Direction" as D
+
+rectangle "Système Gestion Catégories" {
+  
+  package "Référentiel" {
+    usecase "Créer\nCatégorie" as UC1
+    usecase "Modifier\nCatégorie" as UC2
+    usecase "Hiérarchiser\nCatégories" as UC3
+    usecase "Définir\nPolitiques" as UC4
+  }
+  
+  package "Classification" {
+    usecase "Attribuer\nCatégorie" as UC5
+    usecase "Reclasser\nClient" as UC6
+    usecase "Calculer\nCatégorie Auto" as UC7
+    usecase "Valider\nChangement" as UC8
+  }
+  
+  package "Application" {
+    usecase "Appliquer\nTarification" as UC9
+    usecase "Contrôler\nServices" as UC10
+    usecase "Gérer\nLimites" as UC11
+    usecase "Configurer\nNiveau Service" as UC12
+  }
+  
+  package "Pilotage" {
+    usecase "Analyser\nRépartition" as UC13
+    usecase "Suivre\nMigrations" as UC14
+    usecase "Optimiser\nPortefeuille" as UC15
+    usecase "Reporting\nCatégoriel" as UC16
+  }
+}
+
+' Relations
+G --> UC5
+G --> UC6
+G --> UC8
+
+CO --> UC6
+CO --> UC9
+CO --> UC12
+CO --> UC15
+
+C --> UC1
+C --> UC2
+C --> UC8
+C --> UC13
+
+D --> UC3
+D --> UC4
+D --> UC14
+D --> UC16
+
+' Inclusions
+UC5 .> UC7 : <<include>>
+UC6 .> UC8 : <<include>>
+UC8 .> UC9 : <<include>>
+UC8 .> UC10 : <<include>>
+UC8 .> UC11 : <<include>>
+
+note right of UC7
+**Classification Auto:**
+CA, secteur, ancienneté,
+comportement, potentiel
+end note
+
+note bottom of UC9
+**Tarification:**
+Grilles par catégorie,
+conditions préférentielles,
+remises négociées
+end note
+
+note left of UC15
+**Optimisation:**
+Montée en gamme,
+rétention, développement
+end note
+
+@enduml

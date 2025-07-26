@@ -1,0 +1,134 @@
+@startuml EFC02_RoutageIntelligent
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title EFC02 - Routage Intelligent et Classification
+
+package "Analyse Intelligente" {
+  component [Analyseur Contenu] as Analyseur
+  component [Moteur Règles] as Regles
+  component [IA Classification] as IA
+  component [Détecteur Priorité] as Priorite
+}
+
+package "Routage Automatique" {
+  component [Routeur Principal] as Routeur
+  component [Gestionnaire Files] as Files
+  component [Distributeur Charge] as Distrib
+}
+
+package "Bases de Données" {
+  database [Règles Métier] as BDRegles
+  database [Historique Décisions] as BDHisto
+  database [Patterns Reconnaissance] as BDPattern
+}
+
+' Flux principal
+Analyseur --> Regles : contenu analysé
+Regles --> BDRegles : consultation règles
+Regles --> IA : cas complexes
+IA --> BDPattern : apprentissage
+IA --> BDHisto : historique décisions
+Priorite --> Analyseur : évaluation urgence
+Routeur --> Files : attribution service
+Distrib --> Files : équilibrage charge
+
+' Interfaces
+interface "Documents OCR" as InputOCR
+interface "Services Métier" as OutputServices
+
+InputOCR --> Analyseur
+Routeur --> OutputServices
+
+note right of Analyseur
+**Analyse Automatique:**
+- Extraction mots-clés critiques
+- Reconnaissance entités nommées
+- Détection numéros de compte
+- Classification type document
+- Évaluation sentiment/urgence
+
+**Algorithmes:**
+- NLP (Natural Language Processing)
+- Pattern matching avancé
+- Reconnaissance formes
+- Analyse sémantique
+end note
+
+note right of IA
+**Intelligence Artificielle:**
+- Machine Learning supervisé
+- Réseau de neurones
+- Apprentissage continu
+- Auto-amélioration règles
+
+**Performance:**
+- Précision classification: >92%
+- Temps traitement: <2 secondes
+- Amélioration continue
+- Adaptation métier
+end note
+
+@enduml
+skinparam actorStyle awesome
+skinparam usecase {
+  ArrowColor #1976D2
+  BorderColor #1976D2
+}
+left to right direction
+
+title EFC02 - Sécurité & Confidentialité des courriers
+
+actor "Utilisateur autorisé" as UA
+actor "Administrateur" as ADM
+actor "Système d'authentification" as AUTH
+
+rectangle "Sécurité & Confidentialité" {
+  usecase "Authentification forte" as UC1
+  usecase "Verrouillage session inactive" as UC2
+  usecase "Chiffrement des données\n(en transit et au repos)" as UC3
+  usecase "Gestion des droits d’accès\npar rôle et responsabilité" as UC4
+  usecase "Signature électronique\ncourriers sensibles" as UC5
+  usecase "Lien sécurisé temporaire\n(consultation interne/externe)" as UC6
+  usecase "Traçabilité des accès" as UC7
+  usecase "Conformité RGPD\n+ audit régulier" as UC8
+}
+
+UA --> UC1
+UA --> UC2
+UA --> UC4
+UA --> UC6
+
+ADM --> UC3
+ADM --> UC5
+ADM --> UC7
+ADM --> UC8
+
+AUTH --> UC1
+
+' ========================================
+' NOTES EXPLICATIVES (positions variées)
+' ========================================
+note top of UC1 : Double facteur, mot de passe fort ou biométrie
+note left of UC2 : Sécurité contre l'accès non autorisé
+note right of UC3 : Chiffrement AES/SSL des données sensibles
+note bottom of UC4 : Accès restreint selon le profil utilisateur
+note top of UC5 : Signature électronique pour garantir l'intégrité
+note left of UC6 : Lien temporaire sécurisé pour consultation
+note right of UC7 : Journalisation complète des accès et actions
+note bottom of UC8 : Respect du RGPD et audits périodiques
+
+@enduml

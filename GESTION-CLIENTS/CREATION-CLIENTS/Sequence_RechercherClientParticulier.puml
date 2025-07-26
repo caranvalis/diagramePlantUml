@@ -1,0 +1,136 @@
+@startuml Sequence_RechercherClientParticulier
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Rechercher un Client Particulier
+
+participant "Utilisateur" as user
+participant "Interface\nRecherche" as ui
+participant "Contrôleur\nRecherche" as ctrl
+participant "Moteur\nRecherche" as search
+participant "Service\nKYC" as kyc
+participant "Analyseur\nDroits" as rights
+participant "Base\nDonnées" as bdd
+
+== Saisie Critères ==
+user -> ui : Rechercher client particulier
+activate ui
+ui -> user : Interface critères recherche
+user -> ui : Saisir critères (nom, prénom, date naissance, etc.)
+ui -> ctrl : Lancer recherche
+activate ctrl
+
+== Validation Droits ==
+ctrl -> rights : Vérifier droits consultation
+activate rights
+rights -> rights : Contrôler autorisations utilisateur
+rights -> rights : Analyser niveau accès données
+
+alt Droits insuffisants
+    rights -> ctrl : Accès refusé
+    ctrl -> ui : Droits insuffisants
+    ui -> user : Recherche non autorisée
+    note right : "Vous n'avez pas les droits\npour cette recherche"
+    deactivate rights
+    deactivate ctrl
+    deactivate ui
+else Droits validés
+    rights -> ctrl : Recherche autorisée
+    deactivate rights
+end
+
+== Recherche Multicritères ==
+ctrl -> search : Rechercher avec critères
+activate search
+search -> bdd : Requête multicritères
+activate bdd
+bdd -> bdd : Recherche par nom/prénom
+bdd -> bdd : Filtrer par date naissance
+bdd -> bdd : Contrôler pièces identité
+bdd -> bdd : Analyser adresses
+bdd -> search : Résultats correspondants
+deactivate bdd
+
+search -> search : Scorer pertinence résultats
+search -> search : Éliminer doublons
+search -> search : Appliquer filtres sécurité
+
+alt Aucun résultat
+    search -> ctrl : Aucun client trouvé
+    ctrl -> ui : Recherche infructueuse
+    ui -> user : Aucun client correspondant
+    note right : "Aucun client trouvé\navec ces critères"
+    deactivate search
+else Résultats trouvés
+    search -> ctrl : X clients trouvés
+    deactivate search
+end
+
+== Validation KYC ==
+ctrl -> kyc : Contrôler statut KYC résultats
+activate kyc
+kyc -> kyc : Vérifier validité KYC
+kyc -> kyc : Contrôler alertes actives
+kyc -> kyc : Analyser restrictions consultation
+
+kyc -> ctrl : Statuts KYC validés
+deactivate kyc
+
+== Formatage Résultats ==
+ctrl -> ctrl : Anonymiser données sensibles
+ctrl -> ctrl : Appliquer masquage selon droits
+ctrl -> ctrl : Formater pour affichage
+
+== Affichage Résultats ==
+ctrl -> ui : Résultats formatés
+ui -> user : Liste clients trouvés
+note right : "X clients trouvés\nInformations selon vos droits"
+
+== Actions Disponibles ==
+user -> ui : Sélectionner client
+ui -> ctrl : Demander détails client
+ctrl -> rights : Vérifier droits détail
+activate rights
+rights -> ctrl : Niveau accès autorisé
+deactivate rights
+
+alt Accès détail autorisé
+    ctrl -> bdd : Récupérer détails complets
+    activate bdd
+    bdd -> ctrl : Informations détaillées
+    deactivate bdd
+    
+    ctrl -> ui : Détails client
+    ui -> user : Fiche client complète
+    note right : "Détails selon vos\nautorisations"
+else Accès détail refusé
+    ctrl -> ui : Accès limité
+    ui -> user : Informations restreintes
+    note right : "Accès limité aux\ninformations de base"
+end
+
+== Historique Recherche ==
+ctrl -> ctrl : Tracer recherche
+ctrl -> bdd : Enregistrer log recherche
+activate bdd
+bdd -> ctrl : Recherche tracée
+deactivate bdd
+
+ctrl -> ui : Recherche terminée
+ui -> user : Résultats affichés
+note right : "Recherche tracée\npour audit"
+
+deactivate ctrl
+deactivate ui
+
+note over user : Client particulier recherché\navec respect des droits\net traçabilité complète
+
+@enduml

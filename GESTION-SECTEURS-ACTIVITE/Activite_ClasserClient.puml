@@ -1,0 +1,86 @@
+@startuml Activite_ClasserClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam activity {
+    StartColor #1976D2
+    EndColor #1976D2
+    BarColor #0D47A1
+    ArrowColor #0D47A1
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 9
+}
+skinparam note FontSize 8
+
+title Classification Client par Secteur d'Activité
+
+|GFC|
+start
+:Saisir informations client;
+note right: Activité déclarée,\nCA, produits/services
+
+|Système|
+:Analyser données saisies;
+:Consulter référentiel secteurs;
+
+|IA Classification|
+:Appliquer algorithmes matching;
+:Proposer secteurs candidats;
+
+if (Match automatique?) then (oui)
+    :Attribuer secteur avec score;
+    
+    |Validation Auto|
+    if (Score > 90%?) then (oui)
+        :Classification automatique;
+    else (non)
+        |GFC|
+        :Valider proposition système;
+        
+        if (Validé?) then (oui)
+            :Confirmer secteur;
+        else (non)
+            :Sélectionner secteur manuel;
+        endif
+    endif
+    
+else (non)
+    |GFC|
+    :Rechercher secteur approprié;
+    :Sélectionner dans liste;
+endif
+
+|Contrôles Risque|
+:Évaluer niveau risque secteur;
+
+if (Secteur sensible?) then (oui)
+    |Conformité|
+    :Valider classification;
+    :Demander justifications;
+    
+    if (Justifications OK?) then (oui)
+        :Approuver avec restrictions;
+    else (non)
+        |GFC|
+        :Revoir classification;
+    endif
+    
+else (non)
+    :Appliquer règles standard;
+endif
+
+|Système|
+:Enregistrer classification;
+:Calculer profil risque global;
+:Appliquer restrictions sectorielles;
+
+|Notifications|
+:Notifier équipes concernées;
+:Créer tâches de suivi si nécessaire;
+
+|GFC|
+:Recevoir confirmation;
+
+stop
+
+@enduml

@@ -1,0 +1,172 @@
+@startuml Sequence_GestionActionnaires
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Actionnaires
+
+participant "Agent" as agent
+participant "Interface\nActionnaires" as ui
+participant "Contrôleur\nActionnaire" as ctrl
+participant "Service\nEntreprise" as entreprise
+participant "Validateur\nCapital" as valid
+participant "Service\nBénéficiaires" as benef
+participant "Base\nDonnées" as bdd
+
+== Ajouter Actionnaire ==
+agent -> ui : Ajouter nouvel actionnaire
+activate ui
+ui -> agent : Sélectionner entreprise
+agent -> ui : Entreprise sélectionnée
+ui -> ctrl : Charger structure capitalistique
+activate ctrl
+ctrl -> entreprise : Récupérer données entreprise
+activate entreprise
+entreprise -> ctrl : Informations société
+deactivate entreprise
+
+== Saisie Actionnaire ==
+ctrl -> ui : Formulaire actionnaire
+ui -> agent : Saisir données actionnaire
+note right : Nom/Raison sociale\nType (PP/PM)\nPourcentage détenu\nNature participation
+
+agent -> ui : Confirmer saisie
+ui -> ctrl : Valider actionnaire
+ctrl -> valid : Contrôler cohérence
+activate valid
+valid -> valid : Vérifier pourcentages totaux
+valid -> valid : Contrôler limites légales
+valid -> valid : Valider nature participation
+
+alt Total > 100%
+    valid -> ctrl : Répartition incohérente
+    ctrl -> ui : Erreur répartition capital
+    ui -> agent : Ajuster pourcentages
+else Total cohérent
+    valid -> ctrl : Actionnaire validé
+    deactivate valid
+    
+    == Vérification Bénéficiaires Effectifs ==
+    ctrl -> benef : Analyser bénéficiaires effectifs
+    activate benef
+    benef -> benef : Calculer contrôle indirect
+    benef -> benef : Identifier personnes physiques ultimes
+    benef -> benef : Vérifier seuils réglementaires
+    benef -> ctrl : Analyse bénéficiaires
+    deactivate benef
+    
+    == Enregistrement ==
+    ctrl -> bdd : Créer actionnaire
+    activate bdd
+    bdd -> bdd : Générer ID actionnaire
+    bdd -> bdd : Lier à l'entreprise
+    bdd -> bdd : Sauvegarder pourcentages
+    bdd -> bdd : Enregistrer bénéficiaires effectifs
+    bdd -> bdd : Tracer ajout
+    bdd -> ctrl : Actionnaire créé
+    deactivate bdd
+end
+
+== Modifier Actionnaire ==
+agent -> ui : Modifier actionnaire existant
+ui -> ctrl : Charger actionnaire
+ctrl -> bdd : Récupérer données actuelles
+activate bdd
+bdd -> ctrl : Informations actionnaire
+deactivate bdd
+
+agent -> ui : Modifier informations
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler nouveaux pourcentages
+activate valid
+valid -> bdd : Récupérer autres actionnaires
+activate bdd
+bdd -> valid : Structure capitalistique
+deactivate bdd
+valid -> valid : Recalculer répartition totale
+
+alt Modification majeure (>10%)
+    valid -> ctrl : Validation hiérarchique
+    ctrl -> ui : Escalader validation
+else Modification mineure
+    valid -> ctrl : Modification autorisée
+    ctrl -> bdd : Mettre à jour actionnaire
+    activate bdd
+    bdd -> bdd : Historiser changement
+    bdd -> bdd : Recalculer bénéficiaires effectifs
+    bdd -> ctrl : Actionnaire mis à jour
+    deactivate bdd
+end
+deactivate valid
+
+== Supprimer Actionnaire ==
+agent -> ui : Supprimer actionnaire
+ui -> ctrl : Vérifier impact suppression
+ctrl -> valid : Analyser conséquences
+activate valid
+valid -> valid : Vérifier seuils légaux restants
+valid -> valid : Contrôler bénéficiaires effectifs
+
+alt Suppression problématique
+    valid -> ctrl : Suppression non conforme
+    ctrl -> ui : Suppression bloquée
+else Suppression autorisée
+    valid -> ctrl : Suppression validée
+    ctrl -> bdd : Supprimer actionnaire
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> bdd : Recalculer structure
+    bdd -> ctrl : Actionnaire supprimé
+    deactivate bdd
+end
+deactivate valid
+
+== Rechercher Actionnaire ==
+agent -> ui : Rechercher actionnaires
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Filtrer par nom/entreprise
+bdd -> ui : Résultats recherche
+deactivate bdd
+
+== Lier à Entreprise ==
+agent -> ui : Associer actionnaire à entreprise
+ui -> ctrl : Valider association
+ctrl -> entreprise : Vérifier entreprise cible
+activate entreprise
+entreprise -> ctrl : Entreprise validée
+deactivate entreprise
+
+ctrl -> bdd : Créer liaison
+activate bdd
+bdd -> bdd : Enregistrer participation
+bdd -> bdd : Mettre à jour structure
+bdd -> ctrl : Liaison créée
+deactivate bdd
+
+== Lister Comptes Entreprise ==
+agent -> ui : Voir participations actionnaire
+ui -> ctrl : Récupérer participations
+ctrl -> bdd : Lister entreprises liées
+activate bdd
+bdd -> bdd : Récupérer participations
+bdd -> bdd : Calculer totaux
+bdd -> ui : Liste participations
+deactivate bdd
+
+ui -> agent : Afficher portefeuille
+note right : Entreprises détenues\nPourcentages\nMontants investis
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Actionnaires gérés avec\ncontrôle cohérence capital\net bénéficiaires effectifs
+
+@enduml

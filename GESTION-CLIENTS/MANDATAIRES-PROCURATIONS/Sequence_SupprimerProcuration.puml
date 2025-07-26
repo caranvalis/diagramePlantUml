@@ -1,0 +1,167 @@
+@startuml Sequence_SupprimerProcuration
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer une Procuration
+
+participant "Client\nMandant" as client
+participant "Interface\nProcurations" as ui
+participant "Contrôleur\nProcuration" as ctrl
+participant "Validateur\nJuridique" as valid_juridique
+participant "Service\nNotification" as notif
+participant "Contrôleur\nOpérations" as ops
+participant "Base\nDonnées" as bdd
+parameter "Archive\nJuridique" as archive
+
+== Demande Suppression ==
+client -> ui : Supprimer procuration
+activate ui
+ui -> client : Liste procurations actives
+client -> ui : Sélectionner procuration à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Validation Identité ==
+ctrl -> ctrl : Vérifier identité mandant
+ctrl -> ctrl : Contrôler droits suppression
+ctrl -> ctrl : Analyser statut procuration
+
+alt Procuration révoquée/expirée
+    ctrl -> ui : Procuration déjà inactive
+    ui -> client : Procuration non supprimable
+    note right : "Procuration déjà révoquée\nou expirée"
+    deactivate ctrl
+    deactivate ui
+else Procuration active
+    ctrl -> ctrl : Suppression autorisée
+end
+
+== Contrôle Opérations En Cours ==
+ctrl -> ops : Vérifier opérations en cours
+activate ops
+ops -> bdd : Lister opérations utilisant procuration
+activate bdd
+bdd -> ops : Opérations en cours
+deactivate bdd
+
+alt Opérations en cours
+    ops -> ctrl : Opérations bloquantes détectées
+    ctrl -> ui : Opérations en cours avec cette procuration
+    ui -> client : Finaliser opérations avant suppression
+    note right : "X opérations en cours\nutilisent cette procuration"
+    
+    client -> ui : Attendre fin opérations
+    ui -> ops : Surveiller fin opérations
+    ops -> ops : Attendre finalisation
+    ops -> ctrl : Opérations terminées
+    deactivate ops
+else Aucune opération en cours
+    ops -> ctrl : Suppression possible
+    deactivate ops
+end
+
+== Validation Juridique ==
+ctrl -> valid_juridique : Valider suppression juridique
+activate valid_juridique
+valid_juridique -> valid_juridique : Contrôler motifs légaux
+valid_juridique -> valid_juridique : Vérifier procédure révocation
+valid_juridique -> valid_juridique : Analyser impact contrats
+
+alt Révocation irrégulière
+    valid_juridique -> ctrl : Procédure irrégulière
+    ctrl -> ui : Révocation non conforme
+    ui -> client : Procédure juridique incorrecte
+    note right : "Révocation non conforme\nau droit civil"
+    deactivate valid_juridique
+else Révocation conforme
+    valid_juridique -> ctrl : Révocation validée
+    deactivate valid_juridique
+end
+
+== Notification Mandataire ==
+ctrl -> notif : Notifier mandataire révocation
+activate notif
+notif -> notif : Préparer notification officielle
+notif -> notif : Joindre motifs révocation
+notif -> notif : Envoyer notification recommandée
+
+alt Notification mandataire échouée
+    notif -> ctrl : Échec notification
+    ctrl -> ui : Notification mandataire impossible
+    ui -> client : Problème notification mandataire
+    note right : "Impossible de notifier\nle mandataire"
+else Notification réussie
+    notif -> ctrl : Mandataire notifié
+    deactivate notif
+end
+
+== Confirmation Client ==
+ctrl -> ui : Demander confirmation finale
+ui -> client : Confirmer révocation définitive
+note right : "Révoquer procuration définitivement ?\nMandataire sera notifié"
+
+client -> ui : Confirmer révocation
+ui -> ctrl : Révocation confirmée
+
+== Archivage Procuration ==
+ctrl -> archive : Archiver procuration
+activate archive
+archive -> bdd : Récupérer acte procuration
+activate bdd
+bdd -> archive : Acte + historique + opérations
+deactivate bdd
+
+archive -> archive : Créer archive avec motifs
+archive -> archive : Sauvegarder signatures
+archive -> archive : Horodater révocation
+archive -> archive : Joindre notifications
+archive -> ctrl : Procuration archivée
+deactivate archive
+
+== Révocation Officielle ==
+ctrl -> bdd : Révoquer procuration
+activate bdd
+bdd -> bdd : Statut = REVOQUEE
+bdd -> bdd : Date révocation
+bdd -> bdd : Motif révocation
+bdd -> bdd : Bloquer nouveaux usages
+bdd -> bdd : Tracer révocation légale
+bdd -> ctrl : Procuration révoquée
+deactivate bdd
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider autorisations liées
+ctrl -> ctrl : Bloquer accès mandataire
+ctrl -> ctrl : Purger sessions actives
+
+== Notification Finale ==
+ctrl -> notif : Notification révocation effective
+activate notif
+notif -> notif : Notifier mandataire révocation effective
+notif -> notif : Informer services concernés
+notif -> ctrl : Notifications envoyées
+deactivate notif
+
+ctrl -> ui : Révocation réussie
+ui -> client : Procuration révoquée
+note right : Procuration révoquée\nMandataire notifié\nArchive juridique créée
+
+== Rapport Révocation ==
+ctrl -> ui : Générer rapport révocation
+ui -> client : Rapport avec détails juridiques
+note right : Procuration révoquée\nNotifications effectuées\nConformité respectée
+
+deactivate ctrl
+deactivate ui
+
+note over client : Procuration révoquée\navec notification mandataire\net archivage juridique
+
+@enduml

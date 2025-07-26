@@ -1,0 +1,183 @@
+@startuml Sequence_GestionProfilsClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Profils Client
+
+participant "Admin\nSystème" as admin
+participant "Interface\nProfils" as ui
+participant "Contrôleur\nProfil" as ctrl
+participant "Moteur\nSegmentation" as segment
+participant "Analyseur\nComportement" as comportement
+participant "Service\nPersonnalisation" as perso
+participant "Base\nDonnées" as bdd
+participant "Cache\nProfils" as cache
+
+== Ajouter Profil Client ==
+admin -> ui : Créer nouveau profil
+activate ui
+ui -> admin : Formulaire profil
+admin -> ui : Définir caractéristiques profil
+note right : Nom profil, critères\nsegmentation, comportements\ntypes, préférences
+
+== Configuration Segmentation ==
+ui -> ctrl : Valider profil
+activate ctrl
+ctrl -> segment : Configurer critères segmentation
+activate segment
+segment -> ui : Interface critères
+ui -> admin : Définir règles segmentation
+note right : Age, revenus, patrimoine,\nancienneté, géographie,\ncomportement transactionnel
+
+admin -> ui : Confirmer critères
+ui -> segment : Règles définies
+segment -> segment : Valider cohérence règles
+segment -> ctrl : Segmentation configurée
+deactivate segment
+
+== Analyse Comportementale ==
+ctrl -> comportement : Définir patterns comportementaux
+activate comportement
+comportement -> ui : Interface patterns
+ui -> admin : Configurer comportements types
+note right : Fréquence connexions,\ncanaux préférés, produits\nutilisés, horaires activité
+
+admin -> ui : Valider patterns
+ui -> comportement : Patterns définis
+comportement -> comportement : Tester cohérence comportements
+comportement -> ctrl : Patterns validés
+deactivate comportement
+
+== Personnalisation Services ==
+ctrl -> perso : Configurer personnalisation
+activate perso
+perso -> ui : Interface personnalisation
+ui -> admin : Définir adaptations par profil
+note right : Interface utilisateur,\noffres ciblées, communication\npréférée, niveau service
+
+admin -> ui : Confirmer personnalisation
+ui -> perso : Configuration validée
+perso -> ctrl : Personnalisation prête
+deactivate perso
+
+== Enregistrement Profil ==
+ctrl -> bdd : Créer profil client
+activate bdd
+bdd -> bdd : Générer ID profil
+bdd -> bdd : Sauvegarder critères segmentation
+bdd -> bdd : Enregistrer patterns comportementaux
+bdd -> bdd : Sauvegarder personnalisation
+bdd -> bdd : Tracer création
+bdd -> ctrl : Profil créé
+deactivate bdd
+
+ctrl -> cache : Actualiser cache profils
+activate cache
+cache -> cache : Charger nouveau profil
+cache -> ctrl : Cache mis à jour
+deactivate cache
+
+== Modifier Profil Client ==
+admin -> ui : Modifier profil existant
+ui -> ctrl : Charger profil sélectionné
+ctrl -> bdd : Récupérer configuration actuelle
+activate bdd
+bdd -> ctrl : Paramètres profil
+deactivate bdd
+
+admin -> ui : Modifier paramètres
+ui -> ctrl : Valider modifications
+ctrl -> segment : Analyser impact changements
+activate segment
+segment -> bdd : Compter clients affectés
+activate bdd
+bdd -> segment : Nombre clients impactés
+deactivate bdd
+
+alt Impact majeur (>1000 clients)
+    segment -> ctrl : Validation hiérarchique requise
+    ctrl -> ui : Escalader validation
+else Impact modéré
+    segment -> ctrl : Modification autorisée
+    ctrl -> bdd : Appliquer changements
+    activate bdd
+    bdd -> bdd : Mettre à jour profil
+    bdd -> bdd : Recalculer clients affectés
+    bdd -> ctrl : Profil modifié
+    deactivate bdd
+end
+deactivate segment
+
+== Supprimer Profil Client ==
+admin -> ui : Supprimer profil
+ui -> ctrl : Vérifier utilisation
+ctrl -> bdd : Contrôler clients utilisant profil
+activate bdd
+bdd -> ctrl : Clients assignés au profil
+deactivate bdd
+
+alt Profil utilisé
+    ctrl -> ui : Migration clients requise
+    ui -> admin : Réassigner clients avant suppression
+else Profil non utilisé
+    ctrl -> bdd : Supprimer profil
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> ctrl : Profil supprimé
+    deactivate bdd
+    
+    ctrl -> cache : Actualiser cache
+    activate cache
+    cache -> cache : Supprimer profil du cache
+    cache -> ctrl : Cache nettoyé
+    deactivate cache
+end
+
+== Rechercher Profil Client ==
+admin -> ui : Rechercher profils
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Filtrer par critères
+bdd -> ui : Résultats trouvés
+deactivate bdd
+
+== Application Profil ==
+note over ctrl : **Attribution Automatique**
+
+ctrl -> segment : Analyser nouveaux clients
+activate segment
+segment -> bdd : Récupérer clients sans profil
+activate bdd
+bdd -> segment : Clients à analyser
+deactivate bdd
+
+loop Pour chaque client
+    segment -> comportement : Analyser comportement client
+    activate comportement
+    comportement -> comportement : Calculer scores profils
+    comportement -> segment : Profil recommandé
+    deactivate comportement
+    
+    segment -> bdd : Assigner profil au client
+    activate bdd
+    bdd -> segment : Attribution confirmée
+    deactivate bdd
+end
+
+segment -> ctrl : Attribution automatique terminée
+deactivate segment
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Profils clients configurés\navec segmentation automatique\net personnalisation adaptée
+
+@enduml

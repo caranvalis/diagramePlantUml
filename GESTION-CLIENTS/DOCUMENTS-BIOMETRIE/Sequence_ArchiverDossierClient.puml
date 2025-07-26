@@ -1,0 +1,155 @@
+@startuml Sequence_ArchiverDossierClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Archiver un Dossier Client
+
+participant "Gestionnaire\nArchives" as admin
+participant "Interface\nArchivage" as ui
+participant "Contrôleur\nArchive" as ctrl
+participant "Service\nArchivage" as archive
+participant "Validateur\nRéglementaire" as reg_valid
+participant "Compresseur\nDonnées" as compress
+participant "Chiffreur\nSécurisé" as encrypt
+participant "Base\nDonnées" as bdd
+
+== Sélection Dossier ==
+admin -> ui : Archiver dossier client
+activate ui
+ui -> admin : Liste dossiers archivables
+admin -> ui : Sélectionner dossier à archiver
+ui -> ctrl : Demander archivage
+activate ctrl
+
+== Validation Éligibilité ==
+ctrl -> reg_valid : Valider éligibilité archivage
+activate reg_valid
+reg_valid -> bdd : Vérifier statut dossier
+activate bdd
+bdd -> reg_valid : Statut + délais + obligations
+deactivate bdd
+
+reg_valid -> reg_valid : Contrôler délai conservation
+reg_valid -> reg_valid : Vérifier obligations légales
+reg_valid -> reg_valid : Analyser restrictions archivage
+
+alt Délai conservation non atteint
+    reg_valid -> ctrl : Archivage prématuré
+    ctrl -> ui : Délai conservation non respecté
+    ui -> admin : Archivage impossible avant délai
+    note right : "Conservation obligatoire\njusqu'au JJ/MM/AAAA"
+    deactivate reg_valid
+    deactivate ctrl
+    deactivate ui
+else Archivage autorisé
+    reg_valid -> ctrl : Archivage validé
+    deactivate reg_valid
+end
+
+== Collecte Données ==
+ctrl -> archive : Collecter données complètes
+activate archive
+archive -> bdd : Récupérer dossier complet
+activate bdd
+bdd -> archive : Documents + historique + métadonnées
+deactivate bdd
+
+archive -> archive : Inventorier tous éléments
+archive -> archive : Vérifier intégrité données
+archive -> archive : Contrôler complétude dossier
+
+alt Dossier incomplet
+    archive -> ctrl : Données manquantes
+    ctrl -> ui : Dossier incomplet détecté
+    ui -> admin : Compléter avant archivage
+    note right : "Documents manquants :\n- Pièce identité\n- Justificatifs revenus"
+    
+    admin -> ui : Compléter dossier
+    ui -> archive : Dossier complété
+    archive -> ctrl : Dossier complet validé
+end
+
+== Préparation Archivage ==
+archive -> compress : Compresser données
+activate compress
+compress -> compress : Compression optimisée
+compress -> compress : Vérifier taux compression
+compress -> compress : Contrôler intégrité post-compression
+compress -> archive : Données compressées
+deactivate compress
+
+== Chiffrement Sécurisé ==
+archive -> encrypt : Chiffrer archive
+activate encrypt
+encrypt -> encrypt : Chiffrement AES-256
+encrypt -> encrypt : Générer clés archivage
+encrypt -> encrypt : Créer empreinte numérique
+encrypt -> encrypt : Signer électroniquement
+encrypt -> archive : Archive chiffrée
+deactivate encrypt
+
+== Génération Métadonnées ==
+archive -> archive : Créer métadonnées archivage
+archive -> archive : Horodater création archive
+archive -> archive : Référencer éléments inclus
+archive -> archive : Calculer empreinte globale
+archive -> archive : Générer certificat intégrité
+
+== Stockage Archive ==
+archive -> archive : Stocker en coffre numérique
+archive -> archive : Dupliquer sur site distant
+archive -> archive : Créer index recherche
+archive -> archive : Enregistrer localisation
+
+== Mise à Jour Statut ==
+archive -> bdd : Marquer dossier archivé
+activate bdd
+bdd -> bdd : Statut = ARCHIVE
+bdd -> bdd : Date archivage
+bdd -> bdd : Référence archive
+bdd -> bdd : Localisation stockage
+bdd -> bdd : Empreinte intégrité
+bdd -> archive : Statut mis à jour
+deactivate bdd
+
+== Nettoyage Système ==
+archive -> bdd : Purger données courantes
+activate bdd
+bdd -> bdd : Conserver références minimales
+bdd -> bdd : Supprimer documents volumineux
+bdd -> bdd : Nettoyer cache associé
+bdd -> archive : Nettoyage effectué
+deactivate bdd
+
+archive -> ctrl : Archivage terminé
+deactivate archive
+
+== Génération Certificat ==
+ctrl -> ctrl : Générer certificat archivage
+ctrl -> ctrl : Créer récépissé légal
+ctrl -> ctrl : Produire rapport archivage
+
+== Notification ==
+ctrl -> ui : Archivage réussi
+ui -> admin : Dossier archivé avec succès
+note right : "Dossier archivé\nCertificat généré\nDonnées sécurisées"
+
+== Rapport Archivage ==
+ctrl -> ui : Générer rapport archivage
+ui -> admin : Rapport avec certificat
+note right : "Archive créée\nIntégrité garantie\nConservation conforme"
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Dossier client archivé\navec sécurisation complète\net conformité réglementaire
+
+@enduml

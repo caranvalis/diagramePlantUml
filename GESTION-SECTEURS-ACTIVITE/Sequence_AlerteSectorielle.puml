@@ -1,0 +1,66 @@
+@startuml Sequence_AlerteSectorielle
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Alertes Sectorielles
+
+participant "Surveillance" as S
+participant "Moteur Alerte" as M
+participant "Conformité" as C
+participant "Risques" as R
+participant "Management" as MG
+
+S -> M: detecterAnomalie()
+activate M
+
+M -> M: analyserIndicateurs()
+note over M: Concentration,\névolution, nouveaux risques
+
+alt Concentration excessive
+    M -> R: alerteConcentration()
+    activate R
+    R -> R: calculerExposition()
+    R -> MG: recommanderActions()
+    deactivate R
+
+else Évolution défavorable
+    M -> C: alerteEvolution()
+    activate C
+    C -> C: analyserTendance()
+    C -> MG: proposerMesures()
+    deactivate C
+
+else Nouveau secteur à risque
+    M -> C: alerteNouveauRisque()
+    activate C
+    C -> C: evaluerImpact()
+    C -> R: demanderAnalyse()
+    activate R
+    R -> MG: escaladerDecision()
+    deactivate R
+    deactivate C
+end
+
+M -> M: genererRapport()
+M -> MG: transmettreAlerte()
+deactivate M
+
+note over S
+**Surveillance Continue**
+Indicateurs temps réel,
+seuils configurables
+end note
+
+note over M
+**Types d'Alertes:**
+Concentration, évolution,
+nouveaux risques, dépassements
+end note
+
+@enduml

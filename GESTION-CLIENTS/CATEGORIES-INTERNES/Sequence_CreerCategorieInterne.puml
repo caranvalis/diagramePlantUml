@@ -1,0 +1,95 @@
+@startuml Sequence_CreerCategorieInterne
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Créer une Catégorie Interne
+
+participant "Admin\nSystème" as admin
+participant "Interface\nCatégories" as ui
+participant "Contrôleur\nCatégorie" as ctrl
+participant "Validateur\nRègles" as valid
+participant "Moteur\nTarification" as tarif
+participant "Service\nPolitiques" as politique
+participant "Base\nDonnées" as bdd
+participant "Cache\nSystème" as cache
+
+== Définition Catégorie ==
+admin -> ui : Créer nouvelle catégorie
+activate ui
+ui -> admin : Formulaire catégorie
+admin -> ui : Saisir paramètres
+note right : Code, libellé, description,\nniveau risque, seuils
+
+ui -> ctrl : Valider création
+activate ctrl
+
+== Validation Règles Métier ==
+ctrl -> valid : Contrôler cohérence
+activate valid
+valid -> valid : Vérifier code unique
+valid -> valid : Contrôler seuils logiques
+valid -> valid : Valider hiérarchie niveaux
+valid -> ctrl : Validation règles OK
+deactivate valid
+
+== Configuration Tarification ==
+ctrl -> tarif : Définir grille tarifaire
+activate tarif
+tarif -> ui : Interface configuration tarifs
+ui -> admin : Paramétrer tarifs par service
+admin -> ui : Confirmer grille tarifaire
+ui -> tarif : Grille validée
+tarif -> tarif : Calculer impacts revenus
+tarif -> ctrl : Tarification configurée
+deactivate tarif
+
+== Politiques Associées ==
+ctrl -> politique : Configurer politiques
+activate politique
+politique -> ui : Interface politiques
+ui -> admin : Définir services inclus
+admin -> ui : Configurer limites/plafonds
+admin -> ui : Paramétrer niveau service
+ui -> politique : Politiques définies
+politique -> politique : Valider cohérence ensemble
+politique -> ctrl : Politiques validées
+deactivate politique
+
+== Enregistrement ==
+ctrl -> bdd : Créer catégorie interne
+activate bdd
+bdd -> bdd : Générer ID catégorie
+bdd -> bdd : Sauvegarder paramètres
+bdd -> bdd : Enregistrer tarification
+bdd -> bdd : Sauvegarder politiques
+bdd -> bdd : Tracer création
+bdd -> ctrl : Catégorie créée
+deactivate bdd
+
+== Mise en Cache ==
+ctrl -> cache : Actualiser cache
+activate cache
+cache -> cache : Invalider cache existant
+cache -> cache : Charger nouvelle catégorie
+cache -> ctrl : Cache mis à jour
+deactivate cache
+
+== Notification ==
+ctrl -> ui : Catégorie créée avec succès
+ui -> admin : Confirmation création
+note right : ID catégorie généré\net paramètres sauvegardés
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Nouvelle catégorie interne\nopérationnelle pour\nclassification clients
+
+@enduml

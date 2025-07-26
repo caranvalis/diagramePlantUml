@@ -1,0 +1,128 @@
+@startuml Sequence_RoutageAutomatique
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 10
+}
+skinparam note FontSize 8
+
+title Routage Automatique Courrier
+
+participant "Scanner" as S
+participant "OCR" as O
+participant "Routage" as R
+participant "Règles" as RG
+participant "KYC" as K
+participant "Réclamation" as RC
+participant "Gestionnaire" as G
+
+S -> O: analyserDocument()
+activate O
+
+O -> O: extraireTexte()
+O -> O: detecterMotsCles()
+
+O -> R: donneesExtraites()
+deactivate O
+activate R
+
+R -> RG: appliquerRegles()
+activate Regles
+
+Regles -> Regles: analyserMotsCles()
+note over Regles: Mots-clés analysés:\n- "KYC", "ouverture compte"\n- "réclamation", "opposition"\n- "mise en demeure", "contentieux"
+
+Regles -> Regles: determinerTypeDocument()
+Regles -> Regles: evaluerPriorite()
+
+Regles -> Routage: resultatsClassification(type, priorite, service)
+deactivate Regles
+
+alt Type = Document KYC
+    Routage -> KYC: routerVersKYC(document, priorite)
+    activate KYC
+    
+    KYC -> KYC: identifierClient(numeroCompte)
+    
+    alt Client trouvé
+        KYC -> KYC: ajouterAuDossierExistant()
+        KYC -> Gest: notifierMiseAJourDossier()
+        activate Gest
+        Gest -> KYC: accuserReception()
+        deactivate Gest
+        
+    else Nouveau client
+        KYC -> KYC: creerNouveauDossier()
+        KYC -> Gest: assignerGestionnaire()
+        activate Gest
+        Gest -> KYC: initialiserSuiviKYC()
+        deactivate Gest
+    end
+    
+    deactivate KYC
+
+else Type = Réclamation
+    Routage -> Recla: routerVersReclamation(document, priorite)
+    activate Recla
+    
+    Recla -> Recla: evaluerGravite()
+    
+    alt Réclamation critique
+        Recla -> Gest: escaladerVersManager()
+        activate Gest
+        Gest -> Recla: prendreEnChargeImmediatement()
+        deactivate Gest
+        
+    else Réclamation standard
+        Recla -> Gest: assignerSelonCharge()
+        activate Gest
+        Gest -> Recla: planifierTraitement()
+        deactivate Gest
+    end
+    
+    deactivate Recla
+
+else Type = Document juridique
+    Routage -> Juridique: routerVersJuridique(document, priorite)
+    activate Juridique
+    
+    Juridique -> Juridique: analyserImplicationsLegales()
+    Juridique -> Gest: alerterExpertJuridique()
+    activate Gest
+    
+    alt Urgence légale
+        Gest -> Juridique: traiterSousDelaiLegal()
+        
+    else Suivi standard
+        Gest -> Juridique: programmerAnalyseDetaillee()
+    end
+    
+    deactivate Gest
+    deactivate Juridique
+
+else Type non identifié
+    Routage -> Routage: marquerPourAnalyseManuelle()
+    Routage -> Gest: assignerExpertClassification()
+    activate Gest
+    
+    Gest -> Routage: analyserManuellement()
+    Gest -> Regles: mettreAJourRegles(nouveauCas)
+    activate Regles
+    Regles -> Routage: reglesAméliorées()
+    deactivate Regles
+    
+    deactivate Gest
+end
+
+Routage -> Scanner: confirmerRoutagEffectue(statut)
+deactivate Routage
+
+note over OCR: Précision OCR > 95%\nrecommandée pour\nroutage automatique
+
+note over Regles: Base de règles mise à jour\ncontinuellement basée sur\nles corrections manuelles
+
+note over Routage: SLA de routage:\n- Documents urgents: < 5 min\n- Documents standard: < 30 min\n- Taux de précision: > 90%
+
+@enduml

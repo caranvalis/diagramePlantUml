@@ -1,0 +1,172 @@
+@startuml Sequence_SupprimerProfilRisque
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Supprimer un Profil de Risque
+
+participant "Admin\nRisques" as admin
+participant "Interface\nProfils" as ui
+participant "Contrôleur\nProfil" as ctrl
+participant "Analyseur\nRisques" as risk
+participant "Service\nMigration" as migration
+participant "Moteur\nScorig" as scoring
+participant "Base\nDonnées" as bdd
+parameter "Archive\nRisques" as archive
+
+== Sélection Profil ==
+admin -> ui : Supprimer profil de risque
+activate ui
+ui -> admin : Liste profils existants
+admin -> ui : Sélectionner profil à supprimer
+ui -> ctrl : Demander suppression
+activate ctrl
+
+== Analyse Impact Risques ==
+ctrl -> risk : Analyser impact suppression
+activate risk
+risk -> bdd : Compter clients avec ce profil
+activate bdd
+bdd -> risk : Nombre clients affectés
+deactivate bdd
+
+risk -> risk : Analyser scoring associé
+risk -> risk : Contrôler règles LAB-FT
+risk -> risk : Vérifier seuils réglementaires
+
+alt Profil critique réglementaire
+    risk -> ctrl : Suppression bloquée
+    ctrl -> ui : Profil protégé réglementairement
+    ui -> admin : Suppression impossible - conformité
+    note right : Profils comme "Haut Risque LAB-FT"\nsont obligatoires réglementairement
+    deactivate risk
+else Suppression autorisée
+    risk -> ctrl : Suppression possible
+    deactivate risk
+end
+
+== Contrôle Scoring ==
+ctrl -> scoring : Analyser dépendances scoring
+activate scoring
+scoring -> scoring : Contrôler modèles utilisant profil
+scoring -> scoring : Vérifier algorithmes liés
+scoring -> scoring : Analyser historiques scores
+
+alt Modèles utilisent profil
+    scoring -> ctrl : Recalibrage scoring nécessaire
+    ctrl -> ui : Modèles scoring affectés
+    ui -> admin : Recalibrage scoring requis
+    
+    admin -> ui : Confirmer recalibrage
+    ui -> scoring : Autoriser recalibrage
+    
+    scoring -> scoring : Recalculer modèles
+    scoring -> scoring : Ajuster algorithmes
+    scoring -> ctrl : Scoring recalibré
+    deactivate scoring
+else Aucun impact scoring
+    scoring -> ctrl : Pas d'impact scoring
+    deactivate scoring
+end
+
+== Migration Clients ==
+ctrl -> migration : Analyser migration nécessaire
+activate migration
+migration -> bdd : Lister clients du profil
+activate bdd
+bdd -> migration : Clients concernés
+deactivate bdd
+
+migration -> ui : Proposer profil de remplacement
+ui -> admin : Sélectionner nouveau profil
+admin -> ui : Confirmer profil destination
+ui -> migration : Profil destination validé
+
+migration -> migration : Calculer nouveau scoring clients
+migration -> bdd : Migrer clients vers nouveau profil
+activate bdd
+bdd -> bdd : Mettre à jour profils clients
+bdd -> bdd : Recalculer scores de risque
+bdd -> bdd : Ajuster limites opérationnelles
+bdd -> migration : Migration terminée
+deactivate bdd
+migration -> ctrl : Clients migrés avec nouveau scoring
+deactivate migration
+
+== Validation Risques ==
+ctrl -> risk : Valider cohérence post-migration
+activate risk
+risk -> risk : Contrôler distribution risques
+risk -> risk : Vérifier conformité globale
+risk -> risk : Analyser impact portefeuille
+
+alt Distribution risques incohérente
+    risk -> ctrl : Rééquilibrage nécessaire
+    ctrl -> ui : Rééquilibrage portefeuille requis
+    ui -> admin : Ajustements supplémentaires
+else Distribution cohérente
+    risk -> ctrl : Validation risques OK
+    deactivate risk
+end
+
+== Confirmation Admin ==
+ctrl -> ui : Demander confirmation finale
+ui -> admin : Confirmer suppression définitive
+note right : "Supprimer profil de risque ?\nImpact sur scoring global"
+
+admin -> ui : Confirmer suppression
+ui -> ctrl : Suppression confirmée
+
+== Archivage Profil ==
+ctrl -> archive : Archiver profil de risque
+activate archive
+archive -> bdd : Récupérer configuration profil
+activate bdd
+bdd -> archive : Paramètres + scoring + historique
+deactivate bdd
+
+archive -> archive : Créer archive avec modèles
+archive -> archive : Sauvegarder algorithmes liés
+archive -> archive : Horodater suppression
+archive -> ctrl : Profil archivé
+deactivate archive
+
+== Suppression Contrôlée ==
+ctrl -> bdd : Marquer profil supprimé
+activate bdd
+bdd -> bdd : Statut = SUPPRIME
+bdd -> bdd : Date suppression
+bdd -> bdd : Conserver historiques scoring
+bdd -> bdd : Désactiver pour nouveaux clients
+bdd -> bdd : Tracer suppression conformité
+bdd -> ctrl : Profil supprimé
+deactivate bdd
+
+== Nettoyage Système ==
+ctrl -> ctrl : Invalider cache profils
+ctrl -> ctrl : Nettoyer règles scoring
+ctrl -> ctrl : Purger références actives
+
+== Notification ==
+ctrl -> ui : Suppression réussie
+ui -> admin : Profil de risque supprimé
+note right : Profil supprimé\nClients migrés\nScoring recalibré
+
+== Rapport Risques ==
+ctrl -> ui : Générer rapport suppression
+ui -> admin : Rapport avec impact risques
+note right : Profil supprimé\nScoring maintenu\nConformité préservée
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Profil de risque supprimé\navec migration scoring\net conformité maintenue
+
+@enduml

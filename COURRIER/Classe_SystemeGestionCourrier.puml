@@ -1,0 +1,153 @@
+@startuml Classe_SystemeGestionCourrier
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title Diagramme de Classes - Système de Gestion du Courrier
+
+class CourrierPhysique {
+    - id: String
+    - dateReception: Date
+    - expediteur: String
+    - typeDocument: TypeDocument
+    - priorite: Priorite
+    - statut: StatutCourrier
+    - numeroSuivi: String
+    - agentRecepteur: Agent
+    + scanner(): Document
+    + extraireDonnees(): DonneesOCR
+    + validerContenu(): Boolean
+    + archiverOriginal(): void
+}
+
+class Document {
+    - id: String
+    - nom: String
+    - contenu: Byte[]
+    - format: FormatDocument
+    - dateCreation: Date
+    - empreinte: String
+    - versionOCR: String
+    + extraireTexte(): String
+    + validerIntegrite(): Boolean
+    + convertirFormat(): Document
+}
+
+class DonneesOCR {
+    - texteExtrait: String
+    - fiabilite: Double
+    - zonesDetectees: List<Zone>
+    - metadonnees: Map<String, Object>
+    + validerQualite(): Boolean
+    + corrigerErreurs(): void
+    + exporterDonnees(): String
+}
+
+class DossierClient {
+    - numeroCompte: String
+    - nomClient: String
+    - statutKYC: StatutKYC
+    - documentsRequis: List<TypeDocument>
+    - documentsRecus: List<Document>
+    - dateOuverture: Date
+    - gestionnaireAssigne: Gestionnaire
+    + ajouterDocument(): void
+    + verifierCompletude(): Boolean
+    + mettreAJourStatut(): void
+    + genererRapport(): Rapport
+}
+
+class Gestionnaire {
+    - id: String
+    - nom: String
+    - email: String
+    - specialite: DomaineExpertise
+    - chargeActuelle: Integer
+    - disponibilite: Boolean
+    + traiterDossier(): void
+    + validerDocuments(): Boolean
+    + genererDemandeComplements(): void
+}
+
+class SystemeRoutage {
+    - regles: List<RegleRoutage>
+    - fileAttente: Queue<Courrier>
+    - historique: List<ActionRoutage>
+    + analyserCourrier(): TypeAction
+    + determinerDestination(): Service
+    + appliquerPriorite(): void
+    + detecterDoublons(): List<Courrier>
+}
+
+class NotificationManager {
+    - canaux: List<CanalNotification>
+    - templates: Map<TypeNotification, Template>
+    - historique: List<Notification>
+    + envoyerNotification(): void
+    + creerAlerte(): void
+    + planifierRappel(): void
+}
+
+class GED {
+    - repertoires: Map<String, Repertoire>
+    - indexation: ServiceIndexation
+    - archivage: ServiceArchivage
+    + stockerDocument(): String
+    + rechercherDocument(): List<Document>
+    + archiverAutomatique(): void
+    + genererRapportActivite(): Rapport
+}
+
+enum TypeDocument {
+    PIECE_IDENTITE
+    JUSTIFICATIF_DOMICILE
+    JUSTIFICATIF_REVENUS
+    STATUTS_ENTREPRISE
+    AUTRE
+}
+
+enum StatutCourrier {
+    RECU
+    EN_TRAITEMENT
+    TRAITE
+    ARCHIVE
+    EN_ERREUR
+}
+
+enum Priorite {
+    NORMALE
+    URGENT
+    CRITIQUE
+}
+
+enum StatutKYC {
+    INCOMPLET
+    EN_ATTENTE
+    COMPLET
+    VALIDE
+    REJETE
+}
+
+' Relations
+CourrierPhysique ||--o{ Document : contient
+CourrierPhysique ||--|| DonneesOCR : genere
+Document ||--o| DossierClient : integre
+DossierClient ||--|| Gestionnaire : assigne
+SystemeRoutage ||--o{ CourrierPhysique : traite
+NotificationManager ||--o{ DossierClient : notifie
+GED ||--o{ Document : stocke
+Gestionnaire ||--o{ DossierClient : gere
+
+note top of CourrierPhysique : Point d'entrée du système\nReçoit courrier physique et démarre le processus
+note top of SystemeRoutage : Cœur du système\nAnalyse et route automatiquement
+note top of GED : Système d'archivage\nIntégration Alfresco/SharePoint
+
+@enduml

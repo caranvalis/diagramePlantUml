@@ -1,0 +1,108 @@
+@startuml Sequence_CreerEntrepriseCliente
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Création d'une Entreprise Cliente
+
+participant "Agent" as agent
+participant "Interface\nSaisie" as ui
+participant "Contrôleur\nEntreprise" as ctrl
+participant "Service\nRCS" as rcs
+participant "Moteur\nSectoriel" as secteur
+participant "Gestionnaire\nActionnaires" as action
+participant "Service\nMandataires" as mand
+participant "Base\nDonnées" as bdd
+
+== Informations Société ==
+agent -> ui : Nouvelle entreprise
+activate ui
+ui -> agent : Formulaire entreprise
+agent -> ui : Saisir données société
+note right : Raison sociale, SIRET,\nforme juridique, adresse
+
+ui -> ctrl : Valider saisie
+activate ctrl
+ctrl -> rcs : Vérifier SIRET/RCS
+activate rcs
+rcs -> rcs : Consulter registre
+rcs -> ctrl : Données officielles
+deactivate rcs
+
+== Secteur d'Activité ==
+ctrl -> secteur : Analyser code NAF
+activate secteur
+secteur -> secteur : Déterminer niveau risque
+secteur -> secteur : Appliquer restrictions
+secteur -> ctrl : Classification sectorielle
+deactivate secteur
+
+alt Secteur interdit/sensible
+    ctrl -> ui : Escalader validation
+    ui -> agent : Procédure spéciale requise
+else Secteur autorisé
+    == Structure Capitalistique ==
+    ctrl -> action : Saisir actionnaires
+    activate action
+    
+    loop Pour chaque actionnaire
+        agent -> ui : Nom, pourcentage, qualité
+        ui -> action : Enregistrer actionnaire
+        action -> action : Vérifier cohérence parts
+    end
+    
+    action -> action : Valider 100% capital
+    action -> ctrl : Structure validée
+    deactivate action
+    
+    == Représentants Légaux ==
+    ctrl -> mand : Saisir dirigeants
+    activate mand
+    
+    loop Pour chaque dirigeant
+        agent -> ui : Nom, fonction, pouvoirs
+        ui -> mand : Enregistrer mandataire
+        mand -> mand : Vérifier validité
+    end
+    
+    mand -> ctrl : Mandataires validés
+    deactivate mand
+    
+    == Contrôles KYC Entreprise ==
+    ctrl -> ctrl : Lancer due diligence
+    ctrl -> ctrl : Vérifier sanctions dirigeants
+    ctrl -> ctrl : Analyser bénéficiaires effectifs
+    
+    == Enregistrement ==
+    ctrl -> bdd : Créer entreprise
+    activate bdd
+    bdd -> bdd : Générer ID entreprise
+    bdd -> bdd : Sauvegarder données société
+    bdd -> bdd : Lier actionnaires
+    bdd -> bdd : Lier mandataires
+    bdd -> bdd : Créer dossier entreprise
+    bdd -> ctrl : Entreprise créée
+    deactivate bdd
+    
+    == Finalisation ==
+    ctrl -> bdd : Attribuer gestionnaire
+    ctrl -> bdd : Définir statut "ACTIF"
+    ctrl -> bdd : Appliquer restrictions sectorielles
+    
+    ctrl -> ui : Création confirmée
+    ui -> agent : ID entreprise + structure
+end
+
+deactivate ctrl
+deactivate ui
+
+note over agent : Entreprise créée avec\nstructure complète et\ncontrôles KYC validés
+
+@enduml

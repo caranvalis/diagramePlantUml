@@ -1,0 +1,306 @@
+@startuml Classe_GestionTiersConformite
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 7
+}
+skinparam note FontSize 6
+
+title Classes - Tiers et Conformité (Complet)
+
+' Classes principales Tiers
+class Tiers {
+    - id: String
+    - ibu: String
+    - typeTiers: TypeTiers
+    - statutConformite: StatutConformite
+    - dateCreation: Date
+    - agentCreateur: Agent
+    + creerTiers(): Tiers
+    + modifierInformations(): void
+    + supprimerTiers(): void
+    + rechercherTiers(): List<Tiers>
+    + lierAClient(): LienTiersClient
+}
+
+class PersonnePhysiqueTiers {
+    - nom: String
+    - prenom: String
+    - dateNaissance: Date
+    - lieuNaissance: String
+    - nationalite: Pays
+    - numeroIdentite: String
+    - typeIdentite: TypeDocument
+    + validerIdentite(): Boolean
+    + calculerAge(): Integer
+}
+
+class PersonneMoraleTiers {
+    - raisonSociale: String
+    - formeJuridique: String
+    - numeroRCCM: String
+    - numeroNIF: String
+    - dateCreation: Date
+    - capitalSocial: Montant
+    + validerExistenceLegale(): Boolean
+}
+
+' Classes de liaison
+class LienTiersClient {
+    - id: String
+    - tiers: Tiers
+    - client: Client
+    - typeLien: TypeLienTiers
+    - dateDebut: Date
+    - dateFin: Date
+    - pourcentageDetention: Double
+    - etenduePouvoir: String
+    - montantGaranti: Montant
+    - documentsJustificatifs: List<Document>
+    + creerLien(): void
+    + modifierLien(): void
+    + supprimerLien(): void
+    + validerCompatibilite(): Boolean
+}
+
+' Classes de conformité
+class ControlePPE {
+    - id: String
+    - dateControle: Date
+    - resultatsRecherche: List<CorrespondancePPE>
+    - scoreGlobal: Double
+    - statutPPE: StatutPPE
+    - niveauRisque: NiveauRisque
+    - validationManuelle: Boolean
+    + lancerControle(): ResultatControlePPE
+    + analyserCorrespondances(): void
+    + validerManuellement(): void
+}
+
+class CorrespondancePPE {
+    - sourceBase: String
+    - nomTrouve: String
+    - scoreCorrespondance: Double
+    - typeCorrespondance: TypeCorrespondance
+    - detailsPersonne: String
+    - fonctionPolitique: String
+    + calculerScore(): Double
+    + validerCorrespondance(): Boolean
+}
+
+class ControleFATCA {
+    - id: String
+    - dateControle: Date
+    - criteresUSPerson: List<CritereFATCA>
+    - statutFATCA: StatutFATCA
+    - autoCertification: Document
+    - obligationReporting: Boolean
+    + evaluerCriteresUSPerson(): Boolean
+    + validerAutoCertification(): Boolean
+    + configurerReporting(): void
+}
+
+class ControleOFAC {
+    - id: String
+    - dateControle: Date
+    - listesConsultees: List<String>
+    - correspondancesTrouvees: List<CorrespondanceOFAC>
+    - scoreMaxCorrespondance: Double
+    - actionRecommandee: ActionOFAC
+    + interrogerListesSanctions(): void
+    + evaluerCorrespondances(): ActionOFAC
+    + bloquerImmediatement(): void
+}
+
+class CorrespondanceOFAC {
+    - listeSanction: String
+    - nomSanction: String
+    - typeEntite: String
+    - motifSanction: String
+    - scoreCorrespondance: Double
+    - actionRequise: ActionOFAC
+    + validerCorrespondance(): Boolean
+}
+
+' Classes de gestion des statuts
+class StatutConformite {
+    - id: String
+    - libelle: String
+    - codeStatut: String
+    - dateAttribution: Date
+    - agentResponsable: Agent
+    - motifAttribution: String
+    - implications: List<ImplicationStatut>
+    + attribuerStatut(): void
+    + modifierStatut(): void
+    + calculerImplications(): List<ImplicationStatut>
+}
+
+class ImplicationStatut {
+    - id: String
+    - typeImplication: TypeImplication
+    - serviceImpacte: String
+    - typeRestriction: TypeRestriction
+    - parametresSpecifiques: Map<String, Object>
+    + appliquerImplication(): void
+    + supprimerImplication(): void
+}
+
+' Classes référentiels
+class SecteurActivite {
+    - id: String
+    - libelle: String
+    - codeInterne: String
+    - description: String
+    - niveauRisque: NiveauRisque
+    - exigencesKYC: List<ExigenceKYC>
+    - statut: StatutReferentiel
+    + creerSecteur(): void
+    + modifierSecteur(): void
+    + supprimerSecteur(): void
+}
+
+class CategorieInterne {
+    - id: String
+    - libelle: String
+    - codeInterne: String
+    - critereAttribution: String
+    - niveauPriorite: NiveauPriorite
+    - traitementSpecifique: String
+    + definirCategorie(): void
+    + modifierCategorie(): void
+    + rechercherCategorie(): List<CategorieInterne>
+}
+
+class ProfilClient {
+    - id: String
+    - libelle: String
+    - typeProfile: TypeProfile
+    - criteresScoringRisque: Map<String, Double>
+    - criteresScoringComportement: Map<String, Double>
+    - seuilsAlerte: Map<String, Double>
+    + creerProfil(): void
+    + calculerScore(): Double
+    + appliquerProfil(): void
+}
+
+class Pays {
+    - id: String
+    - nomOfficiel: String
+    - nomCourt: String
+    - codeISO2: String
+    - codeISO3: String
+    - nationalite: String
+    - zoneEconomique: String
+    - niveauRisqueGeopolitique: NiveauRisque
+    - statutSanctions: StatutSanctions
+    - obligationsFATCA: Boolean
+    - obligationsCRS: Boolean
+    + creerPays(): void
+    + modifierPays(): void
+    + rechercherPays(): List<Pays>
+}
+
+class Filiale {
+    - id: String
+    - codeFiliale: String
+    - raisonSociale: String
+    - statutJuridique: StatutJuridique
+    - adresse: Adresse
+    - filialeParente: Filiale
+    - niveauHierarchique: Integer
+    - responsable: Agent
+    - perimetre: String
+    + creerFiliale(): void
+    + modifierFiliale(): void
+    + supprimerFiliale(): void
+}
+
+class Declarant {
+    - id: String
+    - matriculeEmploye: String
+    - fonction: String
+    - domainesHabilitation: List<DomaineDeclaration>
+    - certificationsValides: List<Certification>
+    - dateDebutHabilitation: Date
+    - dateFinHabilitation: Date
+    + ajouterDeclarant(): void
+    + modifierHabilitations(): void
+    + supprimerDeclarant(): void
+}
+
+' Énumérations
+enum TypeTiers {
+    MANDATAIRE
+    BENEFICIAIRE_EFFECTIF
+    ACTIONNAIRE
+    GARANT
+    REPRESENTANT_LEGAL
+    PARTENAIRE_COMMERCIAL
+}
+
+enum StatutConformite {
+    CONFORME
+    NON_CONFORME
+    EN_ATTENTE
+    SOUS_SURVEILLANCE
+}
+
+enum TypeLienTiers {
+    PROCURATION
+    DETENTION_CAPITAL
+    GARANTIE
+    REPRESENTATION_LEGALE
+    BENEFICIAIRE
+}
+
+enum NiveauRisque {
+    FAIBLE
+    MODERE
+    ELEVE
+    CRITIQUE
+}
+
+enum ActionOFAC {
+    AUCUNE_ACTION
+    INVESTIGATION
+    BLOCAGE_IMMEDIAT
+    DECLARATION_AUTORITES
+}
+
+' Relations
+Tiers <|-- PersonnePhysiqueTiers
+Tiers <|-- PersonneMoraleTiers
+
+Tiers ||--o{ LienTiersClient : lie
+Client ||--o{ LienTiersClient : concerne
+
+Tiers ||--|| ControlePPE : verifie
+ControlePPE ||--o{ CorrespondancePPE : contient
+
+Tiers ||--|| ControleFATCA : verifie
+Tiers ||--|| ControleOFAC : verifie
+ControleOFAC ||--o{ CorrespondanceOFAC : contient
+
+Tiers ||--|| StatutConformite : possede
+StatutConformite ||--o{ ImplicationStatut : genere
+
+Client ||--|| SecteurActivite : appartient
+Client ||--o| CategorieInterne : classe
+Client ||--|| ProfilClient : utilise
+
+PersonnePhysiqueTiers ||--|| Pays : nationalite
+PersonneMoraleTiers ||--|| Pays : siege
+
+Client ||--|| Filiale : rattache
+Declarant ||--|| Filiale : travaille
+
+note top of Tiers : Point central du système\nGestion complète du cycle de vie\nContrôles automatiques intégrés
+
+note top of ControlePPE : Intégration bases PPE\nnationales et internationales\nMatching intelligent multicritères
+
+note top of StatutConformite : Matrice de conformité\nImplications automatiques\nPropagation multi-systèmes
+
+@enduml

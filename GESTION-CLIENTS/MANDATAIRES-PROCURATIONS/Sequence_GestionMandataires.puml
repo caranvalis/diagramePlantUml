@@ -1,0 +1,127 @@
+@startuml Sequence_GestionMandataires
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Mandataires et Procurations
+
+participant "Agent" as agent
+participant "Interface\nMandats" as ui
+participant "Contrôleur\nMandats" as ctrl
+participant "Service\nClient" as client
+participant "Validateur\nPouvoir" as valid
+participant "Service\nSignature" as sign
+participant "Moteur\nSurveillance" as surv
+participant "Base\nDonnées" as bdd
+
+== Ajout Mandataire ==
+agent -> ui : Ajouter mandataire
+activate ui
+ui -> agent : Formulaire mandataire
+agent -> ui : Saisir données mandataire
+note right : Nom, adresse, CNI,\nrelation avec client
+
+ui -> ctrl : Valider ajout
+activate ctrl
+ctrl -> client : Vérifier client existant
+activate client
+client -> ctrl : Profil client validé
+deactivate client
+
+== Définition des Pouvoirs ==
+ctrl -> ui : Configurer pouvoirs
+ui -> agent : Sélectionner droits
+note right : Type opérations,\nmontants max, durée
+
+agent -> ui : Définir limites temporelles
+ui -> ctrl : Valider configuration
+
+ctrl -> valid : Contrôler cohérence pouvoirs
+activate valid
+valid -> valid : Vérifier limites légales
+valid -> valid : Contrôler montants
+valid -> ctrl : Validation pouvoirs
+deactivate valid
+
+== Signatures et Documents ==
+ctrl -> sign : Enregistrer signature mandataire
+activate sign
+sign -> agent : Capturer spécimen signature
+sign -> sign : Valider qualité
+sign -> ctrl : Signature enregistrée
+deactivate sign
+
+ctrl -> ui : Télécharger procuration
+ui -> agent : Document procuration signé
+ui -> ctrl : Procuration validée
+
+== Création Mandat ==
+ctrl -> bdd : Créer mandataire
+activate bdd
+bdd -> bdd : Générer ID mandat
+bdd -> bdd : Lier au client/compte
+bdd -> bdd : Enregistrer pouvoirs
+bdd -> bdd : Définir date validité
+bdd -> ctrl : Mandataire créé
+deactivate bdd
+
+== Surveillance Automatique ==
+ctrl -> surv : Programmer surveillance
+activate surv
+surv -> surv : Planifier contrôles périodiques
+surv -> surv : Détecter mandats périmés
+surv -> surv : Surveiller usage anormal
+surv -> ctrl : Surveillance activée
+deactivate surv
+
+== Notifications ==
+ctrl -> ui : Mandataire opérationnel
+ui -> agent : Confirmation création
+
+== Vérification lors d'Opération ==
+note over ui : **Utilisation du Mandat**
+
+agent -> ui : Opération par mandataire
+ui -> ctrl : Vérifier validité mandat
+ctrl -> valid : Contrôler pouvoirs
+activate valid
+valid -> valid : Vérifier date validité
+valid -> valid : Contrôler montant autorisé
+valid -> valid : Vérifier type opération
+
+alt Mandat expiré
+    valid -> ctrl : Mandat périmé
+    ctrl -> ui : Bloquer opération
+    ui -> agent : Renouveler procuration
+else Dépassement pouvoirs
+    valid -> ctrl : Pouvoirs insuffisants
+    ctrl -> ui : Demander autorisation titulaire
+else Pouvoirs suffisants
+    valid -> ctrl : Autorisation accordée
+    ctrl -> sign : Vérifier signature
+    activate sign
+    sign -> sign : Comparer spécimens
+    
+    alt Signature non conforme
+        sign -> ctrl : Signature rejetée
+        ctrl -> ui : Bloquer opération
+    else Signature conforme
+        sign -> ctrl : Signature validée
+        ctrl -> ui : Autoriser opération
+        ctrl -> bdd : Tracer utilisation mandat
+    end
+    deactivate sign
+end
+
+deactivate valid
+deactivate ctrl
+deactivate ui
+
+@enduml

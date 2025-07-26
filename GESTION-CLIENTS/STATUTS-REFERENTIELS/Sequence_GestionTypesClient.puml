@@ -1,0 +1,131 @@
+@startuml Sequence_GestionTypesClient
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam sequence {
+    ActorBorderColor #1976D2
+    LifeLineBorderColor #0D47A1
+    ParticipantBorderColor #1976D2
+    ParticipantBackgroundColor #E3F2FD
+    MessageTextSize 8
+    NoteTextSize 7
+}
+
+title Gestion des Types de Client
+
+participant "Admin\nSystème" as admin
+participant "Interface\nTypes" as ui
+participant "Contrôleur\nType" as ctrl
+participant "Validateur\nRègles" as valid
+participant "Service\nCompatibilité" as compat
+participant "Base\nDonnées" as bdd
+participant "Cache\nRéférentiel" as cache
+
+== Définir Type Client ==
+admin -> ui : Créer nouveau type client
+activate ui
+ui -> admin : Formulaire type client
+admin -> ui : Saisir caractéristiques
+note right : Code, libellé, catégorie\n(Particulier, Entreprise, Association,\nFondation, Collectivité)
+
+== Validation Type ==
+ui -> ctrl : Valider nouveau type
+activate ctrl
+ctrl -> valid : Contrôler cohérence
+activate valid
+valid -> valid : Vérifier code unique
+valid -> valid : Contrôler hiérarchie types
+valid -> valid : Valider règles métier
+valid -> ctrl : Type validé
+deactivate valid
+
+== Configuration Règles ==
+ctrl -> compat : Définir compatibilités
+activate compat
+compat -> ui : Interface règles
+ui -> admin : Configurer produits autorisés
+admin -> ui : Définir documents requis
+admin -> ui : Paramétrer validations spécifiques
+ui -> compat : Règles configurées
+compat -> ctrl : Configuration validée
+deactivate compat
+
+== Enregistrement ==
+ctrl -> bdd : Créer type client
+activate bdd
+bdd -> bdd : Générer ID type
+bdd -> bdd : Sauvegarder paramètres
+bdd -> bdd : Enregistrer règles
+bdd -> ctrl : Type créé
+deactivate bdd
+
+ctrl -> cache : Actualiser cache
+activate cache
+cache -> cache : Recharger types clients
+cache -> ctrl : Cache mis à jour
+deactivate cache
+
+== Modifier Type Client ==
+admin -> ui : Modifier type existant
+ui -> ctrl : Charger type sélectionné
+ctrl -> bdd : Récupérer configuration
+activate bdd
+bdd -> ctrl : Paramètres actuels
+deactivate bdd
+
+admin -> ui : Modifier paramètres
+ui -> ctrl : Valider modifications
+ctrl -> valid : Contrôler impacts
+activate valid
+valid -> bdd : Analyser clients utilisant ce type
+activate bdd
+bdd -> valid : Nombre clients affectés
+deactivate bdd
+
+alt Impact majeur (>500 clients)
+    valid -> ctrl : Validation hiérarchique requise
+    ctrl -> ui : Escalader validation
+else Impact mineur
+    valid -> ctrl : Modification autorisée
+    ctrl -> bdd : Appliquer changements
+    activate bdd
+    bdd -> bdd : Mettre à jour type
+    bdd -> bdd : Tracer modification
+    bdd -> ctrl : Type modifié
+    deactivate bdd
+end
+deactivate valid
+
+== Supprimer Type Client ==
+admin -> ui : Supprimer type
+ui -> ctrl : Vérifier utilisation
+ctrl -> bdd : Contrôler dépendances
+activate bdd
+bdd -> ctrl : Clients utilisant ce type
+deactivate bdd
+
+alt Type utilisé
+    ctrl -> ui : Suppression impossible
+    ui -> admin : Migration clients requise
+else Type non utilisé
+    ctrl -> bdd : Supprimer type
+    activate bdd
+    bdd -> bdd : Marquer supprimé
+    bdd -> ctrl : Type supprimé
+    deactivate bdd
+end
+
+== Rechercher Type Client ==
+admin -> ui : Rechercher types
+ui -> bdd : Requête recherche
+activate bdd
+bdd -> bdd : Filtrer types actifs
+bdd -> ui : Résultats recherche
+deactivate bdd
+ui -> admin : Liste types trouvés
+
+deactivate ctrl
+deactivate ui
+
+note over admin : Types clients configurés\navec règles métier\net compatibilités produits
+
+@enduml

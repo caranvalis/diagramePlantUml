@@ -1,0 +1,104 @@
+@startuml Matrice_RisquesSectoriels
+!theme plain
+skinparam backgroundColor #F8FBFF
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 8
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontSize 7
+}
+
+title Matrice des Risques Sectoriels
+
+package "Secteurs Standards" #E8F5E8 {
+    component [AGRICULTURE] #C8E6C9
+    component [INDUSTRIE] #C8E6C9
+    component [COMMERCE] #C8E6C9
+    component [SERVICES] #C8E6C9
+    component [TRANSPORT] #C8E6C9
+}
+
+package "Secteurs Modérés" #FFF3E0 {
+    component [CONSTRUCTION] #FFE0B2
+    component [TECHNOLOGIE] #FFE0B2
+    component [TOURISME] #FFE0B2
+    component [EDUCATION] #FFE0B2
+}
+
+package "Secteurs Élevés" #FFEBEE {
+    component [FINANCE] #FFCDD2
+    component [IMMOBILIER] #FFCDD2
+    component [ENERGIE] #FFCDD2
+    component [TELECOMS] #FFCDD2
+    component [SANTE] #FFCDD2
+}
+
+package "Secteurs Critiques" #FFEBEE {
+    component [ARMEMENT] #F8BBD9
+    component [CASINO_JEUX] #F8BBD9
+    component [CRYPTO] #F8BBD9
+    component [TABAC_ALCOOL] #F8BBD9
+    component [POLITIQUE] #F8BBD9
+}
+
+' Flèches de classification
+[AGRICULTURE] --> [Risque: 1] : Score Base
+[INDUSTRIE] --> [Risque: 1] : Score Base
+[COMMERCE] --> [Risque: 1] : Score Base
+
+[CONSTRUCTION] --> [Risque: 2] : Score Base
+[TECHNOLOGIE] --> [Risque: 2] : Score Base
+
+[FINANCE] --> [Risque: 3] : Score Base
+[IMMOBILIER] --> [Risque: 3] : Score Base
+[ENERGIE] --> [Risque: 3] : Score Base
+
+[ARMEMENT] --> [Risque: 4] : Score Base
+[CASINO_JEUX] --> [Risque: 4] : Score Base
+[CRYPTO] --> [Risque: 4] : Score Base
+
+note right of "Secteurs Standards"
+**Risque Minimal (1-2)**
+- Contrôles standards
+- Pas de restrictions
+- Surveillance normale
+- Validation GFC
+end note
+
+note right of "Secteurs Modérés"
+**Risque Modéré (3-4)**
+- Due diligence renforcée
+- Limites de montants
+- Validation Conformité
+- Surveillance périodique
+end note
+
+note right of "Secteurs Élevés"
+**Risque Élevé (5-7)**
+- Restrictions importantes
+- Validation DA obligatoire
+- Surveillance continue
+- Reporting spécialisé
+end note
+
+note right of "Secteurs Critiques"
+**Risque Critique (8-10)**
+- Validation DG requise
+- Restrictions maximales
+- Surveillance temps réel
+- Due diligence complète
+end note
+
+note bottom
+**Facteurs Multiplicateurs:**
+- Pays à risque: ×1.5
+- CA > 1M€: ×1.2
+- Structure complexe: ×1.3
+- Géographie sensible: ×1.4
+end note
+
+@enduml

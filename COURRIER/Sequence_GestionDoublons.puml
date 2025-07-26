@@ -1,0 +1,93 @@
+@startuml Sequence_GestionDoublons
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    ArrowColor #1976D2
+}
+skinparam participant {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+skinparam note {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+title Diagramme de Séquence - Gestion des Doublons
+
+participant "Agent" as Agent
+participant "Système Routage" as Routage
+participant "Base Données" as BD
+participant "Moteur OCR" as OCR
+participant "Gestionnaire" as Gest
+participant "Client" as Client
+
+Agent -> Routage: scannerCourrier(courrier)
+activate Routage
+
+Routage -> OCR: extraireDonnees(document)
+activate OCR
+OCR -> OCR: analyserContenu()
+OCR -> Routage: donneesExtracted(numCompte, typeDoc, empreinte)
+deactivate OCR
+
+Routage -> BD: rechercherDoublons(numCompte, typeDoc, empreinte)
+activate BD
+
+alt Doublon détecté
+    BD -> Routage: doublonTrouve(courrierExistant)
+    
+    Routage -> Routage: comparerDocuments(nouveauDoc, docExistant)
+    
+    alt Documents identiques
+        Routage -> BD: marquerCommeDupplique(nouveauCourrier)
+        Routage -> Agent: notifierDupplique("Document déjà reçu")
+        
+        note over Agent: Agent archive le doublon\nsans traitement supplémentaire
+        
+    else Documents différents mais même type
+        Routage -> BD: creerLienDocuments(doc1, doc2)
+        Routage -> Gest: alerterVersionsMultiples(numCompte, typeDoc)
+        activate Gest
+        
+        Gest -> BD: analyserDifferences(doc1, doc2)
+        
+        alt Version plus récente
+            Gest -> BD: marquerObsolete(ancienDoc)
+            Gest -> BD: validerNouveauDoc(nouveauDoc)
+            Gest -> Client: confirmerMiseAJour(typeDoc)
+            
+        else Versions complémentaires
+            Gest -> BD: conserverLesDeuxVersions()
+            Gest -> BD: creerDossierConsolidation()
+            
+        else Clarification nécessaire
+            Gest -> Client: demanderClarification(typeDoc, differences)
+            Client -> Gest: fournirExplication()
+            Gest -> BD: resoudreDoublon(decision)
+        end
+        
+        deactivate Gest
+    end
+    
+else Aucun doublon
+    BD -> Routage: aucunDoublonTrouve()
+    Routage -> BD: enregistrerNouveauCourrier(courrier)
+    Routage -> Gest: assignerTraitement(courrier)
+    activate Gest
+    Gest -> Client: accuserReceptionDocument()
+    deactivate Gest
+end
+
+deactivate BD
+
+Routage -> Agent: retournerStatutTraitement(statut)
+deactivate Routage
+
+note over BD: Algorithme de détection:\n1. Empreinte MD5 du document\n2. Numéro de compte + type\n3. Date de réception (fenêtre de 30 jours)
+
+note over Routage: Règles de gestion:\n- Doublon exact = archivage direct\n- Versions différentes = analyse manuelle\n- Seuil de similarité = 95%
+
+@enduml
